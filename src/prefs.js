@@ -17,10 +17,10 @@
  */
 import { ExtensionPreferences } from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
-import Defaults from './preferences/defaults.js';
-import PanelPreferences from './preferences/panel.js';
-import LockPreferences from './preferences/lock.js';
 import AdvancedPreferences from './preferences/advanced.js';
+import Defaults from './preferences/defaults.js';
+import LockPreferences from './preferences/lock.js';
+import PanelPreferences from './preferences/panel.js';
 import { addIconsToSearchPath } from './preferences/about.js';
 
 export default class ContextPreferences extends ExtensionPreferences {

@@ -18,14 +18,14 @@
 import Clutter from 'gi://Clutter';
 import GObject from 'gi://GObject';
 
-import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
-import Defaults from './preferences/defaults.js';
-import ContextButton from './widgets/contextButton.js';
 import ClockLabel from './widgets/clockLabel.js';
-import NameIndicator from './widgets/nameIndicator.js';
+import ContextButton from './widgets/contextButton.js';
+import Defaults from './preferences/defaults.js';
 import LockMessage from './widgets/lockMessage.js';
+import NameIndicator from './widgets/nameIndicator.js';
 
 const NAME = 'ContextWindowTitle ContextExtension'; // Used for console log
 
@@ -69,6 +69,13 @@ export default class ContextExtension extends Extension {
     }
 
     disable() {
+        // This extension uses unlock-dialog so that:
+        //  - The user/host name indicator (nameIndicator) can remain visible on the lock screen.
+        //  - The lock screen message (lockMessage) can be added to the lock screen.
+        // The custom clock (clockLabel) also remains while on lock screen but updates are paused
+        // as the clock is not visible at that time.
+        // The context button (contextButton) is destroyed and not visible on the lock screen.
+
         this.#isEnabled = false;
 
         if (this.#isConnected) {
@@ -109,6 +116,9 @@ export default class ContextExtension extends Extension {
         } finally {
             this.#nameIndicator = null;
         }
+
+        this.#settings = null;
+        this.#defaults = null;
     }
 
     #onSessionMode() {

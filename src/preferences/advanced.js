@@ -5,7 +5,7 @@ import GObject from 'gi://GObject';
 
 import { gettext as _ } from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
-import { getApplicationName, createAboutWindow } from './about.js';
+import { createAboutWindow, getApplicationName } from './about.js';
 
 export default class AdvancedPreferences extends Adw.PreferencesPage {
     static {

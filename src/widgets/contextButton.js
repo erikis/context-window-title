@@ -6,9 +6,12 @@ import Meta from 'gi://Meta';
 import Shell from 'gi://Shell';
 import St from 'gi://St';
 
+import { AppMenu } from 'resource:///org/gnome/shell/ui/appMenu.js';
+import * as Config from 'resource:///org/gnome/shell/misc/config.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
-import { AppMenu } from 'resource:///org/gnome/shell/ui/appMenu.js';
+
+const GNOME_POST_49 = parseInt(Config.PACKAGE_VERSION) >= 49;
 
 export default class ContextButton extends PanelMenu.Button {
     static {
@@ -566,8 +569,12 @@ export default class ContextButton extends PanelMenu.Button {
                     }
                     return Clutter.EVENT_PROPAGATE;
                 } else if (this._focusWindow?.can_maximize()) {
-                    // E.g. GNOME 46 wants MaximizeFlags, 50 doesn't
-                    this._focusWindow.maximize(Meta.MaximizeFlags.BOTH);
+                    // GNOME until 48 wants MaximizeFlags, 49+ doesn't
+                    if (GNOME_POST_49) {
+                        this._focusWindow.maximize();
+                    } else {
+                        this._focusWindow.maximize(Meta.MaximizeFlags.BOTH);
+                    }
                 }
                 return Clutter.EVENT_STOP;
             case Clutter.ScrollDirection.DOWN:
@@ -587,7 +594,11 @@ export default class ContextButton extends PanelMenu.Button {
                     // get_maximize_flags() is better because it is non-zero both for full
                     // and either vertical/horizontal maximize, is_maximized() only for full.
                     // For unmaximize(), GNOME until 48 wants MaximizeFlags, 49+ doesn't.
-                    this._focusWindow.unmaximize(Meta.MaximizeFlags.BOTH);
+                    if (GNOME_POST_49) {
+                        this._focusWindow.unmaximize();
+                    } else {
+                        this._focusWindow.unmaximize(Meta.MaximizeFlags.BOTH);
+                    }
                 }
                 return Clutter.EVENT_STOP;
             case Clutter.ScrollDirection.LEFT:
