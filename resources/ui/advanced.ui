@@ -1,0 +1,503 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface domain="context-window-title@erikis.github.io">
+  <template class="AdvancedPreferences" parent="AdwPreferencesPage">
+    <property name="name">advanced_preferences</property>
+    <property name="title" translatable="yes">Advanced</property>
+    <property name="icon-name">emblem-system-symbolic</property>
+    
+    <child>
+      <object class="AdwPreferencesGroup">
+        <property name="title" translatable="yes">Context Button</property>
+        
+        <child>
+          <object class="AdwSpinRow" id="button_saturation">
+            <property name="title" translatable="yes">Saturation</property>
+            <property name="subtitle" translatable="yes">!VALUE! for automatic (default, currently !CURRENT!%); from monochrome to full color</property>
+            <property name="adjustment">
+              <object class="GtkAdjustment">
+                <property name="lower">-3</property>
+                <property name="upper">100</property>
+                <property name="value">-1</property>
+                <property name="step-increment">1</property>
+                <property name="page-increment">5</property>
+              </object>
+            </property>
+            <child>
+              <object class="GtkLabel">
+                <property name="label" translatable="yes">%</property>
+                <property name="valign">center</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        
+        <child>
+          <object class="AdwSpinRow" id="button_menu_alignment">
+            <property name="title" translatable="yes">Menu Alignment</property>
+            <property name="subtitle" translatable="yes">!VALUE! for automatic (default, currently !CURRENT!%); from left to right</property>
+            <property name="adjustment">
+              <object class="GtkAdjustment">
+                <property name="lower">-1</property>
+                <property name="upper">100</property>
+                <property name="value">-1</property>
+                <property name="step-increment">1</property>
+                <property name="page-increment">5</property>
+              </object>
+            </property>
+            <child>
+              <object class="GtkLabel">
+                <property name="label" translatable="yes">%</property>
+                <property name="valign">center</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        
+        <child>
+          <object class="AdwSpinRow" id="button_ease_time">
+            <property name="title" translatable="yes">Ease Time</property>
+            <property name="subtitle" translatable="yes">!VALUE! for automatic (default, currently !CURRENT! ms)</property>
+            <property name="adjustment">
+              <object class="GtkAdjustment">
+                <property name="lower">-1</property>
+                <property name="upper">1000</property>
+                <property name="value">-1</property>
+                <property name="step-increment">1</property>
+                <property name="page-increment">5</property>
+              </object>
+            </property>
+            <child>
+              <object class="GtkLabel">
+                <property name="label" translatable="yes">ms</property>
+                <property name="valign">center</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        
+        <child>
+          <object class="AdwSpinRow" id="button_minimum_width">
+            <property name="title" translatable="yes">Minimum Width</property>
+            <property name="subtitle" translatable="yes">!VALUE! for automatic (default, currently !CURRENT! px)</property>
+            <property name="adjustment">
+              <object class="GtkAdjustment">
+                <property name="lower">-1</property>
+                <property name="upper">9999</property>
+                <property name="value">-1</property>
+                <property name="step-increment">1</property>
+                <property name="page-increment">5</property>
+              </object>
+            </property>
+            <child>
+              <object class="GtkLabel">
+                <property name="label" translatable="yes">px</property>
+                <property name="valign">center</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        
+        <child>
+          <object class="AdwExpanderRow">
+            <property name="title" translatable="yes">Components</property>
+            <property name="subtitle" translatable="yes">Change internal sizes</property>
+            
+            <child>
+              <object class="AdwSpinRow" id="button_title_width">
+                <property name="title" translatable="yes">Title Width</property>
+                <property name="subtitle" translatable="yes">!VALUE! for automatic (default, dynamic)</property>
+                <property name="adjustment">
+                  <object class="GtkAdjustment">
+                    <property name="lower">-1</property>
+                    <property name="upper">9999</property>
+                    <property name="value">-1</property>
+                    <property name="step-increment">1</property>
+                    <property name="page-increment">5</property>
+                  </object>
+                </property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label" translatable="yes">px</property>
+                    <property name="valign">center</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+            
+            <child>
+              <object class="AdwSpinRow" id="button_padding_width">
+                <property name="title" translatable="yes">Padding Width</property>
+                <property name="subtitle" translatable="yes">!VALUE! for automatic (default, currently !CURRENT! px)</property>
+                <property name="adjustment">
+                  <object class="GtkAdjustment">
+                    <property name="lower">-1</property>
+                    <property name="upper">32</property>
+                    <property name="value">-1</property>
+                    <property name="step-increment">1</property>
+                    <property name="page-increment">5</property>
+                  </object>
+                </property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label" translatable="yes">px</property>
+                    <property name="valign">center</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+            
+            <child>
+              <object class="AdwSpinRow" id="button_padding_left">
+                <property name="title" translatable="yes">Padding Left</property>
+                <property name="subtitle" translatable="yes">!VALUE! for automatic (default, currently !CURRENT! px)</property>
+                <property name="adjustment">
+                  <object class="GtkAdjustment">
+                    <property name="lower">-1</property>
+                    <property name="upper">32</property>
+                    <property name="value">-1</property>
+                    <property name="step-increment">1</property>
+                    <property name="page-increment">5</property>
+                  </object>
+                </property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label" translatable="yes">px</property>
+                    <property name="valign">center</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+            
+            <child>
+              <object class="AdwSpinRow" id="button_padding_right">
+                <property name="title" translatable="yes">Padding Right</property>
+                <property name="subtitle" translatable="yes">!VALUE! for automatic (default, currently !CURRENT! px)</property>
+                <property name="adjustment">
+                  <object class="GtkAdjustment">
+                    <property name="lower">-1</property>
+                    <property name="upper">32</property>
+                    <property name="value">-1</property>
+                    <property name="step-increment">1</property>
+                    <property name="page-increment">5</property>
+                  </object>
+                </property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label" translatable="yes">px</property>
+                    <property name="valign">center</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+            
+            <child>
+              <object class="AdwSpinRow" id="button_icon_size">
+                <property name="title" translatable="yes">Icon Size</property>
+                <property name="subtitle" translatable="yes">!VALUE! for automatic (default, currently !CURRENT! px)</property>
+                <property name="adjustment">
+                  <object class="GtkAdjustment">
+                    <property name="lower">-1</property>
+                    <property name="upper">32</property>
+                    <property name="value">-1</property>
+                    <property name="step-increment">1</property>
+                    <property name="page-increment">5</property>
+                  </object>
+                </property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label" translatable="yes">px</property>
+                    <property name="valign">center</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+            
+          </object>
+        </child>
+        
+        <child>
+          <object class="AdwEntryRow" id="button_context_icon">
+            <property name="title" translatable="yes">Context Icon [empty for automatic (default, currently !CURRENT!)]</property>
+          </object>
+        </child>
+        
+      </object>
+    </child>
+    
+    <child>
+      <object class="AdwPreferencesGroup">
+        <property name="title" translatable="yes">Custom Clock</property>        
+        
+        <child>
+          <object class="AdwActionRow">
+            <property name="title" translatable="yes">Year</property>
+            <property name="activatable-widget">clock_year</property>
+            <child>
+              <object class="GtkDropDown" id="clock_year">
+                <property name="valign">center</property>
+                <property name="model">clock_year_model</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        
+        <child>
+          <object class="AdwActionRow">
+            <property name="title" translatable="yes">Month</property>
+            <property name="activatable-widget">clock_month</property>
+            <child>
+              <object class="GtkDropDown" id="clock_month">
+                <property name="valign">center</property>
+                <property name="model">clock_month_model</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        
+        <child>
+          <object class="AdwActionRow">
+            <property name="title" translatable="yes">Weekday</property>
+            <property name="activatable-widget">clock_weekday</property>
+            <child>
+              <object class="GtkDropDown" id="clock_weekday">
+                <property name="valign">center</property>
+                <property name="model">clock_weekday_model</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        
+        <child>
+          <object class="AdwActionRow">
+            <property name="title" translatable="yes">Hour</property>
+            <property name="activatable-widget">clock_hour</property>
+            <child>
+              <object class="GtkDropDown" id="clock_hour">
+                <property name="valign">center</property>
+                <property name="model">clock_hour_model</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        
+        <child>
+          <object class="AdwActionRow">
+            <property name="title" translatable="yes">Second</property>
+            <property name="activatable-widget">clock_second</property>
+            <child>
+              <object class="GtkDropDown" id="clock_second">
+                <property name="valign">center</property>
+                <property name="model">clock_second_model</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        
+        <child>
+          <object class="AdwExpanderRow">
+            <property name="title" translatable="yes">Extra</property>
+            <property name="subtitle" translatable="yes">Show time zone and change locale options</property>
+            
+            <child>
+              <object class="AdwActionRow">
+                <property name="title" translatable="yes">Time Zone Name</property>
+                <property name="activatable-widget">clock_time_zone_name</property>
+                <child>
+                  <object class="GtkDropDown" id="clock_time_zone_name">
+                    <property name="valign">center</property>
+                    <property name="model">clock_time_zone_name_model</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+            
+            <child>
+              <object class="AdwEntryRow" id="clock_time_zone">
+                <property name="title" translatable="yes">Time Zone, e.g., America/Los_Angeles (tzdb name) or +08:00 [empty for automatic (default)]</property>
+              </object>
+            </child>
+            
+            <child>
+              <object class="AdwActionRow">
+                <property name="title" translatable="yes">Calendar</property>
+                <property name="activatable-widget">clock_calendar</property>
+                <child>
+                  <object class="GtkDropDown" id="clock_calendar">
+                    <property name="valign">center</property>
+                    <property name="model">clock_calendar_model</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+            
+            <child>
+              <object class="AdwActionRow">
+                <property name="title" translatable="yes">Numeral System</property>
+                <property name="activatable-widget">clock_numbering</property>
+                <child>
+                  <object class="GtkDropDown" id="clock_numbering">
+                    <property name="valign">center</property>
+                    <property name="model">clock_numbering_model</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+            
+            <child>
+              <object class="AdwEntryRow" id="clock_locale">
+                <property name="title" translatable="yes">Time Locale [empty for automatic (default, currently !CURRENT!)]</property>
+              </object>
+            </child>
+        
+          </object>
+        </child>
+        
+      </object>
+    </child>
+    
+    <child>
+      <object class="AdwPreferencesGroup">
+        <property name="title" translatable="yes">User/Host Name</property>        
+        
+        <child>
+          <object class="AdwActionRow">
+            <property name="title" translatable="yes">Hide on lock screen</property>
+            <property name="activatable-widget">name_lock_hide</property>
+            <child>
+              <object class="GtkDropDown" id="name_lock_hide">
+                <property name="valign">center</property>
+                <property name="model">name_lock_hide_model</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        
+      </object>
+    </child>
+    
+    <child>
+      <object class="AdwPreferencesGroup">
+        <property name="title" translatable="yes">Lock Screen Message</property>        
+        
+        <child>
+          <object class="AdwEntryRow" id="message_source_icon">
+            <property name="title" translatable="yes">Icon [empty for automatic (default, currently !CURRENT!)]</property>
+          </object>
+        </child>
+        
+      </object>
+    </child>
+    
+    <child>
+      <object class="AdwPreferencesGroup">
+        <property name="title" translatable="yes">Other</property>
+        
+        <child>
+          <object class="AdwActionRow">
+            <property name="focusable">False</property>
+            <child>
+              <object class="GtkButton" id="about">
+                <property name="label" translatable="yes">About !NAME!</property>
+                <property name="valign">center</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        
+        <child>
+          <object class="AdwExpanderRow" id="reset_row">
+            <property name="title" translatable="yes">Reset Preferences</property>
+            <property name="subtitle" translatable="yes">This is irreversible</property>
+            <!-- Not using AdwButtonRow for now, because it requires newer GNOME versions -->
+            <child>
+              <object class="AdwActionRow">
+                <property name="focusable">False</property>
+                <child>
+                  <object class="GtkButton" id="reset_advanced">
+                    <property name="label" translatable="yes">Reset Advanced Preferences</property>
+                    <property name="valign">center</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="AdwActionRow">
+                <property name="focusable">False</property>
+                <child>
+                  <object class="GtkButton" id="reset_all">
+                    <property name="label" translatable="yes">Reset All Preferences</property>
+                    <property name="valign">center</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>        
+        </child>
+        
+      </object>
+    </child>
+    
+  </template>
+  <object class="GtkStringList" id="clock_year_model">
+    <items>
+      <item translatable="yes">Off</item>
+      <item translatable="yes">On</item>
+      <item translatable="yes">On with era</item>
+    </items>
+  </object>
+  <object class="GtkStringList" id="clock_month_model">
+    <items>
+      <item translatable="yes">Short</item>
+      <item translatable="yes">Long</item>
+      <item translatable="yes">Numeric</item>
+    </items>
+  </object>
+  <object class="GtkStringList" id="clock_weekday_model">
+    <items>
+      <item translatable="yes">Short</item>
+      <item translatable="yes">Long</item>
+      <item translatable="yes">Narrow</item>
+    </items>
+  </object>
+  <object class="GtkStringList" id="clock_hour_model">
+    <items>
+      <item translatable="yes">Default</item>
+      <item translatable="yes">12h</item>
+      <item translatable="yes">24h</item>
+    </items>
+  </object>
+  <object class="GtkStringList" id="clock_second_model">
+    <items>
+      <item translatable="yes">Off</item>
+      <item translatable="yes">Second</item>
+      <item translatable="yes">1/10 Second</item>
+      <item translatable="yes">1/100 Second</item>
+      <item translatable="yes">1/1000 Second</item>
+    </items>
+  </object>
+  <object class="GtkStringList" id="clock_time_zone_name_model">
+    <items>
+      <item translatable="yes">Off</item>
+      <item translatable="yes">On</item>
+      <item translatable="yes">On with offset only</item>
+      <item translatable="yes">On with long offset only</item>
+    </items>
+  </object>
+  <object class="GtkStringList" id="clock_calendar_model">
+    <items>
+      <item translatable="yes">Default</item>
+    </items>
+  </object>
+  <object class="GtkStringList" id="clock_numbering_model">
+    <items>
+      <item translatable="yes">Default</item>
+    </items>
+  </object>
+  <object class="GtkStringList" id="name_lock_hide_model">
+    <items>
+      <item translatable="yes">Don’t hide</item>
+      <item translatable="yes">Hide</item>
+      <item translatable="yes">Hide user</item>
+    </items>
+  </object>
+</interface>

@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface domain="context-window-title@erikis.github.io">
+  <template class="PanelPreferences" parent="AdwPreferencesPage">
+    <property name="name">panel_preferences</property>
+    <property name="title" translatable="yes">Top Bar</property>
+    <property name="icon-name">focus-top-bar-symbolic</property>
+    
+    <child>
+      <object class="AdwPreferencesGroup" id="x11_warning">
+        <property name="description" translatable="yes">GNOME is running under X11. There may be reduced functionality and bugs.</property>
+        <property name="visible">False</property>
+      </object>
+    </child>
+    
+    <child>
+      <object class="AdwPreferencesGroup">
+        <property name="title" translatable="yes">Context Button</property>
+        <property name="description" translatable="yes">Show a button on the left side of the top bar – select functionality below</property>
+        <property name="header-suffix">
+          <object class="GtkSwitch" id="activate_button">
+            <property name="valign">center</property>
+          </object>
+        </property>
+        
+        <child>
+          <object class="AdwActionRow">
+            <property name="title" translatable="yes">Context</property>
+            <property name="subtitle" translatable="yes">Click button to toggle from desktop to apps, windows, and back to desktop; scroll up/down/left/right or back/forward click to switch workspaces</property>
+            <property name="activatable-widget">context_button</property>
+            <child>
+              <object class="GtkSwitch" id="context_button">
+                <property name="valign">center</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        
+        <child>
+          <object class="AdwActionRow">
+            <property name="title" translatable="yes">Window</property>
+            <property name="subtitle" translatable="yes">Show window icon; (right/secondary/long-press) click for app menu; middle click to close window; scroll up/down to maximize/unmaximize</property>
+            <property name="activatable-widget">window_button</property>
+            <child>
+              <object class="GtkSwitch" id="window_button">
+                <property name="valign">center</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        
+        <child>
+          <object class="AdwActionRow">
+            <property name="title" translatable="yes">Title</property>
+            <property name="subtitle" translatable="yes">Show window icon and title; (right/secondary/long-press) click for app menu</property>
+            <property name="activatable-widget">title_button</property>
+            <child>
+              <object class="GtkSwitch" id="title_button">
+                <property name="valign">center</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        
+      </object>
+    </child>
+    
+    <child>
+      <object class="AdwPreferencesGroup">
+        <property name="title" translatable="yes">Custom Clock</property>
+        <property name="description" translatable="yes">Replace the clock in the middle of the top bar</property>
+        <property name="header-suffix">
+          <object class="GtkSwitch" id="activate_clock">
+            <property name="valign">center</property>
+          </object>
+        </property>
+        
+        <child>
+          <object class="AdwActionRow">
+            <property name="title" translatable="yes">Weekday</property>
+            <property name="activatable-widget">weekday_clock</property>
+            <child>
+              <object class="GtkSwitch" id="weekday_clock">
+                <property name="valign">center</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        
+        <child>
+          <object class="AdwActionRow">
+            <property name="title" translatable="yes">Date</property>
+            <property name="activatable-widget">date_clock</property>
+            <child>
+              <object class="GtkSwitch" id="date_clock">
+                <property name="valign">center</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        
+        <child>
+          <object class="AdwActionRow">
+            <property name="title" translatable="yes">Time</property>
+            <property name="activatable-widget">time_clock</property>
+            <child>
+              <object class="GtkSwitch" id="time_clock">
+                <property name="valign">center</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        
+      </object>
+    </child>
+    
+    <child>
+      <object class="AdwPreferencesGroup">
+        <property name="title" translatable="yes">User/Host Name</property>
+        <property name="description" translatable="yes">Show user and/or host name on the system menu button</property>
+        <property name="header-suffix">
+          <object class="GtkSwitch" id="activate_name">
+            <property name="valign">center</property>
+          </object>
+        </property>
+        
+        <child>
+          <object class="AdwActionRow">
+            <property name="title" translatable="yes">User</property>
+            <property name="subtitle" translatable="yes">Will be followed by @ if host and/or domain is shown</property>
+            <property name="activatable-widget">user_name</property>
+            <child>
+              <object class="GtkSwitch" id="user_name">
+                <property name="valign">center</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        
+        <child>
+          <object class="AdwActionRow">
+            <property name="title" translatable="yes">Host</property>
+            <property name="subtitle" translatable="yes">Device name excluding the domain, if any</property>
+            <property name="activatable-widget">host_name</property>
+            <child>
+              <object class="GtkSwitch" id="host_name">
+                <property name="valign">center</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        
+        <child>
+          <object class="AdwActionRow">
+            <property name="title" translatable="yes">Domain</property>
+            <property name="subtitle" translatable="yes">Device name starting from/after any first dot</property>
+            <property name="activatable-widget">domain_name</property>
+            <child>
+              <object class="GtkSwitch" id="domain_name">
+                <property name="valign">center</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        
+      </object>
+    </child>
+    
+  </template>
+</interface>

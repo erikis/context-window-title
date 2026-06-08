@@ -1,0 +1,415 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the context-window-title@erikis.github.io package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: context-window-title@erikis.github.io\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-06-08 08:13+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: resources/ui/advanced.ui:5
+msgid "Advanced"
+msgstr ""
+
+#: resources/ui/advanced.ui:10 resources/ui/panel.ui:17
+msgid "Context Button"
+msgstr ""
+
+#: resources/ui/advanced.ui:14
+msgid "Saturation"
+msgstr ""
+
+#: resources/ui/advanced.ui:15
+msgid ""
+"!VALUE! for automatic (default, currently !CURRENT!%); from monochrome to "
+"full color"
+msgstr ""
+
+#: resources/ui/advanced.ui:27 resources/ui/advanced.ui:49
+msgid "%"
+msgstr ""
+
+#: resources/ui/advanced.ui:36
+msgid "Menu Alignment"
+msgstr ""
+
+#: resources/ui/advanced.ui:37
+msgid ""
+"!VALUE! for automatic (default, currently !CURRENT!%); from left to right"
+msgstr ""
+
+#: resources/ui/advanced.ui:58
+msgid "Ease Time"
+msgstr ""
+
+#: resources/ui/advanced.ui:59
+msgid "!VALUE! for automatic (default, currently !CURRENT! ms)"
+msgstr ""
+
+#: resources/ui/advanced.ui:71
+msgid "ms"
+msgstr ""
+
+#: resources/ui/advanced.ui:80
+msgid "Minimum Width"
+msgstr ""
+
+#: resources/ui/advanced.ui:81 resources/ui/advanced.ui:130
+#: resources/ui/advanced.ui:152 resources/ui/advanced.ui:174
+#: resources/ui/advanced.ui:196
+msgid "!VALUE! for automatic (default, currently !CURRENT! px)"
+msgstr ""
+
+#: resources/ui/advanced.ui:93 resources/ui/advanced.ui:120
+#: resources/ui/advanced.ui:142 resources/ui/advanced.ui:164
+#: resources/ui/advanced.ui:186 resources/ui/advanced.ui:208
+msgid "px"
+msgstr ""
+
+#: resources/ui/advanced.ui:102
+msgid "Components"
+msgstr ""
+
+#: resources/ui/advanced.ui:103
+msgid "Change internal sizes"
+msgstr ""
+
+#: resources/ui/advanced.ui:107
+msgid "Title Width"
+msgstr ""
+
+#: resources/ui/advanced.ui:108
+msgid "!VALUE! for automatic (default, dynamic)"
+msgstr ""
+
+#: resources/ui/advanced.ui:129
+msgid "Padding Width"
+msgstr ""
+
+#: resources/ui/advanced.ui:151
+msgid "Padding Left"
+msgstr ""
+
+#: resources/ui/advanced.ui:173
+msgid "Padding Right"
+msgstr ""
+
+#: resources/ui/advanced.ui:195
+msgid "Icon Size"
+msgstr ""
+
+#: resources/ui/advanced.ui:220
+msgid "Context Icon [empty for automatic (default, currently !CURRENT!)]"
+msgstr ""
+
+#: resources/ui/advanced.ui:229 resources/ui/panel.ui:69
+msgid "Custom Clock"
+msgstr ""
+
+#: resources/ui/advanced.ui:233
+msgid "Year"
+msgstr ""
+
+#: resources/ui/advanced.ui:246
+msgid "Month"
+msgstr ""
+
+#: resources/ui/advanced.ui:259 resources/ui/panel.ui:79
+msgid "Weekday"
+msgstr ""
+
+#: resources/ui/advanced.ui:272
+msgid "Hour"
+msgstr ""
+
+#: resources/ui/advanced.ui:285 resources/ui/advanced.ui:472
+msgid "Second"
+msgstr ""
+
+#: resources/ui/advanced.ui:298
+msgid "Extra"
+msgstr ""
+
+#: resources/ui/advanced.ui:299
+msgid "Show time zone and change locale options"
+msgstr ""
+
+#: resources/ui/advanced.ui:303
+msgid "Time Zone Name"
+msgstr ""
+
+#: resources/ui/advanced.ui:316
+msgid ""
+"Time Zone, e.g., America/Los_Angeles (tzdb name) or +08:00 [empty for "
+"automatic (default)]"
+msgstr ""
+
+#: resources/ui/advanced.ui:322
+msgid "Calendar"
+msgstr ""
+
+#: resources/ui/advanced.ui:335
+msgid "Numeral System"
+msgstr ""
+
+#: resources/ui/advanced.ui:348
+msgid "Time Locale [empty for automatic (default, currently !CURRENT!)]"
+msgstr ""
+
+#: resources/ui/advanced.ui:360 resources/ui/panel.ui:118
+msgid "User/Host Name"
+msgstr ""
+
+#: resources/ui/advanced.ui:364
+msgid "Hide on lock screen"
+msgstr ""
+
+#: resources/ui/advanced.ui:380 resources/ui/lock.ui:10
+msgid "Lock Screen Message"
+msgstr ""
+
+#: resources/ui/advanced.ui:384
+msgid "Icon [empty for automatic (default, currently !CURRENT!)]"
+msgstr ""
+
+#: resources/ui/advanced.ui:393
+msgid "Other"
+msgstr ""
+
+#: resources/ui/advanced.ui:400
+msgid "About !NAME!"
+msgstr ""
+
+#: resources/ui/advanced.ui:409
+msgid "Reset Preferences"
+msgstr ""
+
+#: resources/ui/advanced.ui:410
+msgid "This is irreversible"
+msgstr ""
+
+#: resources/ui/advanced.ui:417
+msgid "Reset Advanced Preferences"
+msgstr ""
+
+#: resources/ui/advanced.ui:428
+msgid "Reset All Preferences"
+msgstr ""
+
+#: resources/ui/advanced.ui:443 resources/ui/advanced.ui:471
+#: resources/ui/advanced.ui:480
+msgid "Off"
+msgstr ""
+
+#: resources/ui/advanced.ui:444 resources/ui/advanced.ui:481
+msgid "On"
+msgstr ""
+
+#: resources/ui/advanced.ui:445
+msgid "On with era"
+msgstr ""
+
+#: resources/ui/advanced.ui:450 resources/ui/advanced.ui:457
+msgid "Short"
+msgstr ""
+
+#: resources/ui/advanced.ui:451 resources/ui/advanced.ui:458
+msgid "Long"
+msgstr ""
+
+#: resources/ui/advanced.ui:452
+msgid "Numeric"
+msgstr ""
+
+#: resources/ui/advanced.ui:459
+msgid "Narrow"
+msgstr ""
+
+#: resources/ui/advanced.ui:464 resources/ui/advanced.ui:488
+#: resources/ui/advanced.ui:493
+msgid "Default"
+msgstr ""
+
+#: resources/ui/advanced.ui:465
+msgid "12h"
+msgstr ""
+
+#: resources/ui/advanced.ui:466
+msgid "24h"
+msgstr ""
+
+#: resources/ui/advanced.ui:473
+msgid "1/10 Second"
+msgstr ""
+
+#: resources/ui/advanced.ui:474
+msgid "1/100 Second"
+msgstr ""
+
+#: resources/ui/advanced.ui:475
+msgid "1/1000 Second"
+msgstr ""
+
+#: resources/ui/advanced.ui:482
+msgid "On with offset only"
+msgstr ""
+
+#: resources/ui/advanced.ui:483
+msgid "On with long offset only"
+msgstr ""
+
+#: resources/ui/advanced.ui:498
+msgid "Don’t hide"
+msgstr ""
+
+#: resources/ui/advanced.ui:499
+msgid "Hide"
+msgstr ""
+
+#: resources/ui/advanced.ui:500
+msgid "Hide user"
+msgstr ""
+
+#: resources/ui/lock.ui:5
+msgid "Lock Screen"
+msgstr ""
+
+#: resources/ui/lock.ui:11
+msgid "Show a message as a notification on the lock screen"
+msgstr ""
+
+#: resources/ui/lock.ui:20 resources/ui/panel.ui:53
+msgid "Title"
+msgstr ""
+
+#: resources/ui/lock.ui:26
+msgid "Subject"
+msgstr ""
+
+#: resources/ui/lock.ui:32
+msgid "Body"
+msgstr ""
+
+#: resources/ui/panel.ui:5
+msgid "Top Bar"
+msgstr ""
+
+#: resources/ui/panel.ui:10
+msgid ""
+"GNOME is running under X11. There may be reduced functionality and bugs."
+msgstr ""
+
+#: resources/ui/panel.ui:18
+msgid ""
+"Show a button on the left side of the top bar – select functionality below"
+msgstr ""
+
+#: resources/ui/panel.ui:27
+msgid "Context"
+msgstr ""
+
+#: resources/ui/panel.ui:28
+msgid ""
+"Click button to toggle from desktop to apps, windows, and back to desktop; "
+"scroll up/down/left/right or back/forward click to switch workspaces"
+msgstr ""
+
+#: resources/ui/panel.ui:40
+msgid "Window"
+msgstr ""
+
+#: resources/ui/panel.ui:41
+msgid ""
+"Show window icon; (right/secondary/long-press) click for app menu; middle "
+"click to close window; scroll up/down to maximize/unmaximize"
+msgstr ""
+
+#: resources/ui/panel.ui:54
+msgid ""
+"Show window icon and title; (right/secondary/long-press) click for app menu"
+msgstr ""
+
+#: resources/ui/panel.ui:70
+msgid "Replace the clock in the middle of the top bar"
+msgstr ""
+
+#: resources/ui/panel.ui:91
+msgid "Date"
+msgstr ""
+
+#: resources/ui/panel.ui:103
+msgid "Time"
+msgstr ""
+
+#: resources/ui/panel.ui:119
+msgid "Show user and/or host name on the system menu button"
+msgstr ""
+
+#: resources/ui/panel.ui:128
+msgid "User"
+msgstr ""
+
+#: resources/ui/panel.ui:129
+msgid "Will be followed by @ if host and/or domain is shown"
+msgstr ""
+
+#: resources/ui/panel.ui:141
+msgid "Host"
+msgstr ""
+
+#: resources/ui/panel.ui:142
+msgid "Device name excluding the domain, if any"
+msgstr ""
+
+#: resources/ui/panel.ui:154
+msgid "Domain"
+msgstr ""
+
+#: resources/ui/panel.ui:155
+msgid "Device name starting from/after any first dot"
+msgstr ""
+
+#. This is the application name
+#: src/preferences/about.js:12
+msgid "Context + Window Title"
+msgstr ""
+
+#. Change this to your real name to show up in the credits.
+#. To include your URL: Name https://url
+#. Or to include your email address: Name <emailaddress>
+#: src/preferences/about.js:36
+msgid "TRANSLATOR"
+msgstr ""
+
+#: src/preferences/advanced.js:69
+#, javascript-format
+msgid "!VALUE! for symbolic icon style and !CURRENT!% saturation"
+msgstr ""
+
+#. Keep English version followed by slash, e.g.,
+#. "Locked/Gesperrt"
+#: src/preferences/lock.js:72
+msgid "Locked"
+msgstr ""
+
+#. Keep English version followed by slash, e.g.,
+#. "If found/Falls gefunden"
+#: src/preferences/lock.js:80
+msgid "If found"
+msgstr ""
+
+#. Keep English version followed by slash, e.g.,
+#. "Please contact the owner/Kontaktieren Sie bitte den Besitzer:"
+#: src/preferences/lock.js:88
+msgid "Please contact the owner:"
+msgstr ""

@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.context-window-title"
+    path="/org/gnome/shell/extensions/context-window-title/">
+    <key name="activate-button" type="b">
+      <summary>Activate top bar button feature</summary>
+      <default>true</default>
+    </key>
+    <key name="enable-context" type="b">
+      <summary>Enable context functionality</summary>
+      <default>true</default>
+    </key>
+    <key name="enable-window" type="b">
+      <summary>Enable window functionality</summary>
+      <default>true</default>
+    </key>
+    <key name="enable-title" type="b">
+      <summary>Enable window title</summary>
+      <default>true</default>
+    </key>
+    <key name="button-saturation" type="i">
+      <summary>Button saturation</summary>
+      <description>Color level of button contents (%), -1 for automatic</description>
+      <default>-1</default>
+    </key>
+    <key name="button-menu-alignment" type="i">
+      <summary>Button menu alignment</summary>
+      <description>0 for left, 100 for right, (%), -1 for automatic</description>
+      <default>-1</default>
+    </key>
+    <key name="button-ease-time" type="i">
+      <summary>Button ease time (ms), -1 for automatic</summary>
+      <default>-1</default>
+    </key>
+    <key name="button-minimum-width" type="i">
+      <summary>Button minimum width (px), -1 for automatic</summary>
+      <default>-1</default>
+    </key>
+    <key name="button-title-width" type="i">
+      <summary>Button title label width (px), -1 for automatic</summary>
+      <default>-1</default>
+    </key>
+    <key name="button-padding-width" type="i">
+      <summary>Button padding width (px), -1 for automatic</summary>
+      <description>Padding between icon and title</description>
+      <default>-1</default>
+    </key>
+    <key name="button-padding-left" type="i">
+      <summary>Button padding left (px), -1 for automatic</summary>
+      <default>-1</default>
+    </key>
+    <key name="button-padding-right" type="i">
+      <summary>Button padding right (px), -1 for automatic</summary>
+      <default>-1</default>
+    </key>
+    <key name="button-icon-size" type="i">
+      <summary>Button icon size (px), -1 for automatic</summary>
+      <default>-1</default>
+    </key>
+    <key name="button-context-icon" type="s">
+      <summary>Button context icon</summary>
+      <description>Button icon when on desktop without focused window</description>
+      <default>""</default>
+    </key>
+    
+    <key name="activate-clock" type="b">
+      <summary>Activate custom clock feature</summary>
+      <default>false</default>
+    </key>
+    <key name="enable-weekday" type="b">
+      <summary>Enable clock weekday</summary>
+      <default>false</default>
+    </key>
+    <key name="enable-date" type="b">
+      <summary>Enable clock date</summary>
+      <default>true</default>
+    </key>
+    <key name="enable-time" type="b">
+      <summary>Enable clock time</summary>
+      <default>true</default>
+    </key>
+    <key name="clock-year" type="i">
+      <summary>Clock year</summary>
+      <description>Whether/how to show year</description>
+      <default>0</default>
+    </key>
+    <key name="clock-month" type="i">
+      <summary>Clock month</summary>
+      <description>How to show month</description>
+      <default>0</default>
+    </key>
+    <key name="clock-weekday" type="i">
+      <summary>Clock weekday</summary>
+      <description>How to show weekday</description>
+      <default>0</default>
+    </key>
+    <key name="clock-hour" type="i">
+      <summary>Clock hour</summary>
+      <description>Whether to force 12h or 24h time</description>
+      <default>0</default>
+    </key>
+    <key name="clock-second" type="i">
+      <summary>Clock second</summary>
+      <description>Whether/how to show second</description>
+      <default>0</default>
+    </key>
+    <key name="clock-time-zone-name" type="i">
+      <summary>Clock time zone name</summary>
+      <description>Whether/how to show time zone name</description>
+      <default>0</default>
+    </key>
+    <key name="clock-time-zone" type="s">
+      <summary>Clock time zone</summary>
+      <description>Override time zone</description>
+      <default>""</default>
+    </key>
+    <key name="clock-calendar" type="s">
+      <summary>Clock calendar</summary>
+      <description>Override calendar</description>
+      <default>""</default>
+    </key>
+    <key name="clock-numbering" type="s">
+      <summary>Clock numbering system</summary>
+      <description>Override numbering system</description>
+      <default>""</default>
+    </key>
+    <key name="clock-locale" type="s">
+      <summary>Clock locale</summary>
+      <description>Override time locale</description>
+      <default>""</default>
+    </key>
+    
+    <key name="activate-name" type="b">
+      <summary>Activate user/host name feature</summary>
+      <default>false</default>
+    </key>
+    <key name="enable-user" type="b">
+      <summary>Enable user name</summary>
+      <default>true</default>
+    </key>
+    <key name="enable-host" type="b">
+      <summary>Enable host name</summary>
+      <default>true</default>
+    </key>
+    <key name="enable-domain" type="b">
+      <summary>Enable domain name</summary>
+      <default>false</default>
+    </key>
+    <key name="name-lock-hide" type="i">
+      <summary>Name lock hide</summary>
+      <description>Whether to hide user/host name on lock screen</description>
+      <default>0</default>
+    </key>
+    
+    <key name="activate-message" type="b">
+      <summary>Activate lock screen message feature</summary>
+      <default>false</default>
+    </key>
+    <key name="message-source-icon" type="s">
+      <summary>Lock screen message source icon</summary>
+      <default>""</default>
+    </key>
+    <key name="message-source-title" type="s">
+      <summary>Lock screen message source title</summary>
+      <default>""</default>
+    </key>
+    <key name="message-title" type="s">
+      <summary>Lock screen message title</summary>
+      <default>""</default>
+    </key>
+    <key name="message-body" type="s">
+      <summary>Lock screen message body</summary>
+      <default>""</default>
+    </key>
+  </schema>
+</schemalist>

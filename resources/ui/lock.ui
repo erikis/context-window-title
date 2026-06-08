@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface domain="context-window-title@erikis.github.io">
+  <template class="LockPreferences" parent="AdwPreferencesPage">
+    <property name="name">lock_preferences</property>
+    <property name="title" translatable="yes">Lock Screen</property>
+    <property name="icon-name">system-lock-screen-symbolic</property>
+    
+    <child>
+      <object class="AdwPreferencesGroup" id ="message_preferences">
+        <property name="title" translatable="yes">Lock Screen Message</property>
+        <property name="description" translatable="yes">Show a message as a notification on the lock screen</property>
+        <property name="header-suffix">
+          <object class="GtkSwitch" id="activate_message">
+            <property name="valign">center</property>
+          </object>
+        </property>
+        
+        <child>
+          <object class="AdwEntryRow" id="message_source_title">
+            <property name="title" translatable="yes">Title</property>
+          </object>
+        </child>
+        
+        <child>
+          <object class="AdwEntryRow" id="message_title">
+            <property name="title" translatable="yes">Subject</property>
+          </object>
+        </child>
+        
+        <child>
+          <object class="AdwEntryRow" id="message_body">
+            <property name="title" translatable="yes">Body</property>
+          </object>
+        </child>
+        
+      </object>
+    </child>
+    
+  </template>
+</interface>

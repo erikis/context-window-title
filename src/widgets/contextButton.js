@@ -1,0 +1,723 @@
+import Clutter from 'gi://Clutter';
+import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
+import GObject from 'gi://GObject';
+import Meta from 'gi://Meta';
+import Shell from 'gi://Shell';
+import St from 'gi://St';
+
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
+import { AppMenu } from 'resource:///org/gnome/shell/ui/appMenu.js';
+
+export default class ContextButton extends PanelMenu.Button {
+    static {
+        GObject.registerClass(this);
+    }
+
+    _init() {
+        super._init(0, null, true); // true for dontCreateMenu
+
+        this._isTitleButton = false;
+        this._isContextButton = false;
+        this._isWindowButton = false;
+        this._isConnected = false;
+        this._isUpdating = false;
+        this._isDirty = false;
+        this._focusWindow = null;
+
+        // X11 compatbility mode
+        this._isX11 = GLib.getenv('XDG_SESSION_TYPE') === 'x11';
+
+        // Prevent squeezing of the padding when the title is too long
+        // In gnome-shell's data/theme/gnome-shell-sass/widgets/_panel.scss:
+        // -natural-hpadding: $base_padding * 2;
+        // -minimum-hpadding: $base_padding;
+        // where: $base_padding: 6px;
+        // Reduce the 'natural' padding to the 'minimum', which can be compensated
+        // by adding a default of 6px internal padding left and right
+        this.set_style('-minimum-hpadding: 6px; -natural-hpadding: 6px');
+
+        this._appMenu = new AppMenu(this);
+        Main.panel.menuManager.addMenu(this._appMenu);
+        this.setMenu(this._appMenu);
+
+        this._box = new St.BoxLayout({
+            style: 'padding-left: 6px; padding-right: 6px',
+        });
+        this._fallbackIcon = new Gio.ThemedIcon({
+            name: 'application-x-sharedlib-symbolic',
+        });
+        this._icon = new St.Icon({ fallback_gicon: this._fallbackIcon });
+        this._icon.hide(); // Hide initially to not show fallback icon briefly
+        this._box.add_child(this._icon);
+        this._padding = new St.Label();
+        this._box.add_child(this._padding);
+        this._title = new St.Label({ y_align: Clutter.ActorAlign.CENTER });
+        this._box.add_child(this._title);
+        this.add_child(this._box);
+        this._maxTitleWidth = -1;
+
+        // GNOME 49+ has Clutter.ClickGesture
+        if (Clutter.ClickGesture) {
+            if (this._clickGesture) {
+                this.remove_action(this._clickGesture);
+            }
+            this._clickGesture = new Clutter.ClickGesture();
+            this._clickGesture.connectObject(
+                'recognize',
+                (gesture) => this._onClick(gesture, true),
+                this
+            );
+            this.add_action(this._clickGesture);
+        }
+        this.connectObject(
+            'scroll-event',
+            (actor, event) => this._onScroll(event),
+            this
+        );
+    }
+
+    _onStyleChanged(actor) {
+        super._onStyleChanged(actor);
+        const themeNode = actor.get_theme_node();
+
+        this._minHPadding = themeNode.get_length('-minimum-hpadding');
+        this._natHPadding = themeNode.get_length('-natural-hpadding');
+    }
+
+    _onDestroy() {
+        // These are connected in _init()
+        if (Clutter.ClickGesture) {
+            this._clickGesture?.disconnectObject(this); // Used for 'recognize'
+        }
+        this.disconnectObject(this); // Used for 'scroll-event'
+        global.display.disconnectObject(this); // Used for 'notify::focus-window'
+        this._isConnected = false;
+
+        // These are connected in #updateDo()
+        if (this._focusWindow) {
+            this._focusWindow.disconnectObject(this); // Used for 'notify::title'
+        } else {
+            const controls = Main.overview._overview?.controls;
+            controls?.dash?.showAppsButton?.disconnectObject(this);
+            Main.overview.disconnectObject(this); // Used for 'hiding' and 'showing'
+        }
+        this._focusWindow = null;
+
+        if (this._appMenu) {
+            Main.panel.menuManager.removeMenu(this._appMenu);
+            this._appMenu = null;
+        }
+
+        super._onDestroy();
+    }
+
+    _update() {
+        if (
+            !this._isConnected &&
+            (this._isWindowButton || this._isTitleButton)
+        ) {
+            global.display.connectObject(
+                'notify::focus-window',
+                () => this.#update(),
+                this
+            );
+            this._isConnected = true;
+        } else if (
+            this._isConnected &&
+            !this._isWindowButton &&
+            !this._isTitleButton
+        ) {
+            global.display.disconnectObject(this); // Used for 'notify::focus-window'
+            this._isConnected = false;
+        }
+        this.#update(true);
+    }
+
+    #update(isInit = false, isQuick = false) {
+        if (this._isUpdating) {
+            this._isDirty = true;
+            return;
+        } else {
+            this._isDirty = false;
+        }
+
+        const focusWindow = global.display.get_focus_window();
+        if (
+            !isInit &&
+            focusWindow === null &&
+            this._isX11 &&
+            this._appMenu.isOpen
+        ) {
+            // On X11, when opening panel menus, the window loses focus
+            return;
+        }
+        if (this._focusWindow) {
+            if (isInit || focusWindow !== this._focusWindow) {
+                this._focusWindow.disconnectObject(this);
+            } else {
+                return;
+            }
+        } else if (this._isContextButton) {
+            Main.overview._overview?.controls?.dash?.showAppsButton?.disconnectObject(
+                this
+            );
+            Main.overview.disconnectObject(this);
+        }
+        this._focusWindow = focusWindow;
+
+        if (this.#updatePrepare(isInit)) {
+            this._isUpdating = true;
+            this.#updateOldOut(isQuick);
+        }
+    }
+
+    #updatePrepare(isInit) {
+        if (isInit || this._isTitleButton || this._isWindowButton) {
+            this._newIcon = new St.Icon({
+                fallback_gicon: this._fallbackIcon,
+                icon_size: this._iconSize,
+                style: this._isSymbolic ? '-st-icon-style: symbolic' : null,
+            });
+            this._newIcon.hide();
+            this._box.insert_child_at_index(this._newIcon, 0);
+        } else {
+            this._newIcon = null;
+        }
+
+        let focusApp = null;
+        if (
+            this._focusWindow !== null &&
+            this._newIcon !== null &&
+            (this._isTitleButton || this._isWindowButton)
+        ) {
+            focusApp = Shell.WindowTracker.get_default().get_window_app(
+                this._focusWindow
+            );
+            if (focusApp !== null) {
+                this._newIcon.set_gicon(focusApp.get_icon());
+            }
+        }
+        this._appMenu?.setApp(
+            this._isTitleButton || this._isWindowButton ? focusApp : null
+        );
+
+        return this._newIcon !== null;
+    }
+
+    #updateOldOut(isQuick) {
+        // Manually unset hover state, so that the button won't blink as update is finished
+        // if the mouse pointer is then outside, due to a now smaller button. Remember current
+        // hover state (to be set to false elsewhere if the pointer leaving is detected), so it
+        // can be restored if the mouse pointer is still within the button as update is finished.
+        // Ideally sync_hover() would work, but in GNOME 49+ it seems to have an implementation
+        // which not fully handles the pointer leaving while a mouse button is pressed.
+        this._isHover = this.hover;
+        this.hover = false;
+
+        // When switching workspaces, the workspace indicator varies in size throughout its
+        // animation, causing the context button to tremble. If the the title is too long
+        // and therefore ellipsized, sometimes the character from which it is ellipsized
+        // will not be consistent (depending on the string and exact available space).
+        // As this is slightly distracting, temporarily use a fixed width for the title.
+        // Note that this can't be limited to when Main.wm._switchInProgress is true
+        // because it is false when switching workspaces in the overview.
+        let isTempFixedWidth = this.#tempFixTitleWidth();
+
+        // The initial fade-out also gives time to finish pre-loading the new icon
+        this.ease({
+            opacity: 0,
+            mode: Clutter.AnimationMode.EASE_OUT_QUAD,
+            duration: isQuick ? 0 : this._easeTime,
+            onComplete: () => {
+                if (isTempFixedWidth) {
+                    this._title.set_width(this._titleWidth);
+                }
+                this.#updateDo();
+            },
+        });
+    }
+
+    #updateDo() {
+        if (this._newIcon) {
+            this._box.remove_child(this._icon);
+            this._icon.destroy();
+            this._icon = this._newIcon;
+            this._newIcon = null;
+            if (this._iconSize > 0) {
+                this._icon.show();
+            }
+        }
+        if (this._isDirty) {
+            this._isUpdating = false;
+            this._focusWindow = null;
+            // Start over instead of continuing with old state
+            this.#update(false, true);
+        } else {
+            this._updateTitle();
+            if (
+                this._focusWindow !== null &&
+                (this._isTitleButton || this._isWindowButton)
+            ) {
+                this._focusWindow.connectObject(
+                    'notify::title',
+                    () => this._updateTitle(),
+                    GObject.ConnectFlags.AFTER,
+                    this
+                );
+                if (!this._isContextButton) {
+                    this.set({
+                        width: -1, // Restore after using zero width to hide (see below)
+                        min_width:
+                            this._minimumWidth > 0 ? this._minimumWidth : 1,
+                        min_width_set: this._minimumWidth > 0,
+                    });
+                }
+            } else if (this._isContextButton) {
+                this._updateContextIcon();
+                let handler = () => this._updateContextIcon();
+                const controls = Main.overview._overview?.controls;
+                controls?.dash?.showAppsButton?.connectObject(
+                    'notify::checked',
+                    handler,
+                    GObject.ConnectFlags.AFTER,
+                    this
+                );
+                Main.overview.connectObject(
+                    'hiding',
+                    handler,
+                    GObject.ConnectFlags.AFTER,
+                    this
+                );
+                Main.overview.connectObject(
+                    'showing',
+                    handler,
+                    GObject.ConnectFlags.AFTER,
+                    this
+                );
+            } else {
+                // Set zero width instead of calling hide() because easings were
+                // skipped when in conjunction with workspace switch
+                this.set_width(0);
+                if (this._isHover) {
+                    this.hover = true;
+                }
+                this._isUpdating = false;
+                return;
+            }
+            if (this._isHover) {
+                this.hover = true;
+            }
+            // Give a moment for widths to be calculated
+            GLib.timeout_add(GLib.PRIORITY_DEFAULT, 0, () => {
+                try {
+                    this.#updateNewIn();
+                } catch {
+                    // Just remove the timeout
+                }
+                return GLib.SOURCE_REMOVE;
+            });
+        }
+    }
+
+    #updateNewIn() {
+        let isTempFixedWidth = this.#tempFixTitleWidth();
+        this.ease({
+            opacity: 255,
+            duration: this._easeTime,
+            mode: Clutter.AnimationMode.EASE_OUT_QUAD,
+            onComplete: () => {
+                if (isTempFixedWidth) {
+                    this._title.set_width(this._titleWidth);
+                }
+                this._isUpdating = false;
+                if (this._isDirty) {
+                    // Start again if state has become old in the meantime
+                    this.#update();
+                }
+            },
+        });
+    }
+
+    #tempFixTitleWidth() {
+        if (this._titleWidth < 0) {
+            let titleWidth = this._title.get_width();
+            let preferredWidth = this._title.get_preferred_width(
+                this._title.get_height()
+            )[1];
+            if (preferredWidth > titleWidth) {
+                this._title.set_width(titleWidth);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    _updateTitle() {
+        let title = this._focusWindow?.get_title();
+        if (
+            this._isTitleButton &&
+            typeof title === 'string' &&
+            title.length > 0
+        ) {
+            // If title width is configured to be fixed then always show padding
+            // Otherwise, hide padding if title is empty
+            if (this._titleWidth < 0) {
+                this._padding.show();
+            }
+            this._title.set_text(title);
+        } else {
+            this._title.set_text('');
+            if (this._titleWidth < 0) {
+                this._padding.hide();
+            }
+        }
+    }
+
+    _updateContextIcon() {
+        if (
+            this._focusWindow === null ||
+            !(this._isTitleButton || this._isWindowButton)
+        ) {
+            if (Main.overview.visible && !Main.overview.closing) {
+                const controls = Main.overview._overview?.controls;
+                if (controls?.dash?.showAppsButton?.checked) {
+                    this._icon.set_icon_name('shell-focus-windows-symbolic');
+                } else {
+                    this._icon.set_icon_name('shell-focus-desktop-symbolic');
+                }
+            } else {
+                this._icon.set_icon_name(
+                    this._contextIcon || 'shell-focus-app-grid-symbolic'
+                );
+            }
+        }
+    }
+
+    _onPress(event) {
+        const button =
+            event.type() === Clutter.EventType.TOUCH_BEGIN
+                ? Clutter.BUTTON_PRIMARY
+                : event.get_button();
+
+        // Context button functionality
+        if (this._isContextButton) {
+            let ret = this.#onPressContext(button);
+            if (ret !== undefined) {
+                return ret;
+            }
+            // Not context button usage, fall through
+        }
+
+        // Window/title button functionality
+        return this.#onPressWindow(button);
+    }
+
+    #onPressContext(button) {
+        switch (button) {
+            case 8: // Back button
+            case 9: // Forward button
+                return Clutter.EVENT_PROPAGATE;
+        }
+        if (
+            this._focusWindow === null ||
+            button === Clutter.BUTTON_PRIMARY ||
+            (!this._isTitleButton &&
+                !(
+                    this._isWindowButton &&
+                    (button === Clutter.BUTTON_SECONDARY ||
+                        button === Clutter.BUTTON_MIDDLE)
+                )) ||
+            (this._isTitleButton &&
+                !this._isWindowButton &&
+                button === Clutter.BUTTON_MIDDLE)
+        ) {
+            return Clutter.EVENT_PROPAGATE;
+        }
+        return undefined; // Don't handle if not actually context usage
+    }
+
+    #onPressWindow(button) {
+        switch (button) {
+            case Clutter.BUTTON_PRIMARY:
+            case Clutter.BUTTON_SECONDARY:
+                this._appMenu?.toggle();
+                return Clutter.EVENT_STOP;
+            case Clutter.BUTTON_MIDDLE:
+                if (this._isWindowButton) {
+                    return Clutter.EVENT_PROPAGATE;
+                } else if (this._isTitleButton) {
+                    this._appMenu?.toggle();
+                    return Clutter.EVENT_STOP;
+                }
+                return Clutter.EVENT_PROPAGATE;
+            default:
+                if (!this._isContextButton) {
+                    this._appMenu?.toggle();
+                    return Clutter.EVENT_STOP;
+                }
+                return Clutter.EVENT_PROPAGATE;
+        }
+    }
+
+    _onClick(event, isGesture = false) {
+        let button = event.get_button();
+        if (!isGesture && event.type() === Clutter.EventType.TOUCH_END) {
+            button = Clutter.BUTTON_PRIMARY;
+        }
+
+        // Context button functionality
+        if (this._isContextButton) {
+            switch (button) {
+                case 8: // Back button
+                    // Simulate scroll up on workspace indicator
+                    Main.wm.handleWorkspaceScroll({
+                        type: () => Clutter.EventType.SCROLL,
+                        get_scroll_direction: () => Clutter.ScrollDirection.UP,
+                    });
+                    return Clutter.EVENT_STOP;
+                case 9: // Forward button
+                    // Simulate scroll down on workspace indicator
+                    Main.wm.handleWorkspaceScroll({
+                        type: () => Clutter.EventType.SCROLL,
+                        get_scroll_direction: () =>
+                            Clutter.ScrollDirection.DOWN,
+                    });
+                    return Clutter.EVENT_STOP;
+            }
+            let ret = this.#onClickContext(button);
+            if (ret !== undefined) {
+                return ret;
+            }
+            // Not context button usage, fall through
+        }
+
+        // Window/title button functionality
+        return this.#onClickWindow(button);
+    }
+
+    #onClickContext(button) {
+        if (
+            this._focusWindow === null ||
+            button === Clutter.BUTTON_PRIMARY ||
+            (!this._isTitleButton &&
+                !(
+                    this._isWindowButton &&
+                    (button === Clutter.BUTTON_SECONDARY ||
+                        button === Clutter.BUTTON_MIDDLE)
+                )) ||
+            (this._isTitleButton &&
+                !this._isWindowButton &&
+                button === Clutter.BUTTON_MIDDLE)
+        ) {
+            if (this._isContextButton && !Main.overview.closing) {
+                if (Main.overview.visible && !Main.overview.closing) {
+                    const controls = Main.overview._overview?.controls;
+                    if (controls?.dash?.showAppsButton?.checked) {
+                        if (typeof controls._toggleAppsPage === 'function') {
+                            controls._toggleAppsPage();
+                        }
+                    } else {
+                        Main.overview.hide();
+                    }
+                } else {
+                    Main.overview.showApps();
+                }
+                this._updateContextIcon();
+            }
+            return Clutter.EVENT_STOP;
+        }
+        return undefined; // Don't handle if not actually context usage
+    }
+
+    #onClickWindow(button) {
+        switch (button) {
+            case Clutter.BUTTON_PRIMARY:
+            case Clutter.BUTTON_SECONDARY:
+                // Already handled on press
+                return Clutter.EVENT_STOP;
+            case Clutter.BUTTON_MIDDLE:
+                if (this._isWindowButton) {
+                    if (this._focusWindow?.can_close()) {
+                        this._focusWindow.delete(global.get_current_time());
+                    }
+                    return Clutter.EVENT_STOP;
+                } else if (this._isTitleButton) {
+                    // Already handled on press
+                    return Clutter.EVENT_STOP;
+                }
+                return Clutter.EVENT_PROPAGATE;
+            default:
+                if (!this._isContextButton) {
+                    // Already handled on press
+                    return Clutter.EVENT_STOP;
+                }
+                return Clutter.EVENT_PROPAGATE;
+        }
+    }
+
+    _onScroll(event) {
+        switch (event.get_scroll_direction()) {
+            case Clutter.ScrollDirection.UP:
+                if (!this._isWindowButton) {
+                    if (this._isContextButton) {
+                        return Main.wm.handleWorkspaceScroll(event);
+                    }
+                    return Clutter.EVENT_PROPAGATE;
+                } else if (this._focusWindow?.can_maximize()) {
+                    // E.g. GNOME 46 wants MaximizeFlags, 50 doesn't
+                    this._focusWindow.maximize(Meta.MaximizeFlags.BOTH);
+                }
+                return Clutter.EVENT_STOP;
+            case Clutter.ScrollDirection.DOWN:
+                if (!this._isWindowButton) {
+                    if (this._isContextButton) {
+                        return Main.wm.handleWorkspaceScroll(event);
+                    }
+                    return Clutter.EVENT_PROPAGATE;
+                } else if (
+                    this._focusWindow &&
+                    (this._focusWindow.get_maximize_flags
+                        ? this._focusWindow.get_maximize_flags() !== 0
+                        : this._focusWindow.get_maximized())
+                ) {
+                    // GNOME 46 has get_maximized() (until and including 48).
+                    // GNOME 50 has is_maximized() (48+) and get_maximize_flags() (49+).
+                    // get_maximize_flags() is better because it is non-zero both for full
+                    // and either vertical/horizontal maximize, is_maximized() only for full.
+                    // For unmaximize(), GNOME until 48 wants MaximizeFlags, 49+ doesn't.
+                    this._focusWindow.unmaximize(Meta.MaximizeFlags.BOTH);
+                }
+                return Clutter.EVENT_STOP;
+            case Clutter.ScrollDirection.LEFT:
+            case Clutter.ScrollDirection.RIGHT:
+                if (!this._isContextButton) {
+                    return Clutter.EVENT_PROPAGATE;
+                }
+                return Main.wm.handleWorkspaceScroll(event);
+            default:
+                return Clutter.EVENT_PROPAGATE;
+        }
+    }
+
+    vfunc_leave_event(event) {
+        this._isHover = false;
+        if (typeof this._longPressTimeout === 'number') {
+            GLib.source_remove(this._longPressTimeout);
+            this._longPressTimeout = null;
+        }
+        try {
+            // Keep original functionality working (e.g., hover and click)
+            return super.vfunc_leave_event(event);
+        } catch {
+            // In case of virtual function not implemented
+            return Clutter.EVENT_PROPAGATE;
+        }
+    }
+
+    vfunc_button_press_event(event) {
+        let ret = this._onPress(event);
+        if (ret !== Clutter.EVENT_PROPAGATE) {
+            return ret;
+        }
+        try {
+            return super.vfunc_button_press_event(event);
+        } catch {
+            return Clutter.EVENT_PROPAGATE;
+        }
+    }
+
+    vfunc_button_release_event(event) {
+        if (!this.hover) {
+            this._isHover = false;
+        } else if (
+            !Clutter.ClickGesture &&
+            (!this._isX11 || this._isContextButton)
+        ) {
+            // Manually implement click gestures for older GNOME versions because
+            // ClickAction disrupted vfunc calls
+            let ret = this._onClick(event);
+            if (ret !== Clutter.EVENT_PROPAGATE) {
+                return ret;
+            }
+        }
+        try {
+            return super.vfunc_button_release_event(event);
+        } catch {
+            return Clutter.EVENT_PROPAGATE;
+        }
+    }
+
+    vfunc_touch_event(event) {
+        if (this._isX11) {
+            // If we're on X11, disable this touch handler due to it not working well
+            // On X11, touch (but not long touch) still works through button press/release
+            return Clutter.EVENT_STOP;
+        }
+        switch (event.type()) {
+            case Clutter.EventType.TOUCH_BEGIN:
+                {
+                    let ret = this._onPress(event);
+                    if (ret !== Clutter.EVENT_PROPAGATE) {
+                        return ret;
+                    }
+                }
+                // Custom long-press touch implementation (necessary also in newer GNOME
+                // versions because LongPressGesture detects mouse buttons besides touch)
+                this._longPressTimeout = GLib.timeout_add(
+                    GLib.PRIORITY_DEFAULT,
+                    Clutter.Settings.get_default().longPressDuration,
+                    () => {
+                        try {
+                            if (this._focusWindow) {
+                                let ret = this._onPress({
+                                    // Simulate secondary button press
+                                    type: () => Clutter.EventType.BUTTON_PRESS,
+                                    get_button: () => Clutter.BUTTON_SECONDARY,
+                                });
+                                this._longPressTimeout =
+                                    ret !== Clutter.EVENT_PROPAGATE;
+                            } else {
+                                this._longPressTimeout = false; // Not handled
+                            }
+                        } catch {
+                            // Just remove the timeout
+                        }
+                        return GLib.SOURCE_REMOVE;
+                    }
+                );
+                break;
+            case Clutter.EventType.TOUCH_END:
+                if (typeof this._longPressTimeout === 'number') {
+                    GLib.source_remove(this._longPressTimeout);
+                    this._longPressTimeout = null;
+                }
+                if (!this.hover) {
+                    this._isHover = false;
+                } else {
+                    if (this._longPressTimeout === true) {
+                        // Already handled as a long-press
+                        this._longPressTimeout = null;
+                        return Clutter.EVENT_STOP;
+                    }
+                    let ret = this._onClick(event);
+                    if (ret !== Clutter.EVENT_PROPAGATE) {
+                        return ret;
+                    }
+                }
+                break;
+        }
+        try {
+            return super.vfunc_touch_event(event);
+        } catch {
+            return Clutter.EVENT_PROPAGATE;
+        }
+    }
+
+    vfunc_event(/* event */) {
+        // Necessary to override implementation by PanelMenu.Button
+        // which exists in pre GNOME 49
+        return Clutter.EVENT_PROPAGATE;
+    }
+}
