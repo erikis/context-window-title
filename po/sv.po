@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: context-window-title@erikis\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-08 08:13+0200\n"
-"PO-Revision-Date: 2026-06-08 08:13+0200\n"
+"POT-Creation-Date: 2026-06-08 10:18+0200\n"
+"PO-Revision-Date: 2026-06-08 10:18+0200\n"
 "Last-Translator: Erik Isaksson <erikis@github>\n"
 "Language-Team: Erik Isaksson <erikis@github>\n"
 "Language: sv\n"
@@ -143,7 +143,7 @@ msgstr "Sekund"
 
 #: resources/ui/advanced.ui:298
 msgid "Extra"
-msgstr ""
+msgstr "Extra"
 
 #: resources/ui/advanced.ui:299
 msgid "Show time zone and change locale options"
