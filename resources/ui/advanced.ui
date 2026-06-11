@@ -405,6 +405,19 @@
         </child>
         
         <child>
+          <object class="AdwActionRow">
+            <property name="title" translatable="yes">Allow Logging</property>
+            <property name="subtitle" translatable="yes">Allow writing to the log for debugging</property>
+            <property name="activatable-widget">allow_log</property>
+            <child>
+              <object class="GtkSwitch" id="allow_log">
+                <property name="valign">center</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        
+        <child>
           <object class="AdwExpanderRow" id="reset_row">
             <property name="title" translatable="yes">Reset Preferences</property>
             <property name="subtitle" translatable="yes">This is irreversible</property>

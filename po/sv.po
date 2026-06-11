@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: context-window-title@erikis\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-08 10:18+0200\n"
-"PO-Revision-Date: 2026-06-08 10:18+0200\n"
+"POT-Creation-Date: 2026-06-11 10:33+0200\n"
+"PO-Revision-Date: 2026-06-11 10:35+0200\n"
 "Last-Translator: Erik Isaksson <erikis@github>\n"
 "Language-Team: Erik Isaksson <erikis@github>\n"
 "Language: sv\n"
@@ -137,7 +137,7 @@ msgstr "Veckodag"
 msgid "Hour"
 msgstr "Timme"
 
-#: resources/ui/advanced.ui:285 resources/ui/advanced.ui:472
+#: resources/ui/advanced.ui:285 resources/ui/advanced.ui:485
 msgid "Second"
 msgstr "Sekund"
 
@@ -200,92 +200,100 @@ msgid "About !NAME!"
 msgstr "Om !NAME!"
 
 #: resources/ui/advanced.ui:409
+msgid "Allow Logging"
+msgstr "Tillåt loggning"
+
+#: resources/ui/advanced.ui:410
+msgid "Allow writing to the log for debugging"
+msgstr "Tillåt skrivning till loggen för felsökning"
+
+#: resources/ui/advanced.ui:422
 msgid "Reset Preferences"
 msgstr "Återställ inställningar"
 
-#: resources/ui/advanced.ui:410
+#: resources/ui/advanced.ui:423
 msgid "This is irreversible"
 msgstr "Detta är irreversibelt"
 
-#: resources/ui/advanced.ui:417
+#: resources/ui/advanced.ui:430
 msgid "Reset Advanced Preferences"
 msgstr "Återställ avancerade inställningar"
 
-#: resources/ui/advanced.ui:428
+#: resources/ui/advanced.ui:441
 msgid "Reset All Preferences"
 msgstr "Återställ alla inställningar"
 
-#: resources/ui/advanced.ui:443 resources/ui/advanced.ui:471
-#: resources/ui/advanced.ui:480
+#: resources/ui/advanced.ui:456 resources/ui/advanced.ui:484
+#: resources/ui/advanced.ui:493
 msgid "Off"
 msgstr "Av"
 
-#: resources/ui/advanced.ui:444 resources/ui/advanced.ui:481
+#: resources/ui/advanced.ui:457 resources/ui/advanced.ui:494
 msgid "On"
 msgstr "På"
 
-#: resources/ui/advanced.ui:445
+#: resources/ui/advanced.ui:458
 msgid "On with era"
 msgstr "På med era"
 
-#: resources/ui/advanced.ui:450 resources/ui/advanced.ui:457
+#: resources/ui/advanced.ui:463 resources/ui/advanced.ui:470
 msgid "Short"
 msgstr "Kort"
 
-#: resources/ui/advanced.ui:451 resources/ui/advanced.ui:458
+#: resources/ui/advanced.ui:464 resources/ui/advanced.ui:471
 msgid "Long"
 msgstr "Långt"
 
-#: resources/ui/advanced.ui:452
+#: resources/ui/advanced.ui:465
 msgid "Numeric"
 msgstr "Numeriskt"
 
-#: resources/ui/advanced.ui:459
+#: resources/ui/advanced.ui:472
 msgid "Narrow"
 msgstr "Smalt"
 
-#: resources/ui/advanced.ui:464 resources/ui/advanced.ui:488
-#: resources/ui/advanced.ui:493
+#: resources/ui/advanced.ui:477 resources/ui/advanced.ui:501
+#: resources/ui/advanced.ui:506
 msgid "Default"
 msgstr "Standard"
 
-#: resources/ui/advanced.ui:465
+#: resources/ui/advanced.ui:478
 msgid "12h"
 msgstr "12h"
 
-#: resources/ui/advanced.ui:466
+#: resources/ui/advanced.ui:479
 msgid "24h"
 msgstr "24h"
 
-#: resources/ui/advanced.ui:473
+#: resources/ui/advanced.ui:486
 msgid "1/10 Second"
 msgstr "1/10 sekund"
 
-#: resources/ui/advanced.ui:474
+#: resources/ui/advanced.ui:487
 msgid "1/100 Second"
 msgstr "1/100 sekund"
 
-#: resources/ui/advanced.ui:475
+#: resources/ui/advanced.ui:488
 msgid "1/1000 Second"
 msgstr "1/1000 sekund"
 
-#: resources/ui/advanced.ui:482
+#: resources/ui/advanced.ui:495
 msgid "On with offset only"
 msgstr "På med endast förskjutning"
 
-#: resources/ui/advanced.ui:483
+#: resources/ui/advanced.ui:496
 msgid "On with long offset only"
 msgstr "På med endast lång förskjutning"
 
-#: resources/ui/advanced.ui:498
+#: resources/ui/advanced.ui:511
 msgid "Don’t hide"
 msgstr "Dölj inte"
 
-#: resources/ui/advanced.ui:499
+#: resources/ui/advanced.ui:512
 msgid "Hide"
 msgstr "Dölj"
 
-#: resources/ui/advanced.ui:500
+#: resources/ui/advanced.ui:513
 msgid "Hide user"
 msgstr "Dölj användare"
 
@@ -410,7 +418,7 @@ msgstr "Kontext + Fönstertitel"
 msgid "TRANSLATOR"
 msgstr "Erik Isaksson https://github.com/erikis"
 
-#: src/preferences/advanced.js:69
+#: src/preferences/advanced.js:70
 #, javascript-format
 msgid "!VALUE! for symbolic icon style and !CURRENT!% saturation"
 msgstr "!VALUE! för symbolisk ikonstil och !CURRENT! % färgmättnad"

@@ -2,6 +2,11 @@
 <schemalist>
   <schema id="org.gnome.shell.extensions.context-window-title"
     path="/org/gnome/shell/extensions/context-window-title/">
+    <key name="allow-log" type="b">
+      <summary>Allow writing to log for debugging</summary>
+      <default>false</default>
+    </key>
+    
     <key name="activate-button" type="b">
       <summary>Activate top bar button feature</summary>
       <default>true</default>

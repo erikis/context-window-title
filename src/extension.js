@@ -33,6 +33,7 @@ export default class ContextExtension extends Extension {
     #settings = null;
     #defaults = null;
     #sessionMode = null;
+    #isLogging = false;
     #isEnabled = false;
     #isConnected = false;
     #contextButton = null;
@@ -40,11 +41,19 @@ export default class ContextExtension extends Extension {
     #nameIndicator = null;
     #lockMessage = null;
 
+    _log(to, ...args) {
+        // Only write to the log if enabled in settings
+        if (this.#isLogging) {
+            to.apply(console, args);
+        }
+    }
+
     enable() {
         this.#isEnabled = true;
 
         if (!this.#settings) {
             this.#settings = this.getSettings();
+            this.#isLogging = this.#settings.get_boolean('allow-log');
         }
         if (!this.#defaults) {
             this.#defaults = new Defaults();
@@ -87,7 +96,11 @@ export default class ContextExtension extends Extension {
         try {
             this.#contextButton?.destroy();
         } catch (ex) {
-            console.error(`${NAME} contextButton destroy on disable`, ex);
+            this._log(
+                console.error,
+                `${NAME} contextButton destroy on disable`,
+                ex
+            );
         } finally {
             this.#contextButton = null;
         }
@@ -104,7 +117,11 @@ export default class ContextExtension extends Extension {
                 Main.panel.statusArea.dateMenu._clockDisplay?.show(); // Restore
             }
         } catch (ex) {
-            console.error(`${NAME} clockLabel destroy on disable`, ex);
+            this._log(
+                console.error,
+                `${NAME} clockLabel destroy on disable`,
+                ex
+            );
         } finally {
             this.#clockLabel = null;
         }
@@ -112,7 +129,11 @@ export default class ContextExtension extends Extension {
         try {
             this.#nameIndicator?.destroy();
         } catch (ex) {
-            console.error(`${NAME} nameIndicator destroy on disable`, ex);
+            this._log(
+                console.error,
+                `${NAME} nameIndicator destroy on disable`,
+                ex
+            );
         } finally {
             this.#nameIndicator = null;
         }
@@ -138,7 +159,8 @@ export default class ContextExtension extends Extension {
             try {
                 this.#clockLabel?._updateStart();
             } catch (ex) {
-                console.error(
+                this._log(
+                    console.error,
                     `${NAME} clockLabel _updateStart on sessionMode`,
                     ex
                 );
@@ -148,7 +170,8 @@ export default class ContextExtension extends Extension {
             try {
                 this.#contextButton?.destroy();
             } catch (ex) {
-                console.error(
+                this._log(
+                    console.error,
                     `${NAME} contextButton destroy on sessionMode`,
                     ex
                 );
@@ -161,7 +184,8 @@ export default class ContextExtension extends Extension {
                     this.#nameIndicator._update();
                 }
             } catch (ex) {
-                console.error(
+                this._log(
+                    console.error,
                     `${NAME} nameIndicator _update on sessionMode`,
                     ex
                 );
@@ -169,7 +193,8 @@ export default class ContextExtension extends Extension {
             try {
                 this.#clockLabel?._updateStop();
             } catch (ex) {
-                console.error(
+                this._log(
+                    console.error,
                     `${NAME} clockLabel _updateStop on sessionMode`,
                     ex
                 );
@@ -215,7 +240,11 @@ export default class ContextExtension extends Extension {
                 this.#lockMessage = null;
             }
         } catch (ex) {
-            console.error(`${NAME} lockMessage activate on sessionMode`, ex);
+            this._log(
+                console.error,
+                `${NAME} lockMessage activate on sessionMode`,
+                ex
+            );
         }
     }
 
@@ -230,21 +259,21 @@ export default class ContextExtension extends Extension {
         try {
             this.#onSettingsContext();
         } catch (ex) {
-            console.error(`${NAME} contextButton on settings`, ex);
+            this._log(console.error, `${NAME} contextButton on settings`, ex);
         }
 
         // Custom clock
         try {
             this.#onSettingsClock();
         } catch (ex) {
-            console.error(`${NAME} clockLabel on settings`, ex);
+            this._log(console.error, `${NAME} clockLabel on settings`, ex);
         }
 
         // User/host name
         try {
             this.#onSettingsName();
         } catch (ex) {
-            console.error(`${NAME} nameIndicator on settings`, ex);
+            this._log(console.error, `${NAME} nameIndicator on settings`, ex);
         }
     }
 

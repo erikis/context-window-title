@@ -41,6 +41,7 @@ export default class AdvancedPreferences extends Adw.PreferencesPage {
                     'name_lock_hide',
                     'message_source_icon',
                     'about',
+                    'allow_log',
                     'reset_row',
                     'reset_advanced',
                     'reset_all',
@@ -349,6 +350,13 @@ export default class AdvancedPreferences extends Adw.PreferencesPage {
             this._about.get_label().replace('!NAME!', getApplicationName())
         );
 
+        settings.bind(
+            'allow-log',
+            this._allow_log,
+            'active',
+            Gio.SettingsBindFlags.DEFAULT
+        );
+
         const ui = { calendarDropdown, numberingDropdown };
         this._about.connect('clicked', () =>
             createAboutWindow({ metadata, window }).show()
@@ -401,6 +409,7 @@ export default class AdvancedPreferences extends Adw.PreferencesPage {
             'clock-locale',
             'name-lock-hide',
             'message-source-icon',
+            'allow-log',
         ];
         (isAll ? keysOther.concat(keysAdvanced) : keysAdvanced).forEach((key) =>
             settings.reset(key)
