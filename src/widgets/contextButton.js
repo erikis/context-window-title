@@ -518,9 +518,13 @@ export default class ContextButton extends PanelMenu.Button {
                 if (Main.overview.visible && !Main.overview.closing) {
                     const controls = Main.overview._overview?.controls;
                     if (controls?.dash?.showAppsButton?.checked) {
-                        if (typeof controls._toggleAppsPage === 'function') {
-                            controls._toggleAppsPage();
+                        // Dash to Dock's docking.js sets _fromDesktop = true to indicate that
+                        // the apps button should close the overview and not just the app grid
+                        const showAppsButton = controls.dash.showAppsButton;
+                        if (showAppsButton._fromDesktop === true) {
+                            showAppsButton._fromDesktop = false;
                         }
+                        showAppsButton.checked = false;
                     } else {
                         Main.overview.hide();
                     }
