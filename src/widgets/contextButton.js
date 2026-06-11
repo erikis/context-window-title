@@ -573,11 +573,16 @@ export default class ContextButton extends PanelMenu.Button {
                     }
                     return Clutter.EVENT_PROPAGATE;
                 } else if (this._focusWindow?.can_maximize()) {
-                    // GNOME until 48 wants MaximizeFlags, 49+ doesn't
                     if (GNOME_POST_49) {
+                        // For GNOME 49+ maximize() is used without MaximizeFlags
                         this._focusWindow.maximize();
                     } else {
-                        this._focusWindow.maximize(Meta.MaximizeFlags.BOTH);
+                        // For GNOME 49+, maximize() is used without flags (above),
+                        // but for older GNOME versions use it with Meta.MaximizeFlags.BOTH
+                        this._focusWindow.maximize.call(
+                            this._focusWindow,
+                            Meta.MaximizeFlags.BOTH
+                        );
                     }
                 }
                 return Clutter.EVENT_STOP;
@@ -589,19 +594,29 @@ export default class ContextButton extends PanelMenu.Button {
                     return Clutter.EVENT_PROPAGATE;
                 } else if (
                     this._focusWindow &&
-                    (this._focusWindow.get_maximize_flags
-                        ? this._focusWindow.get_maximize_flags() !== 0
-                        : this._focusWindow.get_maximized())
+                    (GNOME_POST_49
+                        ? // GNOME 49+ has get_maximize_flags()
+                          this._focusWindow.get_maximize_flags() !== 0
+                        : // For GNOME 49+, get_maximize_flags() is used (above),
+                          // but for older GNOME versions use get_maximized()
+                          this._focusWindow.get_maximized.call(
+                              this._focusWindow
+                          ))
                 ) {
-                    // GNOME 46 has get_maximized() (until and including 48).
-                    // GNOME 50 has is_maximized() (48+) and get_maximize_flags() (49+).
-                    // get_maximize_flags() is better because it is non-zero both for full
-                    // and either vertical/horizontal maximize, is_maximized() only for full.
-                    // For unmaximize(), GNOME until 48 wants MaximizeFlags, 49+ doesn't.
+                    // GNOME 46-48 has get_maximized().
+                    // GNOME 49 has is_maximized() (48+) and get_maximize_flags() (49+).
+                    // get_maximize_flags() is better because it is non-zero both for full and
+                    // either vertical/horizontal maximization, is_maximized() only for full.
                     if (GNOME_POST_49) {
+                        // For GNOME 49+ unmaximize() is used without MaximizeFlags
                         this._focusWindow.unmaximize();
                     } else {
-                        this._focusWindow.unmaximize(Meta.MaximizeFlags.BOTH);
+                        // For GNOME 49+, maximize() is used without flags (above),
+                        // but for older GNOME versions use it with Meta.MaximizeFlags.BOTH
+                        this._focusWindow.unmaximize.call(
+                            this._focusWindow,
+                            Meta.MaximizeFlags.BOTH
+                        );
                     }
                 }
                 return Clutter.EVENT_STOP;
