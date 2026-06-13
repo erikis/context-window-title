@@ -106,16 +106,7 @@ export default class ContextExtension extends Extension {
         }
 
         try {
-            if (this.#clockLabel) {
-                // This code is also in #onSettings() for clock deactivatation
-                const dateMenu = Main.panel.statusArea.dateMenu;
-                // Used for 'notify::timezone', see #onSettings()
-                dateMenu._clock?.disconnectObject(this);
-                // Used for 'notify::text', see #onSettings()
-                dateMenu._clockDisplay?.disconnectObject(this);
-                this.#clockLabel.destroy();
-                Main.panel.statusArea.dateMenu._clockDisplay?.show(); // Restore
-            }
+            this.#clockLabel?.destroy();
         } catch (ex) {
             this._log(
                 console.error,
@@ -136,6 +127,18 @@ export default class ContextExtension extends Extension {
             );
         } finally {
             this.#nameIndicator = null;
+        }
+
+        try {
+            this.#lockMessage?.destroy();
+        } catch (ex) {
+            this._log(
+                console.error,
+                `${NAME} lockMessage destroy on disable`,
+                ex
+            );
+        } finally {
+            this.#lockMessage = null;
         }
 
         this.#settings = null;
@@ -205,7 +208,8 @@ export default class ContextExtension extends Extension {
         if (mode === 'unlock-dialog') {
             this.#onSessionModeUnlockDialog();
         } else {
-            this.#lockMessage = null; // Don't need to call destroy
+            // As the unlock screen is closed the message should have been destroyed
+            this.#lockMessage = null;
         }
     }
 
@@ -477,17 +481,8 @@ export default class ContextExtension extends Extension {
                 isAdding = true;
             }
         } else {
-            if (this.#clockLabel) {
-                // This code is also in disable()
-                const dateMenu = Main.panel.statusArea.dateMenu;
-                // Used for 'notify::timezone', see below
-                dateMenu._clock?.disconnectObject(this);
-                // Used for 'notify::text', see below
-                dateMenu._clockDisplay?.disconnectObject(this);
-                this.#clockLabel.destroy();
-                this.#clockLabel = null;
-                Main.panel.statusArea.dateMenu._clockDisplay?.show(); // Restore
-            }
+            this.#clockLabel?.destroy();
+            this.#clockLabel = null;
         }
         if (this.#clockLabel) {
             let isModified = false;
@@ -682,45 +677,13 @@ export default class ContextExtension extends Extension {
             if (this.#sessionMode !== 'unlock-dialog') {
                 this.#clockLabel._updateStart();
             }
-            let originalClock = Main.panel.statusArea.dateMenu._clockDisplay;
-            originalClock?.hide();
-            originalClock
+            const dateMenu = Main.panel.statusArea.dateMenu;
+            this.#clockLabel._originalClockDisplay = dateMenu._clockDisplay;
+            this.#clockLabel._originalClockDisplay?.hide();
+            this.#clockLabel._originalClockDisplay
                 ?.get_parent()
                 .insert_child_at_index(this.#clockLabel, 0);
-
-            // Do a re-format and extraordinary update when the time zone changes
-            Main.panel.statusArea.dateMenu._clock?.connectObject(
-                'notify::timezone',
-                () => {
-                    this.#clockLabel._updateFormat();
-                    this.#clockLabel._updateTime();
-                },
-                this
-            );
-
-            // As dateMenu._clockDisplay updates based on actual wall clock time
-            // (instead of using a monotonic timer, which becomes inaccurate e.g.
-            // after suspend), trigger regular updates when it updates
-            let lastSeconds = 0;
-            Main.panel.statusArea.dateMenu._clockDisplay?.connectObject(
-                'notify::text',
-                () => {
-                    // Only call _updateTime() if we're actually on a new second/minute
-                    let nowSeconds = Date.now(); // Get epoch
-                    nowSeconds -= nowSeconds % 1000; // Completed seconds only (in ms)
-                    const second = this.#clockLabel._second;
-                    if (
-                        (second === 1 && nowSeconds !== lastSeconds) ||
-                        (second === 0 &&
-                            nowSeconds - (nowSeconds % 60) !==
-                                lastSeconds - (lastSeconds % 60))
-                    ) {
-                        lastSeconds = nowSeconds;
-                        this.#clockLabel._updateTime(nowSeconds);
-                    }
-                },
-                this
-            );
+            this.#clockLabel._connect(dateMenu._clock, dateMenu._clockDisplay);
         } else if (isModified && this.#sessionMode !== 'unlock-dialog') {
             this.#clockLabel._updateStop();
             this.#clockLabel._updateStart();
