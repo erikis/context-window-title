@@ -81,32 +81,35 @@ export default class ContextButton extends PanelMenu.Button {
         );
     }
 
-    _onStyleChanged(actor) {
-        super._onStyleChanged(actor);
-        const themeNode = actor.get_theme_node();
-
-        this._minHPadding = themeNode.get_length('-minimum-hpadding');
-        this._natHPadding = themeNode.get_length('-natural-hpadding');
-    }
-
     _onDestroy() {
         // These are connected in _init()
         if (Clutter.ClickGesture) {
             this._clickGesture?.disconnectObject(this); // Used for 'recognize'
+            this._clickGesture = null;
         }
         this.disconnectObject(this); // Used for 'scroll-event'
-        global.display.disconnectObject(this); // Used for 'notify::focus-window'
+        if (this._connectedDisplay) {
+            // Used for 'notify::focus-window'
+            this._connectedDisplay.disconnectObject(this);
+            this._connectedDisplay = null;
+        }
         this._isConnected = false;
 
         // These are connected in #updateDo()
         if (this._focusWindow) {
             this._focusWindow.disconnectObject(this); // Used for 'notify::title'
-        } else {
-            const controls = Main.overview._overview?.controls;
-            controls?.dash?.showAppsButton?.disconnectObject(this);
-            Main.overview.disconnectObject(this); // Used for 'hiding' and 'showing'
+            this._focusWindow = null;
         }
-        this._focusWindow = null;
+        if (this._connectedShowAppsButton) {
+            // Used for 'notify::checked'
+            this._connectedShowAppsButton.disconnectObject(this);
+            this._connectedShowAppsButton = null;
+        }
+        if (this._connectedOverview) {
+            // Used for 'hiding' and 'showing'
+            this._connectedOverview.disconnectObject(this);
+            this._connectedOverview = null;
+        }
 
         if (this._appMenu) {
             Main.panel.menuManager.removeMenu(this._appMenu);
@@ -121,18 +124,25 @@ export default class ContextButton extends PanelMenu.Button {
             !this._isConnected &&
             (this._isWindowButton || this._isTitleButton)
         ) {
-            global.display.connectObject(
-                'notify::focus-window',
-                () => this.#update(),
-                this
-            );
+            if (!this._connectedDisplay) {
+                this._connectedDisplay = global.display;
+                this._connectedDisplay.connectObject(
+                    'notify::focus-window',
+                    () => this.#update(),
+                    this
+                );
+            }
             this._isConnected = true;
         } else if (
             this._isConnected &&
             !this._isWindowButton &&
             !this._isTitleButton
         ) {
-            global.display.disconnectObject(this); // Used for 'notify::focus-window'
+            if (this._connectedDisplay) {
+                // Used for 'notify::focus-window'
+                this._connectedDisplay.disconnectObject(this);
+                this._connectedDisplay = null;
+            }
             this._isConnected = false;
         }
         this.#update(true);
@@ -163,10 +173,16 @@ export default class ContextButton extends PanelMenu.Button {
                 return;
             }
         } else if (this._isContextButton) {
-            Main.overview._overview?.controls?.dash?.showAppsButton?.disconnectObject(
-                this
-            );
-            Main.overview.disconnectObject(this);
+            if (this._connectedShowAppsButton) {
+                // Used for 'notify::checked'
+                this._connectedShowAppsButton.disconnectObject(this);
+                this._connectedShowAppsButton = null;
+            }
+            if (this._connectedOverview) {
+                // Used for 'hiding' and 'showing'
+                this._connectedOverview.disconnectObject(this);
+                this._connectedOverview = null;
+            }
         }
         this._focusWindow = focusWindow;
 
@@ -281,24 +297,31 @@ export default class ContextButton extends PanelMenu.Button {
                 this._updateContextIcon();
                 let handler = () => this._updateContextIcon();
                 const controls = Main.overview._overview?.controls;
-                controls?.dash?.showAppsButton?.connectObject(
-                    'notify::checked',
-                    handler,
-                    GObject.ConnectFlags.AFTER,
-                    this
-                );
-                Main.overview.connectObject(
-                    'hiding',
-                    handler,
-                    GObject.ConnectFlags.AFTER,
-                    this
-                );
-                Main.overview.connectObject(
-                    'showing',
-                    handler,
-                    GObject.ConnectFlags.AFTER,
-                    this
-                );
+                if (!this._connectedShowAppsButton) {
+                    this._connectedShowAppsButton =
+                        controls?.dash?.showAppsButton;
+                    this._connectedShowAppsButton?.connectObject(
+                        'notify::checked',
+                        handler,
+                        GObject.ConnectFlags.AFTER,
+                        this
+                    );
+                }
+                if (!this._connectedOverview) {
+                    this._connectedOverview = Main.overview;
+                    this._connectedOverview.connectObject(
+                        'hiding',
+                        handler,
+                        GObject.ConnectFlags.AFTER,
+                        this
+                    );
+                    this._connectedOverview.connectObject(
+                        'showing',
+                        handler,
+                        GObject.ConnectFlags.AFTER,
+                        this
+                    );
+                }
             } else {
                 // Set zero width instead of calling hide() because easings were
                 // skipped when in conjunction with workspace switch
@@ -395,6 +418,27 @@ export default class ContextButton extends PanelMenu.Button {
                     this._contextIcon || 'shell-focus-app-grid-symbolic'
                 );
             }
+            this._reconnectShowAppsButton();
+        }
+    }
+
+    _reconnectShowAppsButton() {
+        // If another extension (e.g., Dash to Dock) has replaced the
+        // showAppsButton, disconnect and reconnect to the new button
+        const controls = Main.overview._overview?.controls;
+        const showAppsButton = controls?.dash?.showAppsButton;
+        if (
+            this._connectedShowAppsButton &&
+            showAppsButton !== this._connectedShowAppsButton
+        ) {
+            this._connectedShowAppsButton.disconnectObject(this);
+            this._connectedShowAppsButton = showAppsButton;
+            this._connectedShowAppsButton?.connectObject(
+                'notify::checked',
+                () => this._updateContextIcon(),
+                GObject.ConnectFlags.AFTER,
+                this
+            );
         }
     }
 
