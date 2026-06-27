@@ -30,6 +30,7 @@ export default class ContextButton extends PanelMenu.Button {
         this._isUpdating = false;
         this._isDirty = false;
         this._focusWindow = null;
+        this._focusApp = null;
 
         // X11 compatbility mode
         this._isX11 = GLib.getenv('XDG_SESSION_TYPE') === 'x11';
@@ -113,12 +114,6 @@ export default class ContextButton extends PanelMenu.Button {
             this._clickGesture = null;
         }
         this.disconnectObject(this); // Used for 'scroll-event'
-        if (this._connectedDisplay) {
-            // Used for 'notify::focus-window'
-            this._connectedDisplay.disconnectObject(this);
-            this._connectedDisplay = null;
-        }
-        this._isConnected = false;
         this._windowMenu = null; // Submenu of the app menu
         if (this._appMenu) {
             this._appMenu.disconnectObject(this); // Used for 'open-state-changed'
@@ -127,11 +122,25 @@ export default class ContextButton extends PanelMenu.Button {
             this._appMenu = null;
         }
 
+        // These are connected in _uodate()
+        if (this._connectedDisplay) {
+            // Used for 'notify::focus-window'
+            this._connectedDisplay.disconnectObject(this);
+            this._connectedDisplay = null;
+        }
+        if (this._connectedTracker) {
+            // Used for 'notify::focus-app'
+            this._connectedTracker.disconnectObject(this);
+            this._connectedTracker = null;
+        }
+        this._isConnected = false;
+
         // These are connected in #updateDo()
         if (this._focusWindow) {
             this._focusWindow.disconnectObject(this); // Used for 'notify::title'
             this._focusWindow = null;
         }
+        this._focusApp = null;
         if (this._connectedShowAppsButton) {
             // Used for 'notify::checked'
             this._connectedShowAppsButton.disconnectObject(this);
@@ -269,6 +278,25 @@ export default class ContextButton extends PanelMenu.Button {
                     () => this.#update(),
                     this
                 );
+                this._connectedTracker = Shell.WindowTracker.get_default();
+                this._connectedTracker.connectObject(
+                    'notify::focus-app',
+                    () => {
+                        const focusWindow = global.display.get_focus_window();
+                        if (focusWindow && focusWindow === this._focusWindow) {
+                            const focusApp =
+                                Shell.WindowTracker.get_default().get_window_app(
+                                    focusWindow
+                                );
+                            if (focusApp && focusApp !== this._focusApp) {
+                                // Force update even if the focused window hasn't changed
+                                // (e.g., LibreOffice launcher switching to Writer)
+                                this.#update(true);
+                            }
+                        }
+                    },
+                    this
+                );
             }
             this._isConnected = true;
         } else if (
@@ -280,6 +308,11 @@ export default class ContextButton extends PanelMenu.Button {
                 // Used for 'notify::focus-window'
                 this._connectedDisplay.disconnectObject(this);
                 this._connectedDisplay = null;
+            }
+            if (this._connectedTracker) {
+                // Used for 'notify::focus-app'
+                this._connectedTracker.disconnectObject(this);
+                this._connectedTracker = null;
             }
             this._isConnected = false;
         }
@@ -360,6 +393,7 @@ export default class ContextButton extends PanelMenu.Button {
         this._appMenu?.setApp(
             this._isTitleButton || this._isWindowButton ? focusApp : null
         );
+        this._focusApp = focusApp;
 
         return this._newIcon !== null;
     }
