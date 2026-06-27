@@ -10,6 +10,8 @@ import { AppMenu } from 'resource:///org/gnome/shell/ui/appMenu.js';
 import * as Config from 'resource:///org/gnome/shell/misc/config.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
+import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
+import { WindowMenu } from 'resource:///org/gnome/shell/ui/windowMenu.js';
 
 const GNOME_POST_49 = parseInt(Config.PACKAGE_VERSION) >= 49;
 
@@ -43,6 +45,7 @@ export default class ContextButton extends PanelMenu.Button {
 
         this._appMenu = new AppMenu(this);
         Main.panel.menuManager.addMenu(this._appMenu);
+        const updateMenu = this._patchAppMenu(this._appMenu);
         this.setMenu(this._appMenu);
 
         this._box = new St.BoxLayout({
@@ -79,9 +82,31 @@ export default class ContextButton extends PanelMenu.Button {
             (actor, event) => this._onScroll(event),
             this
         );
+
+        this._appMenu.connectObject(
+            'open-state-changed',
+            (menu, open) => {
+                if (open) {
+                    if (updateMenu) {
+                        updateMenu();
+                    }
+                } else {
+                    if (this._isX11) {
+                        // For X11, run postponed update on menu close
+                        this.#update();
+                    }
+                }
+            },
+            this
+        );
     }
 
     _onDestroy() {
+        // While calling disconnectObject when the object (this)
+        // is being destroyed is unnecessary, do it anyway...
+        // (just to more easily keep track of what's going on)
+        // For documentation, see gnome-shell's js/misc/signalTracker.js
+
         // These are connected in _init()
         if (Clutter.ClickGesture) {
             this._clickGesture?.disconnectObject(this); // Used for 'recognize'
@@ -94,6 +119,13 @@ export default class ContextButton extends PanelMenu.Button {
             this._connectedDisplay = null;
         }
         this._isConnected = false;
+        this._windowMenu = null; // Submenu of the app menu
+        if (this._appMenu) {
+            this._appMenu.disconnectObject(this); // Used for 'open-state-changed'
+            Main.panel.menuManager.removeMenu(this._appMenu);
+            // The app menu is destroyed by super._onDestroy()
+            this._appMenu = null;
+        }
 
         // These are connected in #updateDo()
         if (this._focusWindow) {
@@ -111,12 +143,118 @@ export default class ContextButton extends PanelMenu.Button {
             this._connectedOverview = null;
         }
 
-        if (this._appMenu) {
-            Main.panel.menuManager.removeMenu(this._appMenu);
-            this._appMenu = null;
+        super._onDestroy();
+    }
+
+    _patchAppMenu(appMenu) {
+        // Compatibility checks
+        if (
+            !(
+                typeof appMenu._updateWindowsSection === 'function' &&
+                appMenu._windowSection instanceof PopupMenu.PopupMenuSection &&
+                appMenu._openWindowsHeader instanceof
+                    PopupMenu.PopupSeparatorMenuItem
+            )
+        ) {
+            return null; // Unsupported - stop here
         }
 
-        super._onDestroy();
+        // Convert "Open Windows" from a section to a submenu
+        const openWindowsMenuItem = new PopupMenu.PopupSubMenuMenuItem(
+            appMenu._openWindowsHeader.label.text,
+            false
+        );
+        appMenu.addMenuItem(openWindowsMenuItem, 0);
+        appMenu._windowSection.destroy();
+        const openWindowsMenu = openWindowsMenuItem.menu;
+        appMenu._windowSection = openWindowsMenu;
+
+        // Adjust the animation of opening/closing the submenu (but keep arrow as-is)
+        const adjustSubmenuEaseProps = (props) => ({
+            ...props,
+            // Prevent appearance of overshooting
+            height: Math.max(0, props.height - 12),
+            // Cut duration by half
+            duration: props.duration === 0 ? 0 : 125,
+        });
+        // The ease method comes from gnome-shell's js/ui/environment.js
+        const overrideEaseMethod = (actor, adjustProps) => {
+            if (!Object.prototype.hasOwnProperty.call(actor, 'ease')) {
+                actor.ease = (props) =>
+                    Clutter.Actor.prototype.ease.call(
+                        actor,
+                        adjustProps(props)
+                    );
+            }
+        };
+        overrideEaseMethod(openWindowsMenu.actor, adjustSubmenuEaseProps);
+
+        // When updating the app menu as it opens
+        let windowMenuItem = null;
+        const updateMenu = () => {
+            // Open the "Open Windows" submenu by default
+            if (openWindowsMenuItem.is_visible()) {
+                openWindowsMenu.open();
+            }
+
+            // Populate the embedded window menu
+            if (windowMenuItem) {
+                const windowMenu = windowMenuItem.menu;
+                windowMenu.removeAll();
+                const windowMenuBuilder = Object.create(windowMenu);
+                const windowMenuPrototype = WindowMenu.prototype;
+                // WindowMenu overrides addAction() to set a default ornament of none.
+                // Just Perfection's API.js replaces _buildMenu with a function
+                // that accesses _oldBuildMenu where it has put the original function.
+                Object.getOwnPropertyNames(windowMenuPrototype).forEach(
+                    (key) => {
+                        windowMenuBuilder[key] = windowMenuPrototype[key];
+                    }
+                );
+                if (this._focusWindow) {
+                    windowMenuBuilder._buildMenu(this._focusWindow);
+                }
+            }
+        };
+
+        // Replace the app menu's _updateWindowsSection() with a function
+        // that calls the original function and applies changes to the menu
+        const originalUpdateWindowsSection =
+            appMenu._updateWindowsSection.bind(appMenu);
+        appMenu._updateWindowsSection = () => {
+            // Doing an extra remove all initially prevents the windows sometimes
+            // being added twice on X11 (e.g., when switcing between two Files windows)
+            openWindowsMenu.removeAll();
+
+            // Original "Open Windows" section menu update
+            originalUpdateWindowsSection();
+
+            // Apply menu changes
+            if (appMenu._openWindowsHeader.is_visible()) {
+                openWindowsMenuItem.show();
+            } else {
+                openWindowsMenuItem.hide();
+            }
+            appMenu._openWindowsHeader.hide();
+            this._windowMenu = null;
+            windowMenuItem?.destroy();
+            windowMenuItem = null;
+            if (appMenu._app) {
+                windowMenuItem = new PopupMenu.PopupSubMenuMenuItem(
+                    appMenu._app.get_name() || '',
+                    false
+                );
+                const windowMenu = windowMenuItem.menu;
+                this._windowMenu = windowMenu; // So it can be emptied in #update()
+                overrideEaseMethod(windowMenu.actor, adjustSubmenuEaseProps);
+                appMenu.addMenuItem(windowMenuItem, 0);
+            }
+            if (appMenu.isOpen) {
+                updateMenu();
+            }
+        };
+
+        return updateMenu; // Call when menu is being opened
     }
 
     _update() {
@@ -166,6 +304,7 @@ export default class ContextButton extends PanelMenu.Button {
             // On X11, when opening panel menus, the window loses focus
             return;
         }
+        this._windowMenu?.removeAll();
         if (this._focusWindow) {
             if (isInit || focusWindow !== this._focusWindow) {
                 this._focusWindow.disconnectObject(this);
