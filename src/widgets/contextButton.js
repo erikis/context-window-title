@@ -848,19 +848,50 @@ export default class ContextButton extends PanelMenu.Button {
         }
     }
 
+    _superVFunc(name, defaultRet, ...args) {
+        let isSuperVFuncImpl = this._isSuperVFuncImpl;
+        if (isSuperVFuncImpl === undefined) {
+            isSuperVFuncImpl = {};
+            this._isSuperVFuncImpl = isSuperVFuncImpl;
+        }
+        let isImpl = isSuperVFuncImpl[name];
+        if (isImpl === undefined) {
+            isImpl = false;
+            try {
+                isImpl = !!super[name];
+            } catch {
+                // Virtual function not implemented
+            }
+            isSuperVFuncImpl[name] = isImpl;
+        }
+        if (isImpl) {
+            return super[name].apply(this, args);
+        }
+        return defaultRet;
+    }
+
+    vfunc_enter_event(event) {
+        this._isHover = true;
+
+        // Keep original functionality working (e.g., hover and click)
+        return this._superVFunc(
+            'vfunc_enter_event',
+            Clutter.EVENT_PROPAGATE,
+            event
+        );
+    }
+
     vfunc_leave_event(event) {
         this._isHover = false;
         if (typeof this._longPressTimeout === 'number') {
             GLib.source_remove(this._longPressTimeout);
             this._longPressTimeout = null;
         }
-        try {
-            // Keep original functionality working (e.g., hover and click)
-            return super.vfunc_leave_event(event);
-        } catch {
-            // In case of virtual function not implemented
-            return Clutter.EVENT_PROPAGATE;
-        }
+        return this._superVFunc(
+            'vfunc_leave_event',
+            Clutter.EVENT_PROPAGATE,
+            event
+        );
     }
 
     vfunc_button_press_event(event) {
@@ -868,11 +899,11 @@ export default class ContextButton extends PanelMenu.Button {
         if (ret !== Clutter.EVENT_PROPAGATE) {
             return ret;
         }
-        try {
-            return super.vfunc_button_press_event(event);
-        } catch {
-            return Clutter.EVENT_PROPAGATE;
-        }
+        return this._superVFunc(
+            'vfunc_button_press_event',
+            Clutter.EVENT_PROPAGATE,
+            event
+        );
     }
 
     vfunc_button_release_event(event) {
@@ -889,11 +920,11 @@ export default class ContextButton extends PanelMenu.Button {
                 return ret;
             }
         }
-        try {
-            return super.vfunc_button_release_event(event);
-        } catch {
-            return Clutter.EVENT_PROPAGATE;
-        }
+        return this._superVFunc(
+            'vfunc_button_release_event',
+            Clutter.EVENT_PROPAGATE,
+            event
+        );
     }
 
     vfunc_touch_event(event) {
@@ -955,11 +986,11 @@ export default class ContextButton extends PanelMenu.Button {
                 }
                 break;
         }
-        try {
-            return super.vfunc_touch_event(event);
-        } catch {
-            return Clutter.EVENT_PROPAGATE;
-        }
+        return this._superVFunc(
+            'vfunc_touch_event',
+            Clutter.EVENT_PROPAGATE,
+            event
+        );
     }
 
     vfunc_event(/* event */) {
