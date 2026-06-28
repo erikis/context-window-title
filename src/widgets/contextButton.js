@@ -103,54 +103,24 @@ export default class ContextButton extends PanelMenu.Button {
     }
 
     _onDestroy() {
-        // While calling disconnectObject when the object (this)
-        // is being destroyed is unnecessary, do it anyway...
-        // (just to more easily keep track of what's going on)
+        // Signals connected using connectObject will be automatically
+        // disconnected when the object (this) is being destroyed
         // For documentation, see gnome-shell's js/misc/signalTracker.js
 
-        // These are connected in _init()
-        if (Clutter.ClickGesture) {
-            this._clickGesture?.disconnectObject(this); // Used for 'recognize'
-            this._clickGesture = null;
-        }
-        this.disconnectObject(this); // Used for 'scroll-event'
+        this._clickGesture = null;
         this._windowMenu = null; // Submenu of the app menu
         if (this._appMenu) {
-            this._appMenu.disconnectObject(this); // Used for 'open-state-changed'
             Main.panel.menuManager.removeMenu(this._appMenu);
-            // The app menu is destroyed by super._onDestroy()
-            this._appMenu = null;
         }
-
-        // These are connected in _uodate()
-        if (this._connectedDisplay) {
-            // Used for 'notify::focus-window'
-            this._connectedDisplay.disconnectObject(this);
-            this._connectedDisplay = null;
-        }
-        if (this._connectedTracker) {
-            // Used for 'notify::focus-app'
-            this._connectedTracker.disconnectObject(this);
-            this._connectedTracker = null;
-        }
+        this._appMenu = null;
+        this._connectedDisplay = null;
+        this._connectedTracker = null;
+        this._connectedShowAppsButton = null;
+        this._connectedOverview = null;
         this._isConnected = false;
 
-        // These are connected in #updateDo()
-        if (this._focusWindow) {
-            this._focusWindow.disconnectObject(this); // Used for 'notify::title'
-            this._focusWindow = null;
-        }
+        this._focusWindow = null;
         this._focusApp = null;
-        if (this._connectedShowAppsButton) {
-            // Used for 'notify::checked'
-            this._connectedShowAppsButton.disconnectObject(this);
-            this._connectedShowAppsButton = null;
-        }
-        if (this._connectedOverview) {
-            // Used for 'hiding' and 'showing'
-            this._connectedOverview.disconnectObject(this);
-            this._connectedOverview = null;
-        }
 
         super._onDestroy();
     }

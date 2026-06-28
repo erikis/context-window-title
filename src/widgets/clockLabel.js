@@ -31,11 +31,7 @@ export default class ClockLabel extends St.Label {
     _onDestroy() {
         this._updateStop();
 
-        // Used for 'notify::timezone'
-        this._connectedClock?.disconnectObject(this);
         this._connectedClock = null;
-        // Used for 'notify::text'
-        this._connectedClockDisplay?.disconnectObject(this);
         this._connectedClockDisplay = null;
         this._isConnected = false;
 
