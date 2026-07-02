@@ -79,6 +79,9 @@ export default class ContextExtension extends Extension {
         // as the clock is not visible at that time.
         // The context button (contextButton) is destroyed and not visible on the lock screen.
 
+        this.#settings?.disconnectObject(this);
+        Main.sessionMode.disconnectObject(this);
+
         this.#contextButton?.destroy();
         this.#contextButton = null;
 
