@@ -26,11 +26,14 @@ export default class ContextButton extends PanelMenu.Button {
         this._isTitleButton = false;
         this._isContextButton = false;
         this._isWindowButton = false;
-        this._isConnected = false;
         this._isUpdating = false;
         this._isDirty = false;
+        this._isHover = false;
         this._focusWindow = null;
         this._focusApp = null;
+        this._updateNewInTimeout = null;
+        this._longPressTimeout = null;
+        this._longPressHandled = false;
 
         // X11 compatbility mode
         this._isX11 = GLib.getenv('XDG_SESSION_TYPE') === 'x11';
@@ -46,6 +49,7 @@ export default class ContextButton extends PanelMenu.Button {
 
         this._appMenu = new AppMenu(this);
         Main.panel.menuManager.addMenu(this._appMenu);
+        this._windowMenu = null; // To be set by _patchAppMenu()
         const updateMenu = this._patchAppMenu(this._appMenu);
         this.setMenu(this._appMenu);
 
@@ -103,10 +107,19 @@ export default class ContextButton extends PanelMenu.Button {
     }
 
     _onDestroy() {
-        // Signals connected using connectObject will be automatically
-        // disconnected when the object (this) is being destroyed
-        // For documentation, see gnome-shell's js/misc/signalTracker.js
+        // Remove any timeouts that might be running
+        if (this._updateNewInTimeout !== null) {
+            GLib.source_remove(this._updateNewInTimeout);
+            this._updateNewInTimeout = null;
+        }
+        if (this._longPressTimeout !== null) {
+            GLib.source_remove(this._longPressTimeout);
+            this._longPressTimeout = null;
+        }
 
+        // Signals connected using connectObject() will be automatically disconnected when
+        // the object (this) is destroyed. See gnome-shell's js/misc/signalTracker.js.
+        // No signals are connected using connect() requiring manual disconnect on destroy.
         this._clickGesture = null;
         this._windowMenu = null; // Submenu of the app menu
         if (this._appMenu) {
@@ -117,8 +130,6 @@ export default class ContextButton extends PanelMenu.Button {
         this._connectedTracker = null;
         this._connectedShowAppsButton = null;
         this._connectedOverview = null;
-        this._isConnected = false;
-
         this._focusWindow = null;
         this._focusApp = null;
 
@@ -237,10 +248,7 @@ export default class ContextButton extends PanelMenu.Button {
     }
 
     _update() {
-        if (
-            !this._isConnected &&
-            (this._isWindowButton || this._isTitleButton)
-        ) {
+        if (this._isWindowButton || this._isTitleButton) {
             if (!this._connectedDisplay) {
                 this._connectedDisplay = global.display;
                 this._connectedDisplay.connectObject(
@@ -248,6 +256,8 @@ export default class ContextButton extends PanelMenu.Button {
                     () => this.#update(),
                     this
                 );
+            }
+            if (!this._connectedTracker) {
                 this._connectedTracker = Shell.WindowTracker.get_default();
                 this._connectedTracker.connectObject(
                     'notify::focus-app',
@@ -268,12 +278,7 @@ export default class ContextButton extends PanelMenu.Button {
                     this
                 );
             }
-            this._isConnected = true;
-        } else if (
-            this._isConnected &&
-            !this._isWindowButton &&
-            !this._isTitleButton
-        ) {
+        } else if (!this._isWindowButton && !this._isTitleButton) {
             if (this._connectedDisplay) {
                 // Used for 'notify::focus-window'
                 this._connectedDisplay.disconnectObject(this);
@@ -284,7 +289,6 @@ export default class ContextButton extends PanelMenu.Button {
                 this._connectedTracker.disconnectObject(this);
                 this._connectedTracker = null;
             }
-            this._isConnected = false;
         }
         this.#update(true);
     }
@@ -479,14 +483,23 @@ export default class ContextButton extends PanelMenu.Button {
                 this.hover = true;
             }
             // Give a moment for widths to be calculated
-            GLib.timeout_add(GLib.PRIORITY_DEFAULT, 0, () => {
-                try {
-                    this.#updateNewIn();
-                } catch {
-                    // Just remove the timeout
+            if (this._updateNewInTimeout !== null) {
+                GLib.source_remove(this._updateNewInTimeout);
+                this._updateNewInTimeout = null;
+            }
+            this._updateNewInTimeout = GLib.timeout_add(
+                GLib.PRIORITY_DEFAULT,
+                0,
+                () => {
+                    try {
+                        this.#updateNewIn();
+                    } catch {
+                        // Just remove the timeout
+                    }
+                    this._updateNewInTimeout = null;
+                    return GLib.SOURCE_REMOVE;
                 }
-                return GLib.SOURCE_REMOVE;
-            });
+            );
         }
     }
 
@@ -913,6 +926,11 @@ export default class ContextButton extends PanelMenu.Button {
                 }
                 // Custom long-press touch implementation (necessary also in newer GNOME
                 // versions because LongPressGesture detects mouse buttons besides touch)
+                this._longPressHandled = false;
+                if (this._longPressTimeout !== null) {
+                    GLib.source_remove(this._longPressTimeout);
+                    this._longPressTimeout = null;
+                }
                 this._longPressTimeout = GLib.timeout_add(
                     GLib.PRIORITY_DEFAULT,
                     Clutter.Settings.get_default().longPressDuration,
@@ -924,29 +942,27 @@ export default class ContextButton extends PanelMenu.Button {
                                     type: () => Clutter.EventType.BUTTON_PRESS,
                                     get_button: () => Clutter.BUTTON_SECONDARY,
                                 });
-                                this._longPressTimeout =
+                                this._longPressHandled =
                                     ret !== Clutter.EVENT_PROPAGATE;
-                            } else {
-                                this._longPressTimeout = false; // Not handled
                             }
                         } catch {
                             // Just remove the timeout
                         }
+                        this._longPressTimeout = null;
                         return GLib.SOURCE_REMOVE;
                     }
                 );
                 break;
             case Clutter.EventType.TOUCH_END:
-                if (typeof this._longPressTimeout === 'number') {
+                if (this._longPressTimeout !== null) {
                     GLib.source_remove(this._longPressTimeout);
                     this._longPressTimeout = null;
+                    this._longPressHandled = false;
                 }
                 if (!this.hover) {
                     this._isHover = false;
                 } else {
-                    if (this._longPressTimeout === true) {
-                        // Already handled as a long-press
-                        this._longPressTimeout = null;
+                    if (this._longPressHandled) {
                         return Clutter.EVENT_STOP;
                     }
                     let ret = this._onClick(event);

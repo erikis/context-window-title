@@ -12,8 +12,6 @@ export default class ClockLabel extends St.Label {
     constructor() {
         super({ style_class: 'clock' });
 
-        this._isConnected = false;
-
         // Keep same style as in gnome-shell's dateMenu.js
         this.clutter_text.y_align = Clutter.ActorAlign.CENTER;
         this.clutter_text.ellipsize = Pango.EllipsizeMode.NONE;
@@ -24,68 +22,61 @@ export default class ClockLabel extends St.Label {
         this._f = null; // Intl.DateTimeFormat
         this._t = null; // timeout
         this._u = false; // Already updated
-
-        this.connect('destroy', this._onDestroy.bind(this));
     }
 
-    _onDestroy() {
+    destroy() {
+        // Remove the current update timeout
         this._updateStop();
 
+        // As connectObject was used with this as object, these will be automatically
+        // disconnected when this is destroyed
         this._connectedClock = null;
         this._connectedClockDisplay = null;
-        this._isConnected = false;
 
-        this._originalClockDisplay?.show(); // Restore
-        this._originalClockDisplay = null;
+        super.destroy();
     }
 
     // Optionally make the clock more responsive by connecting
     // to a wall clock and the original clock display
     _connect(wallClock, originalClockDisplay) {
-        if (!this._isConnected) {
-            // Do a re-format and an extraordinary update when the time zone changes
-            if (!this._connectedClock) {
-                this._connectedClock = wallClock;
-                this._connectedClock?.connectObject(
-                    'notify::timezone',
-                    () => {
-                        this._updateFormat();
-                        this.#updateTime();
-                    },
-                    this
-                );
-            }
+        // Do a re-format and an extraordinary update when the time zone changes
+        if (!this._connectedClock) {
+            this._connectedClock = wallClock;
+            this._connectedClock?.connectObject(
+                'notify::timezone',
+                () => {
+                    this._updateFormat();
+                    this.#updateTime();
+                },
+                this
+            );
+        }
 
-            // As dateMenu._clockDisplay updates based on actual wall clock time
-            // (instead of using a monotonic timer, which becomes inaccurate e.g.
-            // after suspend), trigger regular updates when it updates
-            if (!this._connectedClockDisplay) {
-                // _connectedClockDisplay and _originalClockDisplay are the
-                // same object, but keep separate to remind of the need to disconnect
-                this._connectedClockDisplay = originalClockDisplay;
-                let lastSeconds = 0; // Keep track between notifications
-                this._connectedClockDisplay?.connectObject(
-                    'notify::text',
-                    () => {
-                        // Only call _updateTime() if we're actually on a new second/minute
-                        let nowSeconds = Date.now(); // Get epoch
-                        nowSeconds -= nowSeconds % 1000; // Completed seconds only (in ms)
-                        const second = this._second;
-                        if (
-                            (second === 1 && nowSeconds !== lastSeconds) ||
-                            (second === 0 &&
-                                nowSeconds - (nowSeconds % 60) !==
-                                    lastSeconds - (lastSeconds % 60))
-                        ) {
-                            lastSeconds = nowSeconds;
-                            this.#updateTime(nowSeconds);
-                        }
-                    },
-                    this
-                );
-            }
-
-            this._isConnected = true;
+        // As dateMenu._clockDisplay updates based on actual wall clock time
+        // (instead of using a monotonic timer, which becomes inaccurate e.g.
+        // after suspend), trigger regular updates when it updates
+        if (!this._connectedClockDisplay) {
+            this._connectedClockDisplay = originalClockDisplay;
+            let lastSeconds = 0; // Keep track between notifications
+            this._connectedClockDisplay?.connectObject(
+                'notify::text',
+                () => {
+                    // Only call _updateTime() if we're actually on a new second/minute
+                    let nowSeconds = Date.now(); // Get epoch
+                    nowSeconds -= nowSeconds % 1000; // Completed seconds only (in ms)
+                    const second = this._second;
+                    if (
+                        (second === 1 && nowSeconds !== lastSeconds) ||
+                        (second === 0 &&
+                            nowSeconds - (nowSeconds % 60) !==
+                                lastSeconds - (lastSeconds % 60))
+                    ) {
+                        lastSeconds = nowSeconds;
+                        this.#updateTime(nowSeconds);
+                    }
+                },
+                this
+            );
         }
     }
 
@@ -151,8 +142,12 @@ export default class ClockLabel extends St.Label {
     }
 
     _updateStart() {
-        if (typeof this._t !== 'number') {
-            let n = null; // Function for next update in ms
+        // Only start a new update timeout if there is no existing one.
+        // Therefore, there is no existing timeout to remove first.
+        // If there is no timeout, then this method will decide the best implementation.
+        if (this._t === null) {
+            // Function to use for calculating how many ms until next update
+            let n = null;
             switch (this._second) {
                 case 1: // Second is on - wait up to 1 s
                     n = (now) => 1000 - now.getMilliseconds();
@@ -166,12 +161,15 @@ export default class ClockLabel extends St.Label {
                 case 4:
                     // Optimization: instead of n => 1, repeat the same timeout
                     this.#updateTime();
+                    // Initially there is no timeout (see beginning of this method)
+                    // so there is no none to remove.
+                    // Create a simple update timeout which just keeps running until stopped.
                     this._t = GLib.timeout_add(
                         GLib.PRIORITY_HIGH,
                         1,
                         this.#updateTime.bind(this)
                     );
-                    return;
+                    return; // We're already done creating an update timeout
                 default: // Second is off - wait up to 60 s
                     n = (now) =>
                         1000 -
@@ -179,6 +177,8 @@ export default class ClockLabel extends St.Label {
                         Math.max(0, 59 - now.getSeconds()) * 1000;
                     break;
             }
+
+            // Function for checking whether already updated
             const iu = () => {
                 // If updated already by _updateTime() from outside
                 if (this._u === false) {
@@ -188,10 +188,16 @@ export default class ClockLabel extends St.Label {
                 s -= s % 1000; // Completed seconds only
                 return this._u === s; // If update still valid
             };
+
+            // Create update timeout using timeout_add_once if available, otherwise timeout_add.
+            // If clock is already updated according to iu(), just wait for the next update
+            // using a new timeout. If not updated, then also do an update. Initially there is
+            // no timeout (see beginning of this method) so there is none to remove.
             let u;
             if (GLib.timeout_add_once) {
-                // Use timeout_add_once if available
                 u = () => {
+                    // Using timeout_add_once so the current timeout doesn't need to be removed
+                    this._t = null; // In case of error adding the new timeout
                     this._t = GLib.timeout_add_once(
                         GLib.PRIORITY_HIGH,
                         n(iu() ? new Date() : this.#updateTime()),
@@ -201,6 +207,8 @@ export default class ClockLabel extends St.Label {
             } else {
                 u = () => {
                     try {
+                        // The current timeout is removed by returning GLib.SOURCE_REMOVE below
+                        this._t = null; // In case of error adding the new timeout
                         this._t = GLib.timeout_add(
                             GLib.PRIORITY_HIGH,
                             n(iu() ? new Date() : this.#updateTime()),
@@ -217,7 +225,7 @@ export default class ClockLabel extends St.Label {
     }
 
     _updateStop() {
-        if (typeof this._t === 'number') {
+        if (this._t !== null) {
             GLib.source_remove(this._t);
             this._t = null;
         }

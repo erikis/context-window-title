@@ -34,10 +34,9 @@ export default class ContextExtension extends Extension {
     #defaults = null;
     #sessionMode = null;
     #isLogging = false;
-    #isEnabled = false;
-    #isConnected = false;
     #contextButton = null;
     #clockLabel = null;
+    #originalClockDisplay = null;
     #nameIndicator = null;
     #lockMessage = null;
 
@@ -49,8 +48,6 @@ export default class ContextExtension extends Extension {
     }
 
     enable() {
-        this.#isEnabled = true;
-
         if (!this.#settings) {
             this.#settings = this.getSettings();
             this.#isLogging = this.#settings.get_boolean('allow-log');
@@ -60,21 +57,18 @@ export default class ContextExtension extends Extension {
         }
         this.#onSessionMode(); // This will initialize everything
 
-        if (!this.#isConnected) {
-            this.#isConnected = true;
-            this.#settings.connectObject(
-                'changed',
-                () => this.#onSettings(),
-                GObject.ConnectFlags.AFTER,
-                this
-            );
-            Main.sessionMode.connectObject(
-                'updated',
-                () => this.#onSessionMode(),
-                GObject.ConnectFlags.AFTER,
-                this
-            );
-        }
+        this.#settings.connectObject(
+            'changed',
+            () => this.#onSettings(),
+            GObject.ConnectFlags.AFTER,
+            this
+        );
+        Main.sessionMode.connectObject(
+            'updated',
+            () => this.#onSessionMode(),
+            GObject.ConnectFlags.AFTER,
+            this
+        );
     }
 
     disable() {
@@ -85,71 +79,24 @@ export default class ContextExtension extends Extension {
         // as the clock is not visible at that time.
         // The context button (contextButton) is destroyed and not visible on the lock screen.
 
-        this.#isEnabled = false;
+        this.#contextButton?.destroy();
+        this.#contextButton = null;
 
-        if (this.#isConnected) {
-            this.#isConnected = false;
-            this.#settings.disconnectObject(this);
-            Main.sessionMode.disconnectObject(this);
-        }
+        this.#clockLabel?.destroy();
+        this.#clockLabel = null;
+        this.#restoreOriginalClock();
 
-        try {
-            this.#contextButton?.destroy();
-        } catch (ex) {
-            this._log(
-                console.error,
-                `${NAME} contextButton destroy on disable`,
-                ex
-            );
-        } finally {
-            this.#contextButton = null;
-        }
+        this.#nameIndicator?.destroy();
+        this.#nameIndicator = null;
 
-        try {
-            this.#clockLabel?.destroy();
-        } catch (ex) {
-            this._log(
-                console.error,
-                `${NAME} clockLabel destroy on disable`,
-                ex
-            );
-        } finally {
-            this.#clockLabel = null;
-        }
-
-        try {
-            this.#nameIndicator?.destroy();
-        } catch (ex) {
-            this._log(
-                console.error,
-                `${NAME} nameIndicator destroy on disable`,
-                ex
-            );
-        } finally {
-            this.#nameIndicator = null;
-        }
-
-        try {
-            this.#lockMessage?.destroy();
-        } catch (ex) {
-            this._log(
-                console.error,
-                `${NAME} lockMessage destroy on disable`,
-                ex
-            );
-        } finally {
-            this.#lockMessage = null;
-        }
+        this.#lockMessage?.destroy();
+        this.#lockMessage = null;
 
         this.#settings = null;
         this.#defaults = null;
     }
 
     #onSessionMode() {
-        if (!this.#isEnabled) {
-            return;
-        }
-
         // currentMode may be e.g. 'ubuntu' so check parentMode too
         const mode =
             Main.sessionMode.parentMode === 'user'
@@ -170,21 +117,14 @@ export default class ContextExtension extends Extension {
             }
             this.#onSettings(); // This will instantiate the context button, etc.
         } else {
+            this.#contextButton?.destroy();
+            this.#contextButton = null;
             try {
-                this.#contextButton?.destroy();
-            } catch (ex) {
-                this._log(
-                    console.error,
-                    `${NAME} contextButton destroy on sessionMode`,
-                    ex
-                );
-            } finally {
-                this.#contextButton = null;
-            }
-            try {
-                this.#nameIndicator._sessionMode = mode;
-                if (this.#nameIndicator?._lockHide > 0) {
-                    this.#nameIndicator._update();
+                if (this.#nameIndicator) {
+                    this.#nameIndicator._sessionMode = mode;
+                    if (this.#nameIndicator._lockHide > 0) {
+                        this.#nameIndicator._update();
+                    }
                 }
             } catch (ex) {
                 this._log(
@@ -253,10 +193,6 @@ export default class ContextExtension extends Extension {
     }
 
     #onSettings() {
-        if (!this.#isEnabled) {
-            return;
-        }
-
         // Break up in handlers per widget and don't let errors in one break the others
 
         // Context button
@@ -483,6 +419,7 @@ export default class ContextExtension extends Extension {
         } else {
             this.#clockLabel?.destroy();
             this.#clockLabel = null;
+            this.#restoreOriginalClock();
         }
         if (this.#clockLabel) {
             let isModified = false;
@@ -678,15 +615,28 @@ export default class ContextExtension extends Extension {
                 this.#clockLabel._updateStart();
             }
             const dateMenu = Main.panel.statusArea.dateMenu;
-            this.#clockLabel._originalClockDisplay = dateMenu._clockDisplay;
-            this.#clockLabel._originalClockDisplay?.hide();
-            this.#clockLabel._originalClockDisplay
+            this.#originalClockDisplay = dateMenu._clockDisplay;
+            this.#originalClockDisplay?.hide();
+            this.#originalClockDisplay
                 ?.get_parent()
                 .insert_child_at_index(this.#clockLabel, 0);
-            this.#clockLabel._connect(dateMenu._clock, dateMenu._clockDisplay);
+            this.#clockLabel._connect(
+                dateMenu._clock,
+                this.#originalClockDisplay
+            );
         } else if (isModified && this.#sessionMode !== 'unlock-dialog') {
             this.#clockLabel._updateStop();
             this.#clockLabel._updateStart();
+        }
+    }
+
+    #restoreOriginalClock() {
+        const originalClockDisplay = this.#originalClockDisplay;
+        this.#originalClockDisplay = null;
+        try {
+            originalClockDisplay?.show();
+        } catch (ex) {
+            this._log(console.error, `${NAME} #restoreOriginalClock`, ex);
         }
     }
 
