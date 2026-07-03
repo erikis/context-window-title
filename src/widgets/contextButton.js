@@ -106,7 +106,7 @@ export default class ContextButton extends PanelMenu.Button {
         );
     }
 
-    _onDestroy() {
+    destroy() {
         // Remove any timeouts that might be running
         if (this._updateNewInTimeout !== null) {
             GLib.source_remove(this._updateNewInTimeout);
@@ -133,7 +133,7 @@ export default class ContextButton extends PanelMenu.Button {
         this._focusWindow = null;
         this._focusApp = null;
 
-        super._onDestroy();
+        super.destroy();
     }
 
     _patchAppMenu(appMenu) {

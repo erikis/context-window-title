@@ -26,7 +26,10 @@ export default class ClockLabel extends St.Label {
 
     destroy() {
         // Remove the current update timeout
-        this._updateStop();
+        if (this._t !== null) {
+            GLib.source_remove(this._t);
+            this._t = null;
+        }
 
         // As connectObject was used with this as object, these will be automatically
         // disconnected when this is destroyed
@@ -142,9 +145,7 @@ export default class ClockLabel extends St.Label {
     }
 
     _updateStart() {
-        // Only start a new update timeout if there is no existing one.
-        // Therefore, there is no existing timeout to remove first.
-        // If there is no timeout, then this method will decide the best implementation.
+        // Only start a new update timeout if there is no existing one
         if (this._t === null) {
             // Function to use for calculating how many ms until next update
             let n = null;
@@ -159,17 +160,8 @@ export default class ClockLabel extends St.Label {
                     n = (now) => 10 - (now.getMilliseconds() % 10);
                     break;
                 case 4:
-                    // Optimization: instead of n => 1, repeat the same timeout
-                    this.#updateTime();
-                    // Initially there is no timeout (see beginning of this method)
-                    // so there is no none to remove.
-                    // Create a simple update timeout which just keeps running until stopped.
-                    this._t = GLib.timeout_add(
-                        GLib.PRIORITY_HIGH,
-                        1,
-                        this.#updateTime.bind(this)
-                    );
-                    return; // We're already done creating an update timeout
+                    n = () => 1;
+                    break;
                 default: // Second is off - wait up to 60 s
                     n = (now) =>
                         1000 -
@@ -180,46 +172,33 @@ export default class ClockLabel extends St.Label {
 
             // Function for checking whether already updated
             const iu = () => {
-                // If updated already by _updateTime() from outside
                 if (this._u === false) {
                     return false;
                 }
+                // Already updated by call to #updateTime() from _connect()
                 let s = Date.now();
                 s -= s % 1000; // Completed seconds only
-                return this._u === s; // If update still valid
+                return this._u === s; // Whether update still valid
             };
 
-            // Create update timeout using timeout_add_once if available, otherwise timeout_add.
             // If clock is already updated according to iu(), just wait for the next update
-            // using a new timeout. If not updated, then also do an update. Initially there is
-            // no timeout (see beginning of this method) so there is none to remove.
-            let u;
-            if (GLib.timeout_add_once) {
-                u = () => {
-                    // Using timeout_add_once so the current timeout doesn't need to be removed
-                    this._t = null; // In case of error adding the new timeout
-                    this._t = GLib.timeout_add_once(
-                        GLib.PRIORITY_HIGH,
-                        n(iu() ? new Date() : this.#updateTime()),
-                        u
-                    );
-                };
-            } else {
-                u = () => {
-                    try {
-                        // The current timeout is removed by returning GLib.SOURCE_REMOVE below
-                        this._t = null; // In case of error adding the new timeout
-                        this._t = GLib.timeout_add(
-                            GLib.PRIORITY_HIGH,
-                            n(iu() ? new Date() : this.#updateTime()),
-                            u
-                        );
-                    } catch {
-                        // Just remove the timeout
-                    }
-                    return GLib.SOURCE_REMOVE;
-                };
-            }
+            // using a new timeout. If not updated, then also do an update.
+            const u = () => {
+                // Remove the current timeout before creating a new one
+                if (this._t !== null) {
+                    GLib.source_remove(this._t);
+                    this._t = null;
+                }
+                // Update if not already updated and create new timeout
+                this._t = GLib.timeout_add(
+                    GLib.PRIORITY_HIGH,
+                    n(iu() ? new Date() : this.#updateTime()), // n: time until next update
+                    u // u: this function (use as timeout callback)
+                );
+                // In GLib's g_main_dispatch it looks safe to return SOURCE_REMOVE
+                // for an already removed source (checks whether already destroyed)
+                return GLib.SOURCE_REMOVE; // Prevent g_timeout_dispatch setting new expiry
+            };
             u(); // Start
         }
     }
@@ -230,5 +209,14 @@ export default class ClockLabel extends St.Label {
             this._t = null;
         }
         this._u = false; // Clear updated state
+    }
+
+    vfunc_unrealize() {
+        // set_text() might result in a "has been already disposed" error even
+        // if destroy() has not yet been called when GNOME Shell shutting down.
+        // To avoid this, don't actually update if vfunc_unrealize() has been called.
+        // If it's because screen is locked, resume updates when _updateStart() is called.
+        this._updateStop(); // Prevent further updates
+        super.vfunc_unrealize();
     }
 }
