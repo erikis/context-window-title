@@ -99,7 +99,6 @@ export default class ClockLabel extends St.Label {
                     typeof overrideOptions === 'object' &&
                     overrideOptions !== null
                 ) {
-                    // this._options is safe to modify
                     Object.assign(options, overrideOptions);
                     Object.keys(options).forEach((key) => {
                         if (options[key] === null) {
@@ -183,22 +182,27 @@ export default class ClockLabel extends St.Label {
 
             // If clock is already updated according to iu(), just wait for the next update
             // using a new timeout. If not updated, then also do an update.
+            let c = null; // Timeout callback
             const u = () => {
-                // Remove the current timeout before creating a new one
                 if (this._t !== null) {
                     GLib.source_remove(this._t);
                     this._t = null;
                 }
-                // Update if not already updated and create new timeout
                 this._t = GLib.timeout_add(
                     GLib.PRIORITY_HIGH,
                     n(iu() ? new Date() : this.#updateTime()), // n: time until next update
-                    u // u: this function (use as timeout callback)
+                    c // Use this function or optimized function as timeout callback
                 );
-                // In GLib's g_main_dispatch it looks safe to return SOURCE_REMOVE
-                // for an already removed source (checks whether already destroyed)
-                return GLib.SOURCE_REMOVE; // Prevent g_timeout_dispatch setting new expiry
+                return GLib.SOURCE_REMOVE; // Already removed, but also don't set new expiry
             };
+            c = u;
+            if (this._second === 4) {
+                // Optimization for 1 ms updates: keep same timeout running
+                c = () => {
+                    this.#updateTime();
+                    return GLib.SOURCE_CONTINUE;
+                };
+            }
             u(); // Start
         }
     }
@@ -212,11 +216,8 @@ export default class ClockLabel extends St.Label {
     }
 
     vfunc_unrealize() {
-        // set_text() might result in a "has been already disposed" error even
-        // if destroy() has not yet been called when GNOME Shell shutting down.
-        // To avoid this, don't actually update if vfunc_unrealize() has been called.
-        // If it's because screen is locked, resume updates when _updateStart() is called.
-        this._updateStop(); // Prevent further updates
+        // Avoid set_text() resulting in a "has been already disposed" error
+        this._updateStop(); // Could be restarted if for locked screen and not shutdown
         super.vfunc_unrealize();
     }
 }
