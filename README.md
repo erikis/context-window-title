@@ -14,6 +14,10 @@ The context button can function both as a toggle from desktop to apps, windows, 
 
 ## Install
 
+### From GNOME Extensions
+
+Go to [Context + Window Title](https://extensions.gnome.org/extension/10114/context-window-title/) and click on Install. If you have [Extension Manager](https://flathub.org/apps/com.mattjakeman.ExtensionManager) (Flathub link; Debian/Ubuntu package gnome-shell-extension-manager), this should work without installing a browser extension or connector.
+
 ### From source
 
 Run `make install`.
