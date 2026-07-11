@@ -338,53 +338,58 @@ export default class AdvancedPreferences extends Adw.PreferencesPage {
             Gio.SettingsBindFlags.DEFAULT
         );
 
-        const calendarDropdown = this._clock_calendar;
-        const calendarModel = calendarDropdown.model; // a GtkStringList in advanced.ui
-        const selectedCalendar = settings.get_string('clock-calendar');
-        let calendarIndex = 0;
-        Intl.supportedValuesOf('calendar').forEach((calendar, index) => {
-            calendarModel.append(calendar);
-            if (calendar === selectedCalendar) {
-                calendarIndex = index + 1;
-            }
-        });
-        if (selectedCalendar.length > 0 && calendarIndex === 0) {
-            settings.set_string('clock-calendar', ''); // Unknown calendar - set to default
-        }
-        calendarDropdown.set_selected(calendarIndex);
-        calendarDropdown.connect('notify::selected-item', () => {
-            settings.set_string(
-                'clock-calendar',
-                calendarDropdown.get_selected() === 0
-                    ? ''
-                    : calendarDropdown.get_selected_item().get_string()
-            );
-        });
-
-        const numberingDropdown = this._clock_numbering;
-        const numberingModel = numberingDropdown.model; // a GtkStringList in advanced.ui
-        const selectedNumbering = settings.get_string('clock-numbering');
-        let numberingIndex = 0;
-        Intl.supportedValuesOf('numberingSystem').forEach(
-            (numbering, index) => {
-                numberingModel.append(numbering);
-                if (numbering === selectedNumbering) {
-                    numberingIndex = index + 1;
+        const setUpIntlValuesDropdown = (dropdown, valuesOf, keyName) => {
+            const model = dropdown.model; // GtkStringList
+            Intl.supportedValuesOf(valuesOf).forEach((value) => {
+                model.append(value);
+            });
+            let isUpdating = false;
+            const doUpdate = () => {
+                isUpdating = true;
+                const selected = settings.get_string(keyName);
+                const count = model.n_items;
+                let index = 0;
+                for (let i = 0; i < count; i++) {
+                    if (model.get_string(i) === selected) {
+                        index = i;
+                        break;
+                    }
                 }
-            }
+                if (selected.length > 0 && index === 0) {
+                    settings.set_string(keyName, ''); // Unknown value - set to default
+                }
+                dropdown.set_selected(index);
+                isUpdating = false;
+            };
+            doUpdate();
+            settings.connect(`changed::${keyName}`, () => {
+                if (isUpdating) {
+                    return;
+                }
+                doUpdate();
+            });
+            dropdown.connect('notify::selected-item', () => {
+                if (isUpdating) {
+                    return;
+                }
+                settings.set_string(
+                    keyName,
+                    dropdown.get_selected() === 0
+                        ? ''
+                        : dropdown.get_selected_item().get_string()
+                );
+            });
+        };
+        setUpIntlValuesDropdown(
+            this._clock_calendar,
+            'calendar',
+            'clock-calendar'
         );
-        if (selectedNumbering.length > 0 && numberingIndex === 0) {
-            settings.set_string('clock-numbering', ''); // Unknown numbering - set to default
-        }
-        numberingDropdown.set_selected(numberingIndex);
-        numberingDropdown.connect('notify::selected-item', () => {
-            settings.set_string(
-                'clock-numbering',
-                numberingDropdown.get_selected() === 0
-                    ? ''
-                    : numberingDropdown.get_selected_item().get_string()
-            );
-        });
+        setUpIntlValuesDropdown(
+            this._clock_numbering,
+            'numberingSystem',
+            'clock-numbering'
+        );
 
         this._clock_locale.set_title(
             this._clock_locale
@@ -428,19 +433,16 @@ export default class AdvancedPreferences extends Adw.PreferencesPage {
             Gio.SettingsBindFlags.DEFAULT
         );
 
-        const ui = { calendarDropdown, numberingDropdown };
         this._about.connect('clicked', () =>
             createAboutWindow({ metadata, window }).show()
         );
         this._reset_advanced.connect('clicked', () =>
-            this._reset(settings, false, ui)
+            this._reset(settings, false)
         );
-        this._reset_all.connect('clicked', () =>
-            this._reset(settings, true, ui)
-        );
+        this._reset_all.connect('clicked', () => this._reset(settings, true));
     }
 
-    _reset(settings, isAll, ui) {
+    _reset(settings, isAll) {
         let keysOther = [
             'activate-button',
             'enable-context',
@@ -478,6 +480,8 @@ export default class AdvancedPreferences extends Adw.PreferencesPage {
             'clock-second',
             'clock-time-zone-name',
             'clock-time-zone',
+            'clock-calendar',
+            'clock-numbering',
             'clock-locale',
             'name-lock-hide',
             'message-source-icon',
@@ -486,10 +490,6 @@ export default class AdvancedPreferences extends Adw.PreferencesPage {
         (isAll ? keysOther.concat(keysAdvanced) : keysAdvanced).forEach((key) =>
             settings.reset(key)
         );
-
-        // Update those without bindings via UI objects instead
-        ui.calendarDropdown.set_selected(0);
-        ui.numberingDropdown.set_selected(0);
 
         // Hide the reset buttons to indicate that something happened
         this._reset_row.set_expanded(false);

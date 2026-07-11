@@ -53,6 +53,7 @@ export default class ContextExtension extends Extension {
     enable() {
         if (!this.#settings) {
             this.#settings = this.getSettings();
+            // Also set in #onSettings() but do it early here in case something is logged
             this.#isLogging = this.#settings.get_boolean('allow-log');
         }
         if (!this.#defaults) {
@@ -163,7 +164,7 @@ export default class ContextExtension extends Extension {
         if (mode === 'unlock-dialog') {
             this.#onSessionModeUnlockDialog();
         } else {
-            // As the unlock screen is closed the message should have been destroyed
+            // As the lock screen is closed the message should have been destroyed
             this.#lockMessage = null;
         }
     }
@@ -208,6 +209,9 @@ export default class ContextExtension extends Extension {
     }
 
     #onSettings() {
+        // Already set in enable() but in case the value was changed
+        this.#isLogging = this.#settings.get_boolean('allow-log');
+
         // Break up in handlers per widget and don't let errors in one break the others
 
         // Context button
@@ -484,8 +488,6 @@ export default class ContextExtension extends Extension {
         }
     }
 
-    // Break up into multiple, chained functions for readability, isolation,
-    // and keeping ESLint happy
     #onSettingsClockConfigure({
         isAdding,
         isModified,
