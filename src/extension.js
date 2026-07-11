@@ -17,6 +17,8 @@
  */
 import Clutter from 'gi://Clutter';
 import GObject from 'gi://GObject';
+import Meta from 'gi://Meta';
+import Shell from 'gi://Shell';
 
 import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
@@ -35,6 +37,7 @@ export default class ContextExtension extends Extension {
     #sessionMode = null;
     #isLogging = false;
     #contextButton = null;
+    #menuKeybinding = null;
     #clockLabel = null;
     #originalClockDisplay = null;
     #nameIndicator = null;
@@ -78,10 +81,15 @@ export default class ContextExtension extends Extension {
         // The custom clock (clockLabel) also remains while on lock screen but updates are paused
         // as the clock is not visible at that time.
         // The context button (contextButton) is destroyed and not visible on the lock screen.
+        // No keybindings are in use on the lock screen.
 
         this.#settings?.disconnectObject(this);
         Main.sessionMode.disconnectObject(this);
 
+        if (this.#menuKeybinding) {
+            Main.wm.removeKeybinding(this.#menuKeybinding);
+            this.#menuKeybinding = null;
+        }
         this.#contextButton?.destroy();
         this.#contextButton = null;
 
@@ -120,6 +128,10 @@ export default class ContextExtension extends Extension {
             }
             this.#onSettings(); // This will instantiate the context button, etc.
         } else {
+            if (this.#menuKeybinding) {
+                Main.wm.removeKeybinding(this.#menuKeybinding);
+                this.#menuKeybinding = null;
+            }
             this.#contextButton?.destroy();
             this.#contextButton = null;
             try {
@@ -236,6 +248,10 @@ export default class ContextExtension extends Extension {
                 isAdding = true;
             }
         } else {
+            if (this.#menuKeybinding) {
+                Main.wm.removeKeybinding(this.#menuKeybinding);
+                this.#menuKeybinding = null;
+            }
             this.#contextButton?.destroy();
             this.#contextButton = null;
         }
@@ -398,6 +414,26 @@ export default class ContextExtension extends Extension {
                 -1,
                 'left'
             );
+            if (!this.#menuKeybinding) {
+                // Keybinding name in the schema
+                const keybindingName = 'context-window-title-menu-keybinding';
+                const keybindingAction = Main.wm.addKeybinding(
+                    keybindingName,
+                    this.#settings, // Current keybinding is read from the settings
+                    Meta.KeyBindingFlags.IGNORE_AUTOREPEAT,
+                    Shell.ActionMode.NORMAL |
+                        Shell.ActionMode.OVERVIEW |
+                        Shell.ActionMode.POPUP,
+                    () => {
+                        // When opening the menu, automatically focus first menu item
+                        this.#contextButton?._toggleMenu(true);
+                    }
+                );
+                if (keybindingAction !== Meta.KeyBindingAction.NONE) {
+                    // Save the keybinding name for later removal
+                    this.#menuKeybinding = keybindingName;
+                }
+            }
         }
         if (isAdding || isModified) {
             // Run _update() after adding to avoid "not on stage" errors

@@ -590,6 +590,16 @@ export default class ContextButton extends PanelMenu.Button {
         }
     }
 
+    _toggleMenu(isFocused = false) {
+        const appMenu = this._appMenu;
+        if (appMenu && this._focusApp) {
+            appMenu.toggle();
+            if (isFocused && appMenu.isOpen) {
+                appMenu.firstMenuItem.active = true;
+            }
+        }
+    }
+
     _onPress(event) {
         const button =
             event.type() === Clutter.EventType.TOUCH_BEGIN
@@ -637,19 +647,19 @@ export default class ContextButton extends PanelMenu.Button {
         switch (button) {
             case Clutter.BUTTON_PRIMARY:
             case Clutter.BUTTON_SECONDARY:
-                this._appMenu?.toggle();
+                this._toggleMenu();
                 return Clutter.EVENT_STOP;
             case Clutter.BUTTON_MIDDLE:
                 if (this._isWindowButton) {
                     return Clutter.EVENT_PROPAGATE;
                 } else if (this._isTitleButton) {
-                    this._appMenu?.toggle();
+                    this._toggleMenu();
                     return Clutter.EVENT_STOP;
                 }
                 return Clutter.EVENT_PROPAGATE;
             default:
                 if (!this._isContextButton) {
-                    this._appMenu?.toggle();
+                    this._toggleMenu();
                     return Clutter.EVENT_STOP;
                 }
                 return Clutter.EVENT_PROPAGATE;
