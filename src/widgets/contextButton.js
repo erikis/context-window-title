@@ -769,7 +769,9 @@ export default class ContextButton extends PanelMenu.Button {
     _onScroll(event) {
         switch (event.get_scroll_direction()) {
             case Clutter.ScrollDirection.UP:
-                if (!this._isWindowButton) {
+                if (Main.overview.visible) {
+                    return this.#onScrollOverview(event);
+                } else if (!this._isWindowButton) {
                     if (this._isContextButton) {
                         return Main.wm.handleWorkspaceScroll(event);
                     }
@@ -789,7 +791,9 @@ export default class ContextButton extends PanelMenu.Button {
                 }
                 return Clutter.EVENT_STOP;
             case Clutter.ScrollDirection.DOWN:
-                if (!this._isWindowButton) {
+                if (Main.overview.visible) {
+                    return this.#onScrollOverview(event);
+                } else if (!this._isWindowButton) {
                     if (this._isContextButton) {
                         return Main.wm.handleWorkspaceScroll(event);
                     }
@@ -831,6 +835,31 @@ export default class ContextButton extends PanelMenu.Button {
             default:
                 return Clutter.EVENT_PROPAGATE;
         }
+    }
+
+    #onScrollOverview(event) {
+        if (!this._isContextButton) {
+            return Clutter.EVENT_PROPAGATE;
+        } else if (!Main.overview.closing) {
+            const controls = Main.overview._overview?.controls;
+            switch (event.get_scroll_direction()) {
+                case Clutter.ScrollDirection.UP:
+                    if (controls?.dash?.showAppsButton?.checked === false) {
+                        controls.dash.showAppsButton.checked = true;
+                    }
+                    break;
+                case Clutter.ScrollDirection.DOWN:
+                    if (controls?.dash?.showAppsButton?.checked) {
+                        const showAppsButton = controls.dash.showAppsButton;
+                        if (showAppsButton._fromDesktop === true) {
+                            showAppsButton._fromDesktop = false;
+                        }
+                        showAppsButton.checked = false;
+                    }
+                    break;
+            }
+        }
+        return Clutter.EVENT_STOP;
     }
 
     _superVFunc(name, defaultRet, ...args) {
