@@ -1,7 +1,7 @@
 {
   "uuid": "context-window-title@erikis.github.io",
   "name": "Context + Window Title",
-  "description": "Add a little more text and context to your user experience.\n\nCreates a top bar “context” button with the focused window’s icon and title, or an app grid icon if no window is focused. Optionally shows a more customizable clock, the user/host name on the system menu button, and a message on the lock screen.\n\nThe context button can function both as a toggle from desktop to apps, windows, and back to desktop when clicked, and as an app menu when pressed using the secondary button or long-pressed by touch.",
+  "description": "Add a little more text and context to your user experience.\n\nCreates a top bar “context” button with the focused window’s icon and title, or an app grid icon if no window is focused. Optionally shows a more customizable clock, the user/host name on the system menu button, and a message on the lock screen.\n\nThe context button can function both as a toggle from desktop to apps, windows, and back to desktop when clicked, and as an app menu when activated using the secondary mouse button, long-press, or a keyboard shortcut.",
   "url": "https://github.com/erikis/context-window-title",
   "settings-schema": "org.gnome.shell.extensions.context-window-title",
   "gettext-domain": "context-window-title@erikis.github.io",

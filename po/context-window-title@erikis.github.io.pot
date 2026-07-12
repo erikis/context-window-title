@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: context-window-title@erikis.github.io\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-11 10:33+0200\n"
+"POT-Creation-Date: 2026-07-11 12:33+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -112,179 +112,187 @@ msgstr ""
 msgid "Context Icon [empty for automatic (default, currently !CURRENT!)]"
 msgstr ""
 
-#: resources/ui/advanced.ui:229 resources/ui/panel.ui:69
+#: resources/ui/advanced.ui:226
+msgid "Keyboard Shortcut"
+msgstr ""
+
+#: resources/ui/advanced.ui:227
+msgid "Toggles the app menu (none by default; recommendation: Super+C)"
+msgstr ""
+
+#: resources/ui/advanced.ui:242 resources/ui/panel.ui:69
 msgid "Custom Clock"
 msgstr ""
 
-#: resources/ui/advanced.ui:233
+#: resources/ui/advanced.ui:246
 msgid "Year"
 msgstr ""
 
-#: resources/ui/advanced.ui:246
+#: resources/ui/advanced.ui:259
 msgid "Month"
 msgstr ""
 
-#: resources/ui/advanced.ui:259 resources/ui/panel.ui:79
+#: resources/ui/advanced.ui:272 resources/ui/panel.ui:79
 msgid "Weekday"
 msgstr ""
 
-#: resources/ui/advanced.ui:272
+#: resources/ui/advanced.ui:285
 msgid "Hour"
 msgstr ""
 
-#: resources/ui/advanced.ui:285 resources/ui/advanced.ui:485
+#: resources/ui/advanced.ui:298 resources/ui/advanced.ui:498
 msgid "Second"
 msgstr ""
 
-#: resources/ui/advanced.ui:298
+#: resources/ui/advanced.ui:311
 msgid "Extra"
 msgstr ""
 
-#: resources/ui/advanced.ui:299
+#: resources/ui/advanced.ui:312
 msgid "Show time zone and change locale options"
 msgstr ""
 
-#: resources/ui/advanced.ui:303
+#: resources/ui/advanced.ui:316
 msgid "Time Zone Name"
 msgstr ""
 
-#: resources/ui/advanced.ui:316
+#: resources/ui/advanced.ui:329
 msgid ""
 "Time Zone, e.g., America/Los_Angeles (tzdb name) or +08:00 [empty for "
 "automatic (default)]"
 msgstr ""
 
-#: resources/ui/advanced.ui:322
+#: resources/ui/advanced.ui:335
 msgid "Calendar"
 msgstr ""
 
-#: resources/ui/advanced.ui:335
+#: resources/ui/advanced.ui:348
 msgid "Numeral System"
 msgstr ""
 
-#: resources/ui/advanced.ui:348
+#: resources/ui/advanced.ui:361
 msgid "Time Locale [empty for automatic (default, currently !CURRENT!)]"
 msgstr ""
 
-#: resources/ui/advanced.ui:360 resources/ui/panel.ui:118
+#: resources/ui/advanced.ui:373 resources/ui/panel.ui:118
 msgid "User/Host Name"
 msgstr ""
 
-#: resources/ui/advanced.ui:364
+#: resources/ui/advanced.ui:377
 msgid "Hide on lock screen"
 msgstr ""
 
-#: resources/ui/advanced.ui:380 resources/ui/lock.ui:10
+#: resources/ui/advanced.ui:393 resources/ui/lock.ui:10
 msgid "Lock Screen Message"
 msgstr ""
 
-#: resources/ui/advanced.ui:384
+#: resources/ui/advanced.ui:397
 msgid "Icon [empty for automatic (default, currently !CURRENT!)]"
 msgstr ""
 
-#: resources/ui/advanced.ui:393
+#: resources/ui/advanced.ui:406
 msgid "Other"
 msgstr ""
 
-#: resources/ui/advanced.ui:400
+#: resources/ui/advanced.ui:413
 msgid "About !NAME!"
 msgstr ""
 
-#: resources/ui/advanced.ui:409
+#: resources/ui/advanced.ui:422
 msgid "Allow Logging"
 msgstr ""
 
-#: resources/ui/advanced.ui:410
+#: resources/ui/advanced.ui:423
 msgid "Allow writing to the log for debugging"
 msgstr ""
 
-#: resources/ui/advanced.ui:422
+#: resources/ui/advanced.ui:435
 msgid "Reset Preferences"
 msgstr ""
 
-#: resources/ui/advanced.ui:423
+#: resources/ui/advanced.ui:436
 msgid "This is irreversible"
 msgstr ""
 
-#: resources/ui/advanced.ui:430
+#: resources/ui/advanced.ui:443
 msgid "Reset Advanced Preferences"
 msgstr ""
 
-#: resources/ui/advanced.ui:441
+#: resources/ui/advanced.ui:454
 msgid "Reset All Preferences"
 msgstr ""
 
-#: resources/ui/advanced.ui:456 resources/ui/advanced.ui:484
-#: resources/ui/advanced.ui:493
+#: resources/ui/advanced.ui:469 resources/ui/advanced.ui:497
+#: resources/ui/advanced.ui:506
 msgid "Off"
 msgstr ""
 
-#: resources/ui/advanced.ui:457 resources/ui/advanced.ui:494
+#: resources/ui/advanced.ui:470 resources/ui/advanced.ui:507
 msgid "On"
 msgstr ""
 
-#: resources/ui/advanced.ui:458
+#: resources/ui/advanced.ui:471
 msgid "On with era"
 msgstr ""
 
-#: resources/ui/advanced.ui:463 resources/ui/advanced.ui:470
+#: resources/ui/advanced.ui:476 resources/ui/advanced.ui:483
 msgid "Short"
 msgstr ""
 
-#: resources/ui/advanced.ui:464 resources/ui/advanced.ui:471
+#: resources/ui/advanced.ui:477 resources/ui/advanced.ui:484
 msgid "Long"
 msgstr ""
 
-#: resources/ui/advanced.ui:465
+#: resources/ui/advanced.ui:478
 msgid "Numeric"
 msgstr ""
 
-#: resources/ui/advanced.ui:472
+#: resources/ui/advanced.ui:485
 msgid "Narrow"
 msgstr ""
 
-#: resources/ui/advanced.ui:477 resources/ui/advanced.ui:501
-#: resources/ui/advanced.ui:506
+#: resources/ui/advanced.ui:490 resources/ui/advanced.ui:514
+#: resources/ui/advanced.ui:519
 msgid "Default"
 msgstr ""
 
-#: resources/ui/advanced.ui:478
+#: resources/ui/advanced.ui:491
 msgid "12h"
 msgstr ""
 
-#: resources/ui/advanced.ui:479
+#: resources/ui/advanced.ui:492
 msgid "24h"
 msgstr ""
 
-#: resources/ui/advanced.ui:486
+#: resources/ui/advanced.ui:499
 msgid "1/10 Second"
 msgstr ""
 
-#: resources/ui/advanced.ui:487
+#: resources/ui/advanced.ui:500
 msgid "1/100 Second"
 msgstr ""
 
-#: resources/ui/advanced.ui:488
+#: resources/ui/advanced.ui:501
 msgid "1/1000 Second"
 msgstr ""
 
-#: resources/ui/advanced.ui:495
+#: resources/ui/advanced.ui:508
 msgid "On with offset only"
 msgstr ""
 
-#: resources/ui/advanced.ui:496
+#: resources/ui/advanced.ui:509
 msgid "On with long offset only"
 msgstr ""
 
-#: resources/ui/advanced.ui:511
+#: resources/ui/advanced.ui:524
 msgid "Don’t hide"
 msgstr ""
 
-#: resources/ui/advanced.ui:512
+#: resources/ui/advanced.ui:525
 msgid "Hide"
 msgstr ""
 
-#: resources/ui/advanced.ui:513
+#: resources/ui/advanced.ui:526
 msgid "Hide user"
 msgstr ""
 
@@ -399,9 +407,13 @@ msgstr ""
 msgid "TRANSLATOR"
 msgstr ""
 
-#: src/preferences/advanced.js:70
+#: src/preferences/advanced.js:74
 #, javascript-format
 msgid "!VALUE! for symbolic icon style and !CURRENT!% saturation"
+msgstr ""
+
+#: src/preferences/advanced.js:234
+msgid "Press key… (Esc or click to cancel, Backspace to remove)"
 msgstr ""
 
 #. Keep English version followed by slash, e.g.,

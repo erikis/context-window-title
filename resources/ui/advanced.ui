@@ -221,6 +221,19 @@
           </object>
         </child>
         
+        <child>
+          <object class="AdwActionRow" id="button_menu_keybinding">
+            <property name="title" translatable="yes">Keyboard Shortcut</property>
+            <property name="subtitle" translatable="yes">Toggles the app menu (none by default; recommendation: Super+C)</property>
+            <property name="activatable-widget">button_menu_keybinding_shortcut</property>
+            <child>
+              <object class="GtkShortcutLabel" id="button_menu_keybinding_shortcut">
+                <property name="valign">center</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        
       </object>
     </child>
     

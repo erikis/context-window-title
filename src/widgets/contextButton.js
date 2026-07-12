@@ -330,7 +330,8 @@ export default class ContextButton extends PanelMenu.Button {
                 this._connectedOverview = null;
             }
         }
-        this._focusWindow = focusWindow;
+        this._focusWindow =
+            this._isTitleButton || this._isWindowButton ? focusWindow : null;
 
         if (this.#updatePrepare(isInit)) {
             this._isUpdating = true;
@@ -352,11 +353,7 @@ export default class ContextButton extends PanelMenu.Button {
         }
 
         let focusApp = null;
-        if (
-            this._focusWindow !== null &&
-            this._newIcon !== null &&
-            (this._isTitleButton || this._isWindowButton)
-        ) {
+        if (this._focusWindow !== null && this._newIcon !== null) {
             focusApp = Shell.WindowTracker.get_default().get_window_app(
                 this._focusWindow
             );
@@ -364,9 +361,7 @@ export default class ContextButton extends PanelMenu.Button {
                 this._newIcon.set_gicon(focusApp.get_icon());
             }
         }
-        this._appMenu?.setApp(
-            this._isTitleButton || this._isWindowButton ? focusApp : null
-        );
+        this._appMenu?.setApp(focusApp);
         this._focusApp = focusApp;
 
         return this._newIcon !== null;
@@ -422,10 +417,7 @@ export default class ContextButton extends PanelMenu.Button {
             this.#update(false, true);
         } else {
             this._updateTitle();
-            if (
-                this._focusWindow !== null &&
-                (this._isTitleButton || this._isWindowButton)
-            ) {
+            if (this._focusWindow !== null) {
                 this._focusWindow.connectObject(
                     'notify::title',
                     () => this._updateTitle(),
@@ -598,6 +590,16 @@ export default class ContextButton extends PanelMenu.Button {
         }
     }
 
+    _toggleMenu(isFocused = false) {
+        const appMenu = this._appMenu;
+        if (appMenu && this._focusApp) {
+            appMenu.toggle();
+            if (isFocused && appMenu.isOpen) {
+                appMenu.firstMenuItem.active = true;
+            }
+        }
+    }
+
     _onPress(event) {
         const button =
             event.type() === Clutter.EventType.TOUCH_BEGIN
@@ -645,19 +647,19 @@ export default class ContextButton extends PanelMenu.Button {
         switch (button) {
             case Clutter.BUTTON_PRIMARY:
             case Clutter.BUTTON_SECONDARY:
-                this._appMenu?.toggle();
+                this._toggleMenu();
                 return Clutter.EVENT_STOP;
             case Clutter.BUTTON_MIDDLE:
                 if (this._isWindowButton) {
                     return Clutter.EVENT_PROPAGATE;
                 } else if (this._isTitleButton) {
-                    this._appMenu?.toggle();
+                    this._toggleMenu();
                     return Clutter.EVENT_STOP;
                 }
                 return Clutter.EVENT_PROPAGATE;
             default:
                 if (!this._isContextButton) {
-                    this._appMenu?.toggle();
+                    this._toggleMenu();
                     return Clutter.EVENT_STOP;
                 }
                 return Clutter.EVENT_PROPAGATE;

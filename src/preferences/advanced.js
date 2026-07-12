@@ -1,7 +1,9 @@
 import Adw from 'gi://Adw';
+import Gdk from 'gi://Gdk';
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
+import Gtk from 'gi://Gtk';
 
 import { gettext as _ } from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
@@ -28,6 +30,8 @@ export default class AdvancedPreferences extends Adw.PreferencesPage {
                     'button_padding_right',
                     'button_icon_size',
                     'button_context_icon',
+                    'button_menu_keybinding',
+                    'button_menu_keybinding_shortcut',
                     'clock_year',
                     'clock_month',
                     'clock_weekday',
@@ -218,6 +222,73 @@ export default class AdvancedPreferences extends Adw.PreferencesPage {
             Gio.SettingsBindFlags.DEFAULT
         );
 
+        const keybindingUpdate = (ctx) => {
+            const keybindings = ctx.settings.get_strv(ctx.keyName);
+            ctx.shortcut.set_accelerator(
+                keybindings.length > 0 ? keybindings[0] : ''
+            );
+        };
+        const keybindingActivate = (ctx) => {
+            ctx.isCapturing = !ctx.isCapturing;
+            const subtitle = _(
+                'Press key… (Esc or click to cancel, Backspace to remove)'
+            );
+            ctx.row.set_subtitle(
+                ctx.isCapturing ? subtitle : ctx.regularSubtitle
+            );
+        };
+        const keybindingCapture = (ctx, keyval, keycode, state) => {
+            if (!ctx.isCapturing) {
+                return Gdk.EVENT_PROPAGATE;
+            }
+            const mods = state & Gtk.accelerator_get_default_mod_mask();
+            if (
+                mods === 0 &&
+                (keyval === Gdk.KEY_Escape || keyval === Gdk.KEY_BackSpace)
+            ) {
+                if (keyval === Gdk.KEY_BackSpace) {
+                    ctx.settings.set_strv(ctx.keyName, []);
+                }
+                ctx.isCapturing = false;
+            } else if (Gtk.accelerator_valid(keyval, mods)) {
+                const keybinding = Gtk.accelerator_name_with_keycode(
+                    null, // display
+                    keyval, // mapped key value, e.g., depending on current layout
+                    keycode, // physical key on the keyboard
+                    mods // state of modifier keys
+                );
+                ctx.settings.set_strv(ctx.keyName, [keybinding]);
+                ctx.isCapturing = false;
+            }
+            if (!ctx.isCapturing) {
+                ctx.row.set_subtitle(ctx.regularSubtitle);
+            }
+            return Gdk.EVENT_STOP;
+        };
+        const menuKeybindingRow = this._button_menu_keybinding;
+        const menuKeybindingShortcut = this._button_menu_keybinding_shortcut;
+        const menuKeybindingContext = {
+            settings,
+            keyName: 'context-window-title-menu-keybinding',
+            row: menuKeybindingRow,
+            shortcut: menuKeybindingShortcut,
+            regularSubtitle: menuKeybindingRow.get_subtitle(),
+        };
+        keybindingUpdate(menuKeybindingContext);
+        settings.connect(`changed::${menuKeybindingContext.keyName}`, () => {
+            keybindingUpdate(menuKeybindingContext);
+        });
+        menuKeybindingRow.connect('activated', () => {
+            keybindingActivate(menuKeybindingContext);
+        });
+        const menuKeybindingController = new Gtk.EventControllerKey();
+        menuKeybindingController.connect(
+            'key-pressed',
+            (source, keyval, keycode, state) =>
+                keybindingCapture(menuKeybindingContext, keyval, keycode, state)
+        );
+        menuKeybindingRow.add_controller(menuKeybindingController);
+
         settings.bind(
             'clock-year',
             this._clock_year,
@@ -267,53 +338,58 @@ export default class AdvancedPreferences extends Adw.PreferencesPage {
             Gio.SettingsBindFlags.DEFAULT
         );
 
-        const calendarDropdown = this._clock_calendar;
-        const calendarModel = calendarDropdown.model; // a GtkStringList in advanced.ui
-        const selectedCalendar = settings.get_string('clock-calendar');
-        let calendarIndex = 0;
-        Intl.supportedValuesOf('calendar').forEach((calendar, index) => {
-            calendarModel.append(calendar);
-            if (calendar === selectedCalendar) {
-                calendarIndex = index + 1;
-            }
-        });
-        if (selectedCalendar.length > 0 && calendarIndex === 0) {
-            settings.set_string('clock-calendar', ''); // Unknown calendar - set to default
-        }
-        calendarDropdown.set_selected(calendarIndex);
-        calendarDropdown.connect('notify::selected-item', () => {
-            settings.set_string(
-                'clock-calendar',
-                calendarDropdown.get_selected() === 0
-                    ? ''
-                    : calendarDropdown.get_selected_item().get_string()
-            );
-        });
-
-        const numberingDropdown = this._clock_numbering;
-        const numberingModel = numberingDropdown.model; // a GtkStringList in advanced.ui
-        const selectedNumbering = settings.get_string('clock-numbering');
-        let numberingIndex = 0;
-        Intl.supportedValuesOf('numberingSystem').forEach(
-            (numbering, index) => {
-                numberingModel.append(numbering);
-                if (numbering === selectedNumbering) {
-                    numberingIndex = index + 1;
+        const setUpIntlValuesDropdown = (dropdown, valuesOf, keyName) => {
+            const model = dropdown.model; // GtkStringList
+            Intl.supportedValuesOf(valuesOf).forEach((value) => {
+                model.append(value);
+            });
+            let isUpdating = false;
+            const doUpdate = () => {
+                isUpdating = true;
+                const selected = settings.get_string(keyName);
+                const count = model.n_items;
+                let index = 0;
+                for (let i = 0; i < count; i++) {
+                    if (model.get_string(i) === selected) {
+                        index = i;
+                        break;
+                    }
                 }
-            }
+                if (selected.length > 0 && index === 0) {
+                    settings.set_string(keyName, ''); // Unknown value - set to default
+                }
+                dropdown.set_selected(index);
+                isUpdating = false;
+            };
+            doUpdate();
+            settings.connect(`changed::${keyName}`, () => {
+                if (isUpdating) {
+                    return;
+                }
+                doUpdate();
+            });
+            dropdown.connect('notify::selected-item', () => {
+                if (isUpdating) {
+                    return;
+                }
+                settings.set_string(
+                    keyName,
+                    dropdown.get_selected() === 0
+                        ? ''
+                        : dropdown.get_selected_item().get_string()
+                );
+            });
+        };
+        setUpIntlValuesDropdown(
+            this._clock_calendar,
+            'calendar',
+            'clock-calendar'
         );
-        if (selectedNumbering.length > 0 && numberingIndex === 0) {
-            settings.set_string('clock-numbering', ''); // Unknown numbering - set to default
-        }
-        numberingDropdown.set_selected(numberingIndex);
-        numberingDropdown.connect('notify::selected-item', () => {
-            settings.set_string(
-                'clock-numbering',
-                numberingDropdown.get_selected() === 0
-                    ? ''
-                    : numberingDropdown.get_selected_item().get_string()
-            );
-        });
+        setUpIntlValuesDropdown(
+            this._clock_numbering,
+            'numberingSystem',
+            'clock-numbering'
+        );
 
         this._clock_locale.set_title(
             this._clock_locale
@@ -357,19 +433,16 @@ export default class AdvancedPreferences extends Adw.PreferencesPage {
             Gio.SettingsBindFlags.DEFAULT
         );
 
-        const ui = { calendarDropdown, numberingDropdown };
         this._about.connect('clicked', () =>
             createAboutWindow({ metadata, window }).show()
         );
         this._reset_advanced.connect('clicked', () =>
-            this._reset(settings, false, ui)
+            this._reset(settings, false)
         );
-        this._reset_all.connect('clicked', () =>
-            this._reset(settings, true, ui)
-        );
+        this._reset_all.connect('clicked', () => this._reset(settings, true));
     }
 
-    _reset(settings, isAll, ui) {
+    _reset(settings, isAll) {
         let keysOther = [
             'activate-button',
             'enable-context',
@@ -399,6 +472,7 @@ export default class AdvancedPreferences extends Adw.PreferencesPage {
             'button-padding-right',
             'button-icon-size',
             'button-context-icon',
+            'context-window-title-menu-keybinding',
             'clock-year',
             'clock-month',
             'clock-weekday',
@@ -406,6 +480,8 @@ export default class AdvancedPreferences extends Adw.PreferencesPage {
             'clock-second',
             'clock-time-zone-name',
             'clock-time-zone',
+            'clock-calendar',
+            'clock-numbering',
             'clock-locale',
             'name-lock-hide',
             'message-source-icon',
@@ -414,10 +490,6 @@ export default class AdvancedPreferences extends Adw.PreferencesPage {
         (isAll ? keysOther.concat(keysAdvanced) : keysAdvanced).forEach((key) =>
             settings.reset(key)
         );
-
-        // Update those without bindings via UI objects instead
-        ui.calendarDropdown.set_selected(0);
-        ui.numberingDropdown.set_selected(0);
 
         // Hide the reset buttons to indicate that something happened
         this._reset_row.set_expanded(false);

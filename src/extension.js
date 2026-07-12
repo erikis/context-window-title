@@ -17,6 +17,8 @@
  */
 import Clutter from 'gi://Clutter';
 import GObject from 'gi://GObject';
+import Meta from 'gi://Meta';
+import Shell from 'gi://Shell';
 
 import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
@@ -35,6 +37,7 @@ export default class ContextExtension extends Extension {
     #sessionMode = null;
     #isLogging = false;
     #contextButton = null;
+    #menuKeybinding = null;
     #clockLabel = null;
     #originalClockDisplay = null;
     #nameIndicator = null;
@@ -50,6 +53,7 @@ export default class ContextExtension extends Extension {
     enable() {
         if (!this.#settings) {
             this.#settings = this.getSettings();
+            // Also set in #onSettings() but do it early here in case something is logged
             this.#isLogging = this.#settings.get_boolean('allow-log');
         }
         if (!this.#defaults) {
@@ -78,10 +82,15 @@ export default class ContextExtension extends Extension {
         // The custom clock (clockLabel) also remains while on lock screen but updates are paused
         // as the clock is not visible at that time.
         // The context button (contextButton) is destroyed and not visible on the lock screen.
+        // No keybindings are in use on the lock screen.
 
         this.#settings?.disconnectObject(this);
         Main.sessionMode.disconnectObject(this);
 
+        if (this.#menuKeybinding) {
+            Main.wm.removeKeybinding(this.#menuKeybinding);
+            this.#menuKeybinding = null;
+        }
         this.#contextButton?.destroy();
         this.#contextButton = null;
 
@@ -109,17 +118,12 @@ export default class ContextExtension extends Extension {
 
         // User session mode (or, in theory, GDM session mode)
         if (mode === 'user' /*|| mode === 'gdm'*/) {
-            try {
-                this.#clockLabel?._updateStart();
-            } catch (ex) {
-                this._log(
-                    console.error,
-                    `${NAME} clockLabel _updateStart on sessionMode`,
-                    ex
-                );
-            }
             this.#onSettings(); // This will instantiate the context button, etc.
         } else {
+            if (this.#menuKeybinding) {
+                Main.wm.removeKeybinding(this.#menuKeybinding);
+                this.#menuKeybinding = null;
+            }
             this.#contextButton?.destroy();
             this.#contextButton = null;
             try {
@@ -136,22 +140,13 @@ export default class ContextExtension extends Extension {
                     ex
                 );
             }
-            try {
-                this.#clockLabel?._updateStop();
-            } catch (ex) {
-                this._log(
-                    console.error,
-                    `${NAME} clockLabel _updateStop on sessionMode`,
-                    ex
-                );
-            }
         }
 
         // Unlock dialog session mode
         if (mode === 'unlock-dialog') {
             this.#onSessionModeUnlockDialog();
         } else {
-            // As the unlock screen is closed the message should have been destroyed
+            // As the lock screen is closed the message should have been destroyed
             this.#lockMessage = null;
         }
     }
@@ -196,6 +191,9 @@ export default class ContextExtension extends Extension {
     }
 
     #onSettings() {
+        // Already set in enable() but in case the value was changed
+        this.#isLogging = this.#settings.get_boolean('allow-log');
+
         // Break up in handlers per widget and don't let errors in one break the others
 
         // Context button
@@ -236,6 +234,10 @@ export default class ContextExtension extends Extension {
                 isAdding = true;
             }
         } else {
+            if (this.#menuKeybinding) {
+                Main.wm.removeKeybinding(this.#menuKeybinding);
+                this.#menuKeybinding = null;
+            }
             this.#contextButton?.destroy();
             this.#contextButton = null;
         }
@@ -398,6 +400,26 @@ export default class ContextExtension extends Extension {
                 -1,
                 'left'
             );
+            if (!this.#menuKeybinding) {
+                // Keybinding name in the schema
+                const keybindingName = 'context-window-title-menu-keybinding';
+                const keybindingAction = Main.wm.addKeybinding(
+                    keybindingName,
+                    this.#settings, // Current keybinding is read from the settings
+                    Meta.KeyBindingFlags.IGNORE_AUTOREPEAT,
+                    Shell.ActionMode.NORMAL |
+                        Shell.ActionMode.OVERVIEW |
+                        Shell.ActionMode.POPUP,
+                    () => {
+                        // When opening the menu, automatically focus first menu item
+                        this.#contextButton?._toggleMenu(true);
+                    }
+                );
+                if (keybindingAction !== Meta.KeyBindingAction.NONE) {
+                    // Save the keybinding name for later removal
+                    this.#menuKeybinding = keybindingName;
+                }
+            }
         }
         if (isAdding || isModified) {
             // Run _update() after adding to avoid "not on stage" errors
@@ -448,8 +470,6 @@ export default class ContextExtension extends Extension {
         }
     }
 
-    // Break up into multiple, chained functions for readability, isolation,
-    // and keeping ESLint happy
     #onSettingsClockConfigure({
         isAdding,
         isModified,
@@ -614,9 +634,7 @@ export default class ContextExtension extends Extension {
             this.#clockLabel._updateFormat();
         }
         if (isAdding) {
-            if (this.#sessionMode !== 'unlock-dialog') {
-                this.#clockLabel._updateStart();
-            }
+            this.#clockLabel._updateStart();
             const dateMenu = Main.panel.statusArea.dateMenu;
             this.#originalClockDisplay = dateMenu._clockDisplay;
             this.#originalClockDisplay?.hide();
@@ -627,7 +645,7 @@ export default class ContextExtension extends Extension {
                 dateMenu._clock,
                 this.#originalClockDisplay
             );
-        } else if (isModified && this.#sessionMode !== 'unlock-dialog') {
+        } else if (isModified) {
             this.#clockLabel._updateStop();
             this.#clockLabel._updateStart();
         }
