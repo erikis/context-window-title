@@ -118,15 +118,6 @@ export default class ContextExtension extends Extension {
 
         // User session mode (or, in theory, GDM session mode)
         if (mode === 'user' /*|| mode === 'gdm'*/) {
-            try {
-                this.#clockLabel?._updateStart();
-            } catch (ex) {
-                this._log(
-                    console.error,
-                    `${NAME} clockLabel _updateStart on sessionMode`,
-                    ex
-                );
-            }
             this.#onSettings(); // This will instantiate the context button, etc.
         } else {
             if (this.#menuKeybinding) {
@@ -146,15 +137,6 @@ export default class ContextExtension extends Extension {
                 this._log(
                     console.error,
                     `${NAME} nameIndicator _update on sessionMode`,
-                    ex
-                );
-            }
-            try {
-                this.#clockLabel?._updateStop();
-            } catch (ex) {
-                this._log(
-                    console.error,
-                    `${NAME} clockLabel _updateStop on sessionMode`,
                     ex
                 );
             }
@@ -652,9 +634,7 @@ export default class ContextExtension extends Extension {
             this.#clockLabel._updateFormat();
         }
         if (isAdding) {
-            if (this.#sessionMode !== 'unlock-dialog') {
-                this.#clockLabel._updateStart();
-            }
+            this.#clockLabel._updateStart();
             const dateMenu = Main.panel.statusArea.dateMenu;
             this.#originalClockDisplay = dateMenu._clockDisplay;
             this.#originalClockDisplay?.hide();
@@ -665,7 +645,7 @@ export default class ContextExtension extends Extension {
                 dateMenu._clock,
                 this.#originalClockDisplay
             );
-        } else if (isModified && this.#sessionMode !== 'unlock-dialog') {
+        } else if (isModified) {
             this.#clockLabel._updateStop();
             this.#clockLabel._updateStart();
         }

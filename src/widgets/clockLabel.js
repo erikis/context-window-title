@@ -4,6 +4,8 @@ import GObject from 'gi://GObject';
 import Pango from 'gi://Pango';
 import St from 'gi://St';
 
+import ContextButton from './contextButton.js';
+
 export default class ClockLabel extends St.Label {
     static {
         GObject.registerClass(this);
@@ -16,6 +18,7 @@ export default class ClockLabel extends St.Label {
         this.clutter_text.y_align = Clutter.ActorAlign.CENTER;
         this.clutter_text.ellipsize = Pango.EllipsizeMode.NONE;
 
+        this._isStopped = true;
         this._locale = undefined; // Use runtime's default locale
         this._options = {};
         this._second = 0; // 0 = showing second is off
@@ -49,7 +52,9 @@ export default class ClockLabel extends St.Label {
                 'notify::timezone',
                 () => {
                     this._updateFormat();
-                    this.#updateTime();
+                    if (this.mapped) {
+                        this.#updateTime();
+                    }
                 },
                 this
             );
@@ -64,7 +69,7 @@ export default class ClockLabel extends St.Label {
             this._connectedClockDisplay?.connectObject(
                 'notify::text',
                 () => {
-                    // Only call _updateTime() if we're actually on a new second/minute
+                    // Only call #updateTime() if we're actually on a new second/minute
                     let nowSeconds = Date.now(); // Get epoch
                     nowSeconds -= nowSeconds % 1000; // Completed seconds only (in ms)
                     const second = this._second;
@@ -75,7 +80,9 @@ export default class ClockLabel extends St.Label {
                                 lastSeconds - (lastSeconds % 60))
                     ) {
                         lastSeconds = nowSeconds;
-                        this.#updateTime(nowSeconds);
+                        if (this.mapped) {
+                            this.#updateTime(nowSeconds);
+                        }
                     }
                 },
                 this
@@ -144,8 +151,10 @@ export default class ClockLabel extends St.Label {
     }
 
     _updateStart() {
+        this._isStopped = false;
         // Only start a new update timeout if there is no existing one
-        if (this._t === null) {
+        // Also only start timeout if currently mapped, otherwise postpone
+        if (this._t === null && this.mapped) {
             // Function to use for calculating how many ms until next update
             let n = null;
             switch (this._second) {
@@ -207,7 +216,10 @@ export default class ClockLabel extends St.Label {
         }
     }
 
-    _updateStop() {
+    _updateStop(isTemporary = false) {
+        if (!isTemporary) {
+            this._isStopped = true;
+        }
         if (this._t !== null) {
             GLib.source_remove(this._t);
             this._t = null;
@@ -215,9 +227,21 @@ export default class ClockLabel extends St.Label {
         this._u = false; // Clear updated state
     }
 
-    vfunc_unrealize() {
-        // Avoid set_text() resulting in a "has been already disposed" error
-        this._updateStop(); // Could be restarted if for locked screen and not shutdown
-        super.vfunc_unrealize();
+    _superVFunc() {
+        // Borrow method from ContextButton
+        return ContextButton.prototype._superVFunc.apply(this, arguments);
+    }
+
+    vfunc_unmap() {
+        // E.g., if on lock screen, shutdown, or another extension is moving things
+        this._updateStop(true); // Stop temporarily so that 'map' can restart
+        this._superVFunc('vfunc_unmap');
+    }
+
+    vfunc_map() {
+        this._superVFunc('vfunc_map');
+        if (!this._isStopped) {
+            this._updateStart();
+        }
     }
 }
