@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: context-window-title@erikis.github.io\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-11 12:33+0200\n"
+"POT-Creation-Date: 2026-07-12 19:34+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -337,7 +337,8 @@ msgstr ""
 #: resources/ui/panel.ui:28
 msgid ""
 "Click button to toggle from desktop to apps, windows, and back to desktop; "
-"scroll up/down/left/right or back/forward click to switch workspaces"
+"scroll up/down/left/right or back/forward click to switch workspaces; in the "
+"overview, scroll up/down to show apps/windows"
 msgstr ""
 
 #: resources/ui/panel.ui:40
@@ -347,7 +348,7 @@ msgstr ""
 #: resources/ui/panel.ui:41
 msgid ""
 "Show window icon; (right/secondary/long-press) click for app menu; middle "
-"click to close window; scroll up/down to maximize/unmaximize"
+"click to close window; on the desktop, scroll up/down to maximize/unmaximize"
 msgstr ""
 
 #: resources/ui/panel.ui:54

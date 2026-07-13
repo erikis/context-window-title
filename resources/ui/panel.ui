@@ -25,7 +25,7 @@
         <child>
           <object class="AdwActionRow">
             <property name="title" translatable="yes">Context</property>
-            <property name="subtitle" translatable="yes">Click button to toggle from desktop to apps, windows, and back to desktop; scroll up/down/left/right or back/forward click to switch workspaces</property>
+            <property name="subtitle" translatable="yes">Click button to toggle from desktop to apps, windows, and back to desktop; scroll up/down/left/right or back/forward click to switch workspaces; in the overview, scroll up/down to show apps/windows</property>
             <property name="activatable-widget">context_button</property>
             <child>
               <object class="GtkSwitch" id="context_button">
@@ -38,7 +38,7 @@
         <child>
           <object class="AdwActionRow">
             <property name="title" translatable="yes">Window</property>
-            <property name="subtitle" translatable="yes">Show window icon; (right/secondary/long-press) click for app menu; middle click to close window; scroll up/down to maximize/unmaximize</property>
+            <property name="subtitle" translatable="yes">Show window icon; (right/secondary/long-press) click for app menu; middle click to close window; on the desktop, scroll up/down to maximize/unmaximize</property>
             <property name="activatable-widget">window_button</property>
             <child>
               <object class="GtkSwitch" id="window_button">
