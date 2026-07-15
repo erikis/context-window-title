@@ -275,8 +275,17 @@ export default class AdvancedPreferences extends Adw.PreferencesPage {
             regularSubtitle: menuKeybindingRow.get_subtitle(),
         };
         keybindingUpdate(menuKeybindingContext);
-        settings.connect(`changed::${menuKeybindingContext.keyName}`, () => {
-            keybindingUpdate(menuKeybindingContext);
+        let menuKeybindingSignal = settings.connect(
+            `changed::${menuKeybindingContext.keyName}`,
+            () => {
+                keybindingUpdate(menuKeybindingContext);
+            }
+        );
+        window.connect('close-request', () => {
+            if (menuKeybindingSignal !== null) {
+                settings.disconnect(menuKeybindingSignal);
+                menuKeybindingSignal = null;
+            }
         });
         menuKeybindingRow.connect('activated', () => {
             keybindingActivate(menuKeybindingContext);
@@ -362,11 +371,17 @@ export default class AdvancedPreferences extends Adw.PreferencesPage {
                 isUpdating = false;
             };
             doUpdate();
-            settings.connect(`changed::${keyName}`, () => {
+            let changedSignal = settings.connect(`changed::${keyName}`, () => {
                 if (isUpdating) {
                     return;
                 }
                 doUpdate();
+            });
+            window.connect('close-request', () => {
+                if (changedSignal !== null) {
+                    settings.disconnect(changedSignal);
+                    changedSignal = null;
+                }
             });
             dropdown.connect('notify::selected-item', () => {
                 if (isUpdating) {

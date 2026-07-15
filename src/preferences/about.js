@@ -44,5 +44,7 @@ export function createAboutWindow({ metadata, window }) {
 export function addIconsToSearchPath(window, baseDir) {
     const iconTheme = Gtk.IconTheme.get_for_display(window.get_display());
     const iconsDir = baseDir.get_child('icons').get_path();
-    iconTheme.add_search_path(iconsDir);
+    if (iconTheme.get_search_path().indexOf(iconsDir) === -1) {
+        iconTheme.add_search_path(iconsDir);
+    }
 }
