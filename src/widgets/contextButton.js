@@ -368,37 +368,30 @@ export default class ContextButton extends PanelMenu.Button {
         }
 
         const focusWindow = global.display.get_focus_window();
-        if (
-            !isInit &&
-            focusWindow === null &&
-            this._isX11 &&
-            this._appMenu.isOpen
-        ) {
-            // On X11, when opening panel menus, the window loses focus
-            return;
-        }
-        this._windowMenu?.removeAll();
-        if (this._focusWindow) {
-            if (isInit || focusWindow !== this._focusWindow) {
-                this._focusWindow.disconnectObject(this);
-            } else {
+        if (!isInit) {
+            if (focusWindow === null && this._isX11 && this._appMenu?.isOpen) {
+                // On X11, when opening panel menus, the window loses focus
                 return;
             }
-        } else if (this._isContextButton) {
-            if (this._connectedShowAppsButton) {
-                // Used for 'notify::checked'
-                this._connectedShowAppsButton.disconnectObject(this);
-                this._connectedShowAppsButton = null;
-            }
-            if (this._connectedOverview) {
-                // Used for 'hiding' and 'showing'
-                this._connectedOverview.disconnectObject(this);
-                this._connectedOverview = null;
+            if (focusWindow && focusWindow === this._focusWindow) {
+                // When focus returns to same window (probably X11)
+                return;
             }
         }
+
+        // Used for 'notify::checked'
+        this._connectedShowAppsButton?.disconnectObject(this);
+        this._connectedShowAppsButton = null;
+        // Used for 'hiding' and 'showing'
+        this._connectedOverview?.disconnectObject(this);
+        this._connectedOverview = null;
+        // Used for 'notify::title'
+        this._focusWindow?.disconnectObject(this);
+        // Only set _focusWindow to non-null if window/title functionality enabled
         this._focusWindow =
             this._isTitleButton || this._isWindowButton ? focusWindow : null;
 
+        this._windowMenu?.removeAll();
         if (this.#updatePrepare(isInit)) {
             this._isUpdating = true;
             this.#updateOldOut(isQuick);
