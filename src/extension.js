@@ -397,6 +397,11 @@ export default class ContextExtension extends Extension {
             this.#contextButton._contextIcon = contextIcon;
             this.#contextButton._updateContextIcon();
         }
+        const iconChange = this.#settings.get_int('button-icon-change');
+        if (this.#contextButton._iconChange !== iconChange) {
+            this.#contextButton._iconChange = iconChange;
+            isModified = true;
+        }
         this.#onSettingsContextAddOrModify({ isAdding, isModified });
     }
 

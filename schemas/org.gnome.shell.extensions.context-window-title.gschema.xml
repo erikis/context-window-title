@@ -67,6 +67,11 @@
       <description>Button icon when on desktop without focused window</description>
       <default>""</default>
     </key>
+    <key name="button-icon-change" type="i">
+      <summary>Button icon change</summary>
+      <description>Whether/how the icon changes</description>
+      <default>0</default>
+    </key>
     <key name="context-window-title-menu-keybinding" type="as">
       <summary>Button menu keybinding</summary>
       <description>Menu keybinding with a globally unique keybinding name</description>

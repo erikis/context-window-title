@@ -222,6 +222,20 @@
         </child>
         
         <child>
+          <object class="AdwActionRow">
+            <property name="title" translatable="yes">Icon Change</property>
+            <property name="subtitle" translatable="yes">Whether the icon changes (dynamic by default)</property>
+            <property name="activatable-widget">button_icon_change</property>
+            <child>
+              <object class="GtkDropDown" id="button_icon_change">
+                <property name="valign">center</property>
+                <property name="model">button_icon_change_model</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        
+        <child>
           <object class="AdwActionRow" id="button_menu_keybinding">
             <property name="title" translatable="yes">Keyboard Shortcut</property>
             <property name="subtitle" translatable="yes">Toggles the app menu (none by default; recommendation: Super+C)</property>
@@ -361,7 +375,7 @@
                 <property name="title" translatable="yes">Time Locale [empty for automatic (default, currently !CURRENT!)]</property>
               </object>
             </child>
-        
+
           </object>
         </child>
         
@@ -464,6 +478,14 @@
     </child>
     
   </template>
+  <object class="GtkStringList" id="button_icon_change_model">
+    <items>
+      <item translatable="yes">Dynamic</item>
+      <item translatable="yes">App icon or static</item>
+      <item translatable="yes">No app icon</item>
+      <item translatable="yes">Static</item>
+    </items>
+  </object>
   <object class="GtkStringList" id="clock_year_model">
     <items>
       <item translatable="yes">Off</item>

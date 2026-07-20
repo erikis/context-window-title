@@ -30,6 +30,7 @@ export default class AdvancedPreferences extends Adw.PreferencesPage {
                     'button_padding_right',
                     'button_icon_size',
                     'button_context_icon',
+                    'button_icon_change',
                     'button_menu_keybinding',
                     'button_menu_keybinding_shortcut',
                     'clock_year',
@@ -219,6 +220,13 @@ export default class AdvancedPreferences extends Adw.PreferencesPage {
             'button-context-icon',
             this._button_context_icon,
             'text',
+            Gio.SettingsBindFlags.DEFAULT
+        );
+
+        settings.bind(
+            'button-icon-change',
+            this._button_icon_change,
+            'selected',
             Gio.SettingsBindFlags.DEFAULT
         );
 
@@ -487,6 +495,7 @@ export default class AdvancedPreferences extends Adw.PreferencesPage {
             'button-padding-right',
             'button-icon-size',
             'button-context-icon',
+            'button-icon-change',
             'context-window-title-menu-keybinding',
             'clock-year',
             'clock-month',

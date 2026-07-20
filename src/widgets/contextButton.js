@@ -353,12 +353,19 @@ export default class ContextButton extends PanelMenu.Button {
         }
 
         let focusApp = null;
-        if (this._focusWindow !== null && this._newIcon !== null) {
+        if (this._focusWindow !== null) {
+            // _newIcon has been set because _isTitleButton || _isWindowButton
             focusApp = Shell.WindowTracker.get_default().get_window_app(
                 this._focusWindow
             );
-            if (focusApp !== null) {
-                this._newIcon.set_gicon(focusApp.get_icon());
+            if (this._iconChange <= 1) {
+                if (focusApp !== null) {
+                    this._newIcon.set_gicon(focusApp.get_icon());
+                }
+            } else if (!this._isContextButton && this._iconChange > 1) {
+                // Only possibility is to set a static icon (if it's the default
+                // app grid icon, it won't make sense, but it can be configured)
+                this._updateContextIcon();
             }
         }
         this._appMenu?.setApp(focusApp);
@@ -376,6 +383,15 @@ export default class ContextButton extends PanelMenu.Button {
         // which not fully handles the pointer leaving while a mouse button is pressed.
         this._isHover = this.hover;
         this.hover = false;
+
+        // If ease time is going to be zero, and the button isn't going to be hidden,
+        // skip ahead in order to avoid flicker (was noticeable when switching workspaces)
+        if (isQuick || this._easeTime === 0) {
+            if (this._focusWindow !== null || this._isContextButton) {
+                this.#updateDo();
+                return;
+            }
+        }
 
         // When switching workspaces, the workspace indicator varies in size throughout its
         // animation, causing the context button to tremble. If the the title is too long
@@ -417,6 +433,7 @@ export default class ContextButton extends PanelMenu.Button {
             this.#update(false, true);
         } else {
             this._updateTitle();
+            // If window/title functionality
             if (this._focusWindow !== null) {
                 this._focusWindow.connectObject(
                     'notify::title',
@@ -432,36 +449,18 @@ export default class ContextButton extends PanelMenu.Button {
                         min_width_set: this._minimumWidth > 0,
                     });
                 }
-            } else if (this._isContextButton) {
+            }
+            // If context functionality (AND not window/title functionality unless a
+            // context icon is going to be used instead of an app icon)
+            if (
+                this._isContextButton &&
+                (this._focusWindow === null || this._iconChange > 1)
+            ) {
                 this._updateContextIcon();
-                let handler = () => this._updateContextIcon();
-                const controls = Main.overview._overview?.controls;
-                if (!this._connectedShowAppsButton) {
-                    this._connectedShowAppsButton =
-                        controls?.dash?.showAppsButton;
-                    this._connectedShowAppsButton?.connectObject(
-                        'notify::checked',
-                        handler,
-                        GObject.ConnectFlags.AFTER,
-                        this
-                    );
-                }
-                if (!this._connectedOverview) {
-                    this._connectedOverview = Main.overview;
-                    this._connectedOverview.connectObject(
-                        'hiding',
-                        handler,
-                        GObject.ConnectFlags.AFTER,
-                        this
-                    );
-                    this._connectedOverview.connectObject(
-                        'showing',
-                        handler,
-                        GObject.ConnectFlags.AFTER,
-                        this
-                    );
-                }
-            } else {
+                this.#connectContext();
+            }
+            // If no functionality is currently possible
+            if (this._focusWindow === null && !this._isContextButton) {
                 // Set zero width instead of calling hide() because easings were
                 // skipped when in conjunction with workspace switch
                 this.set_width(0);
@@ -491,6 +490,36 @@ export default class ContextButton extends PanelMenu.Button {
                     this._updateNewInTimeout = null;
                     return GLib.SOURCE_REMOVE;
                 }
+            );
+        }
+    }
+
+    // Helper method only for use by #updateDo() (code moved out to reduce complexity)
+    #connectContext() {
+        let handler = () => this._updateContextIcon();
+        const controls = Main.overview._overview?.controls;
+        if (!this._connectedShowAppsButton) {
+            this._connectedShowAppsButton = controls?.dash?.showAppsButton;
+            this._connectedShowAppsButton?.connectObject(
+                'notify::checked',
+                handler,
+                GObject.ConnectFlags.AFTER,
+                this
+            );
+        }
+        if (!this._connectedOverview) {
+            this._connectedOverview = Main.overview;
+            this._connectedOverview.connectObject(
+                'hiding',
+                handler,
+                GObject.ConnectFlags.AFTER,
+                this
+            );
+            this._connectedOverview.connectObject(
+                'showing',
+                handler,
+                GObject.ConnectFlags.AFTER,
+                this
             );
         }
     }
@@ -552,10 +581,17 @@ export default class ContextButton extends PanelMenu.Button {
     _updateContextIcon() {
         if (
             this._focusWindow === null ||
-            !(this._isTitleButton || this._isWindowButton)
+            !(this._isTitleButton || this._isWindowButton) ||
+            this._iconChange > 1
         ) {
             const icon = this._newIcon || this._icon;
-            if (Main.overview.visible && !Main.overview.closing) {
+            if (
+                this._isContextButton &&
+                Main.overview.visible &&
+                !Main.overview.closing &&
+                this._iconChange !== 1 &&
+                this._iconChange !== 3
+            ) {
                 const controls = Main.overview._overview?.controls;
                 if (controls?.dash?.showAppsButton?.checked) {
                     icon.set_icon_name('shell-focus-windows-symbolic');
