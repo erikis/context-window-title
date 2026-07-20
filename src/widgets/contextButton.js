@@ -50,7 +50,9 @@ export default class ContextButton extends PanelMenu.Button {
         this._appMenu = new AppMenu(this);
         Main.panel.menuManager.addMenu(this._appMenu);
         this._windowMenu = null; // To be set by _patchAppMenu()
-        const updateMenu = this._patchAppMenu(this._appMenu);
+        this._isWindowMenu = true; // Flag to enable embedded window menu
+        this._isAppMenuPatched = false; // Call _setAppMenuPatched() to change
+        this._updateMenu = null; // To be set by _setAppMenuPatched()
         this.setMenu(this._appMenu);
 
         this._box = new St.BoxLayout({
@@ -90,10 +92,10 @@ export default class ContextButton extends PanelMenu.Button {
 
         this._appMenu.connectObject(
             'open-state-changed',
-            (menu, open) => {
-                if (open) {
-                    if (updateMenu) {
-                        updateMenu();
+            (menu, isOpen) => {
+                if (isOpen) {
+                    if (this._updateMenu) {
+                        this._updateMenu();
                     }
                 } else {
                     if (this._isX11) {
@@ -136,6 +138,20 @@ export default class ContextButton extends PanelMenu.Button {
         super.destroy();
     }
 
+    _setAppMenuPatched(enabled) {
+        if (this._isAppMenuPatched === enabled) {
+            return;
+        }
+        this._isAppMenuPatched = enabled;
+        if (this._isAppMenuPatched) {
+            this._updateMenu = this._patchAppMenu(this._appMenu);
+            // this._updateMenu being set to a function means patch was successful
+        } else if (this._updateMenu) {
+            this._updateMenu = null;
+            this._unpatchAppMenu(this._appMenu);
+        }
+    }
+
     _patchAppMenu(appMenu) {
         // Compatibility checks
         if (
@@ -144,9 +160,13 @@ export default class ContextButton extends PanelMenu.Button {
                 appMenu._windowSection instanceof PopupMenu.PopupMenuSection &&
                 appMenu._openWindowsHeader instanceof
                     PopupMenu.PopupSeparatorMenuItem
-            )
+            ) ||
+            appMenu._openWindowsMenuItem ||
+            appMenu._originalWindowSection ||
+            appMenu._windowMenuItem ||
+            appMenu._overriddenMethods
         ) {
-            return null; // Unsupported - stop here
+            return null; // Unsupported or already patched - stop here
         }
 
         // Convert "Open Windows" from a section to a submenu
@@ -155,9 +175,11 @@ export default class ContextButton extends PanelMenu.Button {
             false
         );
         appMenu.addMenuItem(openWindowsMenuItem, 0);
-        appMenu._windowSection.destroy();
+        appMenu._openWindowsMenuItem = openWindowsMenuItem;
         const openWindowsMenu = openWindowsMenuItem.menu;
+        appMenu._originalWindowSection = appMenu._windowSection;
         appMenu._windowSection = openWindowsMenu;
+        appMenu._originalWindowSection.removeAll();
 
         // Adjust the animation of opening/closing the submenu (but keep arrow as-is)
         const adjustSubmenuEaseProps = (props) => ({
@@ -183,7 +205,11 @@ export default class ContextButton extends PanelMenu.Button {
         let windowMenuItem = null;
         const updateMenu = () => {
             // Open the "Open Windows" submenu by default
-            if (openWindowsMenuItem.is_visible()) {
+            if (
+                (openWindowsMenuItem.is_visible() &&
+                    this._menuOpenWindows !== 1) ||
+                this._menuOpenWindows === 2
+            ) {
                 openWindowsMenu.open();
             }
 
@@ -229,11 +255,13 @@ export default class ContextButton extends PanelMenu.Button {
             this._windowMenu = null;
             windowMenuItem?.destroy();
             windowMenuItem = null;
-            if (appMenu._app) {
+            appMenu._windowMenuItem = null;
+            if (this._isWindowMenu && appMenu._app) {
                 windowMenuItem = new PopupMenu.PopupSubMenuMenuItem(
                     appMenu._app.get_name() || '',
                     false
                 );
+                appMenu._windowMenuItem = windowMenuItem;
                 const windowMenu = windowMenuItem.menu;
                 this._windowMenu = windowMenu; // So it can be emptied in #update()
                 overrideEaseMethod(windowMenu.actor, adjustSubmenuEaseProps);
@@ -243,8 +271,46 @@ export default class ContextButton extends PanelMenu.Button {
                 updateMenu();
             }
         };
+        appMenu._updateWindowsSection();
+
+        // If additonal overrides have been requested, do them now
+        if (this._appMenuOverrides) {
+            appMenu._overriddenMethods = [];
+            for (const [methodName, override] of Object.entries(
+                this._appMenuOverrides
+            )) {
+                if (
+                    !Object.prototype.hasOwnProperty.call(appMenu, methodName)
+                ) {
+                    appMenu._overriddenMethods.push(methodName);
+                    appMenu[methodName] = override;
+                    appMenu[methodName](); // Assuming an update method that should be called
+                }
+            }
+        }
 
         return updateMenu; // Call when menu is being opened
+    }
+
+    _unpatchAppMenu(appMenu) {
+        // Patch checks
+        if (!(appMenu._openWindowsMenuItem && appMenu._originalWindowSection)) {
+            return;
+        }
+
+        appMenu._overriddenMethods?.forEach((methodName) => {
+            delete appMenu[methodName];
+            appMenu[methodName]?.call(appMenu); // Call original update method
+        });
+        delete appMenu._overriddenMethods;
+        appMenu._windowMenuItem?.destroy();
+        delete appMenu._windowMenuItem;
+        appMenu._openWindowsMenuItem.destroy();
+        delete appMenu._openWindowsMenuItem;
+        appMenu._windowSection = appMenu._originalWindowSection;
+        delete appMenu._originalWindowSection;
+        delete appMenu._updateWindowsSection; // Revert to prototype's method
+        appMenu._updateWindowsSection();
     }
 
     _update() {

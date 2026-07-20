@@ -36,6 +36,9 @@ export default class AdvancedPreferences extends Adw.PreferencesPage {
                     'button_windows_toggle',
                     'button_overview_scroll',
                     'button_desktop_scroll',
+                    'button_menu_patch',
+                    'button_menu_open_windows',
+                    'button_menu_hide_favorite',
                     'clock_year',
                     'clock_month',
                     'clock_weekday',
@@ -331,6 +334,27 @@ export default class AdvancedPreferences extends Adw.PreferencesPage {
         );
 
         settings.bind(
+            'button-menu-patch',
+            this._button_menu_patch,
+            'selected',
+            Gio.SettingsBindFlags.DEFAULT
+        );
+
+        settings.bind(
+            'button-menu-open-windows',
+            this._button_menu_open_windows,
+            'selected',
+            Gio.SettingsBindFlags.DEFAULT
+        );
+
+        settings.bind(
+            'button-menu-hide-favorite',
+            this._button_menu_hide_favorite,
+            'selected',
+            Gio.SettingsBindFlags.DEFAULT
+        );
+
+        settings.bind(
             'clock-year',
             this._clock_year,
             'selected',
@@ -524,6 +548,9 @@ export default class AdvancedPreferences extends Adw.PreferencesPage {
             'button-windows-toggle',
             'button-overview-scroll',
             'button-desktop-scroll',
+            'button-menu-patch',
+            'button-menu-open-windows',
+            'button-menu-hide-favorite',
             'clock-year',
             'clock-month',
             'clock-weekday',

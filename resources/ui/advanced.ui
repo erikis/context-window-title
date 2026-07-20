@@ -295,6 +295,56 @@
           </object>
         </child>
         
+        <child>
+          <object class="AdwExpanderRow">
+            <property name="title" translatable="yes">App Menu</property>
+            <property name="subtitle" translatable="yes">Customize the app menu</property>
+            
+            <child>
+              <object class="AdwActionRow">
+                <property name="title" translatable="yes">Patch App Menu</property>
+                <property name="subtitle" translatable="yes">For the button, a window menu is embedded; patch everywhere for a consistent look in the app grid and the dash</property>
+                <property name="activatable-widget">button_menu_patch</property>
+                <child>
+                  <object class="GtkDropDown" id="button_menu_patch">
+                    <property name="valign">center</property>
+                    <property name="model">button_menu_patch_model</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+            
+            <child>
+              <object class="AdwActionRow">
+                <property name="title" translatable="yes">Show Open Windows</property>
+                <property name="subtitle" translatable="yes">Automatic (default) is depending on window count</property>
+                <property name="activatable-widget">button_menu_open_windows</property>
+                <child>
+                  <object class="GtkDropDown" id="button_menu_open_windows">
+                    <property name="valign">center</property>
+                    <property name="model">button_menu_open_windows_model</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+            
+            <child>
+              <object class="AdwActionRow">
+                <property name="title" translatable="yes">Hide Pin/Unpin</property>
+                <property name="subtitle" translatable="yes">Everywhere only works if also patched everywhere</property>
+                <property name="activatable-widget">button_menu_hide_favorite</property>
+                <child>
+                  <object class="GtkDropDown" id="button_menu_hide_favorite">
+                    <property name="valign">center</property>
+                    <property name="model">button_menu_hide_favorite_model</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+            
+          </object>
+        </child>
+        
       </object>
     </child>
     
@@ -531,6 +581,27 @@
       <item translatable="yes">App icon or static</item>
       <item translatable="yes">No app icon</item>
       <item translatable="yes">Static</item>
+    </items>
+  </object>
+  <object class="GtkStringList" id="button_menu_patch_model">
+    <items>
+      <item translatable="yes">Off</item>
+      <item translatable="yes">Button only</item>
+      <item translatable="yes">Everywhere</item>
+    </items>
+  </object>
+  <object class="GtkStringList" id="button_menu_open_windows_model">
+    <items>
+      <item translatable="yes">Automatic</item>
+      <item translatable="yes">Always and closed</item>
+      <item translatable="yes">Always and open</item>
+    </items>
+  </object>
+  <object class="GtkStringList" id="button_menu_hide_favorite_model">
+    <items>
+      <item translatable="yes">Don’t hide</item>
+      <item translatable="yes">Button only</item>
+      <item translatable="yes">Everywhere</item>
     </items>
   </object>
   <object class="GtkStringList" id="clock_year_model">

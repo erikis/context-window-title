@@ -92,6 +92,21 @@
       <description>Whether to use specific scroll handling on desktop</description>
       <default>true</default>
     </key>
+    <key name="button-menu-patch" type="i">
+      <summary>Button menu patch</summary>
+      <description>Whether/how to patch app menu</description>
+      <default>1</default>
+    </key>
+    <key name="button-menu-open-windows" type="i">
+      <summary>Button menu open windows</summary>
+      <description>Whether/how to show open windows</description>
+      <default>0</default>
+    </key>
+    <key name="button-menu-hide-favorite" type="i">
+      <summary>Button menu hide favorite</summary>
+      <description>Whether/how to hide Pin/Unpin menu item</description>
+      <default>1</default>
+    </key>
     
     <key name="activate-clock" type="b">
       <summary>Activate custom clock feature</summary>

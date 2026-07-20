@@ -20,7 +20,11 @@ import GObject from 'gi://GObject';
 import Meta from 'gi://Meta';
 import Shell from 'gi://Shell';
 
-import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
+import { AppMenu } from 'resource:///org/gnome/shell/ui/appMenu.js';
+import {
+    Extension,
+    InjectionManager,
+} from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 import ClockLabel from './widgets/clockLabel.js';
@@ -37,8 +41,11 @@ export default class ContextExtension extends Extension {
     #defaults = null;
     #sessionMode = null;
     #isLogging = false;
+    #injectionManager = null;
     #allKeybindings = [];
     #contextButton = null;
+    #patchedAppMenus = null;
+    #patchedAppMenuConfig = null;
     #clockLabel = null;
     #originalClockDisplay = null;
     #nameIndicator = null;
@@ -60,6 +67,7 @@ export default class ContextExtension extends Extension {
         if (!this.#defaults) {
             this.#defaults = new Defaults();
         }
+        this.#injectionManager = new InjectionManager();
         this.#onSessionMode(); // This will initialize everything
 
         this.#settings.connectObject(
@@ -90,6 +98,7 @@ export default class ContextExtension extends Extension {
 
         this.#removeAllKeybindings();
 
+        this.#unpatchAppMenus();
         this.#contextButton?.destroy();
         this.#contextButton = null;
 
@@ -102,6 +111,9 @@ export default class ContextExtension extends Extension {
 
         this.#lockMessage?.destroy();
         this.#lockMessage = null;
+
+        this.#injectionManager.clear();
+        this.#injectionManager = null;
 
         this.#settings = null;
         this.#defaults = null;
@@ -265,6 +277,9 @@ export default class ContextExtension extends Extension {
             }
             this.#onSettingsContextConfigure({ isAdding, isModified });
         }
+        // App menus can be patched globally if button is activated even if the
+        // button isn't actually instantiated due to no enabled functionality
+        this.#onSettingsContextAppMenus({ isButtonActivated });
     }
 
     // Break up into multiple, chained functions for readability, isolation,
@@ -423,6 +438,39 @@ export default class ContextExtension extends Extension {
         this.#contextButton._isDesktopScroll = this.#settings.get_boolean(
             'button-desktop-scroll'
         );
+        const menuPatch = this.#settings.get_int('button-menu-patch');
+        if (this.#contextButton._menuPatch !== menuPatch) {
+            this.#contextButton._menuPatch = menuPatch;
+            if (this.#contextButton._appMenu) {
+                this.#contextButton._setAppMenuPatched(menuPatch > 0);
+            }
+        }
+        const menuOpenWindows = this.#settings.get_int(
+            'button-menu-open-windows'
+        );
+        if (this.#contextButton._menuOpenWindows !== menuOpenWindows) {
+            this.#contextButton._menuOpenWindows = menuOpenWindows;
+            if (this.#contextButton._appMenu) {
+                this.#contextButton._appMenu._showSingleWindows =
+                    menuOpenWindows > 0;
+                if (!isAdding) {
+                    this.#contextButton._appMenu._updateWindowsSection();
+                }
+            }
+        }
+        const menuHideFavorite = this.#settings.get_int(
+            'button-menu-hide-favorite'
+        );
+        if (this.#contextButton._menuHideFavorite !== menuHideFavorite) {
+            this.#contextButton._menuHideFavorite = menuHideFavorite;
+            if (this.#contextButton._appMenu) {
+                this.#contextButton._appMenu._enableFavorites =
+                    menuHideFavorite === 0;
+                if (!isAdding) {
+                    this.#contextButton._appMenu._updateFavoriteItem();
+                }
+            }
+        }
         this.#onSettingsContextAddOrModify({ isAdding, isModified });
     }
 
@@ -458,6 +506,125 @@ export default class ContextExtension extends Extension {
         if (isAdding || isModified) {
             // Run _update() after adding to avoid "not on stage" errors
             this.#contextButton._update();
+        }
+    }
+
+    #onSettingsContextAppMenus({ isButtonActivated }) {
+        const menuPatch = this.#settings.get_int('button-menu-patch');
+        if (isButtonActivated && menuPatch === 2) {
+            const isFavoriteHidden =
+                this.#settings.get_int('button-menu-hide-favorite') === 2;
+            const config = this.#patchedAppMenuConfig ?? {
+                _focusWindow: null,
+                _isWindowMenu: false,
+                _menuOpenWindows: 0,
+                _isFavoriteHidden: isFavoriteHidden,
+                _appMenuOverrides: {
+                    _updateFavoriteItem: function () {
+                        // this = AppMenu instance
+                        if (config._isFavoriteHidden) {
+                            if (this._toggleFavoriteItem) {
+                                this._toggleFavoriteItem.visible = false;
+                            }
+                        } else {
+                            AppMenu.prototype._updateFavoriteItem?.call(this);
+                        }
+                    },
+                },
+            };
+            if (!this.#patchedAppMenus) {
+                const patchedAppMenus = new Map();
+                this.#patchedAppMenus = patchedAppMenus;
+                this.#patchedAppMenuConfig = config;
+                const patchAppMenu = ContextButton.prototype._patchAppMenu;
+                const interceptMethod = (originalMethod) => {
+                    const extension = this;
+                    return function () {
+                        // this = AppMenu instance
+                        if (!patchedAppMenus.has(this)) {
+                            const destroy = this.connect('destroy', () => {
+                                // This doesn't seems to happen (GNOME 50), but in case it does
+                                patchedAppMenus.delete(this);
+                            });
+                            let updateMenu = null;
+                            try {
+                                updateMenu = patchAppMenu.call(config, this);
+                            } catch (ex) {
+                                extension._log(
+                                    console.error,
+                                    `${NAME} contextButton _patchAppMenu`,
+                                    ex
+                                );
+                            }
+                            if (updateMenu) {
+                                const open = this.connect(
+                                    'open-state-changed',
+                                    (menu, isOpen) => {
+                                        if (isOpen && updateMenu) {
+                                            updateMenu();
+                                        }
+                                    }
+                                );
+                                patchedAppMenus.set(this, { destroy, open });
+                            } else {
+                                patchedAppMenus.set(this, { destroy });
+                            }
+                        }
+                        originalMethod.apply(this, arguments);
+                    };
+                };
+                this.#injectionManager.overrideMethod(
+                    AppMenu.prototype,
+                    'open',
+                    interceptMethod
+                );
+            }
+            config._menuOpenWindows = this.#settings.get_int(
+                'button-menu-open-windows'
+            ); // Will be read by updateMenu() on open-state-changed
+            if (config._isFavoriteHidden !== isFavoriteHidden) {
+                config._isFavoriteHidden = isFavoriteHidden;
+                this.#patchedAppMenus.forEach((signals, appMenu) => {
+                    try {
+                        appMenu._updateFavoriteItem();
+                    } catch (ex) {
+                        this._log(
+                            console.error,
+                            `${NAME} contextButton _updateFavoriteItem`,
+                            ex
+                        );
+                    }
+                });
+            }
+        } else if (this.#patchedAppMenus) {
+            this.#injectionManager.restoreMethod(AppMenu.prototype, 'open');
+            this.#unpatchAppMenus();
+        }
+    }
+
+    #unpatchAppMenus() {
+        if (this.#patchedAppMenus) {
+            const config = this.#patchedAppMenuConfig;
+            const unpatchAppMenu = ContextButton.prototype._unpatchAppMenu;
+            this.#patchedAppMenus.forEach((signals, appMenu) => {
+                Object.values(signals).forEach((signal) => {
+                    appMenu.disconnect(signal);
+                });
+                if (signals.open !== undefined) {
+                    try {
+                        unpatchAppMenu.call(config, appMenu);
+                    } catch (ex) {
+                        this._log(
+                            console.error,
+                            `${NAME} contextButton _unpatchAppMenu`,
+                            ex
+                        );
+                    }
+                }
+            });
+            this.#patchedAppMenus.clear();
+            this.#patchedAppMenus = null;
+            this.#patchedAppMenuConfig = null;
         }
     }
 
