@@ -30,14 +30,15 @@ import LockMessage from './widgets/lockMessage.js';
 import NameIndicator from './widgets/nameIndicator.js';
 
 const NAME = 'ContextWindowTitle ContextExtension'; // Used for console log
+const MENU_KEYBINDING = 'context-window-title-menu-keybinding'; // Keybinding name in the schema
 
 export default class ContextExtension extends Extension {
     #settings = null;
     #defaults = null;
     #sessionMode = null;
     #isLogging = false;
+    #allKeybindings = [];
     #contextButton = null;
-    #menuKeybinding = null;
     #clockLabel = null;
     #originalClockDisplay = null;
     #nameIndicator = null;
@@ -87,10 +88,8 @@ export default class ContextExtension extends Extension {
         this.#settings?.disconnectObject(this);
         Main.sessionMode.disconnectObject(this);
 
-        if (this.#menuKeybinding) {
-            Main.wm.removeKeybinding(this.#menuKeybinding);
-            this.#menuKeybinding = null;
-        }
+        this.#removeAllKeybindings();
+
         this.#contextButton?.destroy();
         this.#contextButton = null;
 
@@ -120,10 +119,7 @@ export default class ContextExtension extends Extension {
         if (mode === 'user' /*|| mode === 'gdm'*/) {
             this.#onSettings(); // This will instantiate the context button, etc.
         } else {
-            if (this.#menuKeybinding) {
-                Main.wm.removeKeybinding(this.#menuKeybinding);
-                this.#menuKeybinding = null;
-            }
+            this.#removeAllKeybindings(); // Remove all keybindings on lock screen
             this.#contextButton?.destroy();
             this.#contextButton = null;
             try {
@@ -148,6 +144,21 @@ export default class ContextExtension extends Extension {
         } else {
             // As the lock screen is closed the message should have been destroyed
             this.#lockMessage = null;
+        }
+    }
+
+    #removeAllKeybindings() {
+        let keybinding;
+        while ((keybinding = this.#allKeybindings.pop())) {
+            Main.wm.removeKeybinding(keybinding);
+        }
+    }
+
+    #removeKeybinding(keybinding) {
+        let index = this.#allKeybindings.indexOf(keybinding);
+        if (index !== -1) {
+            Main.wm.removeKeybinding(keybinding);
+            this.#allKeybindings.splice(index, 1);
         }
     }
 
@@ -234,10 +245,7 @@ export default class ContextExtension extends Extension {
                 isAdding = true;
             }
         } else {
-            if (this.#menuKeybinding) {
-                Main.wm.removeKeybinding(this.#menuKeybinding);
-                this.#menuKeybinding = null;
-            }
+            this.#removeKeybinding(MENU_KEYBINDING);
             this.#contextButton?.destroy();
             this.#contextButton = null;
         }
@@ -400,9 +408,8 @@ export default class ContextExtension extends Extension {
                 -1,
                 'left'
             );
-            if (!this.#menuKeybinding) {
-                // Keybinding name in the schema
-                const keybindingName = 'context-window-title-menu-keybinding';
+            const keybindingName = MENU_KEYBINDING;
+            if (this.#allKeybindings.indexOf(keybindingName) === -1) {
                 const keybindingAction = Main.wm.addKeybinding(
                     keybindingName,
                     this.#settings, // Current keybinding is read from the settings
@@ -415,9 +422,10 @@ export default class ContextExtension extends Extension {
                         this.#contextButton?._toggleMenu(true);
                     }
                 );
+                // Return value is Meta.KeyBindingAction.NONE if add was unsuccessful
                 if (keybindingAction !== Meta.KeyBindingAction.NONE) {
                     // Save the keybinding name for later removal
-                    this.#menuKeybinding = keybindingName;
+                    this.#allKeybindings.push(keybindingName);
                 }
             }
         }
