@@ -49,6 +49,7 @@ export default class ContextExtension extends Extension {
     #clockLabel = null;
     #originalClockDisplay = null;
     #nameIndicator = null;
+    #nameConnectedIndicators = null;
     #lockMessage = null;
 
     _log(to, ...args) {
@@ -106,6 +107,7 @@ export default class ContextExtension extends Extension {
         this.#clockLabel = null;
         this.#restoreOriginalClock();
 
+        this.#nameConnectedIndicators = null; // Disconnected on #nameIndicator.destroy()
         this.#nameIndicator?.destroy();
         this.#nameIndicator = null;
 
@@ -201,6 +203,9 @@ export default class ContextExtension extends Extension {
                     0
                 );
                 notificationsBox?._updateVisibility();
+                if (this.#settings.get_boolean('message-expanded')) {
+                    this.#lockMessage.expand(false);
+                }
             } else if (!isMessageActivated && this.#lockMessage !== null) {
                 this.#lockMessage = null;
             }
@@ -827,6 +832,10 @@ export default class ContextExtension extends Extension {
             this.#clockLabel._locale = locale;
             isModified = true;
         }
+        let style = this.#settings.get_string('clock-style');
+        if (this.#clockLabel.style !== style) {
+            this.#clockLabel.style = style;
+        }
         this.#onSettingsClockAddOrModify({ isAdding, isModified });
     }
 
@@ -874,6 +883,7 @@ export default class ContextExtension extends Extension {
                 isAdding = true;
             }
         } else {
+            this.#nameConnectedIndicators = null;
             this.#nameIndicator?.destroy();
             this.#nameIndicator = null;
         }
@@ -908,17 +918,65 @@ export default class ContextExtension extends Extension {
             this.#nameIndicator._lockHide = lockHide;
             isModified = true;
         }
-        this.#onSettingsNameAddOrModify({ isAdding, isModified });
+        let isKeepFirst = this.#settings.get_boolean('name-keep-first');
+        if (this.#nameIndicator._isKeepFirst !== isKeepFirst) {
+            this.#nameIndicator._isKeepFirst = isKeepFirst;
+            if (!isAdding) {
+                if (isKeepFirst) {
+                    this.#nameIndicator
+                        .get_parent()
+                        .remove_child(this.#nameIndicator);
+                    isAdding = true; // Re-add to keep first
+                } else {
+                    // No longer keeping first, so disconnect the signal
+                    this.#nameConnectedIndicators?.disconnectObject(
+                        this.#nameIndicator
+                    );
+                    this.#nameConnectedIndicators = null;
+                }
+            }
+        }
+        this.#onSettingsNameAddOrModify({ isAdding, isModified, isKeepFirst });
     }
 
-    #onSettingsNameAddOrModify({ isAdding, isModified }) {
+    #onSettingsNameAddOrModify({ isAdding, isModified, isKeepFirst }) {
         if (isAdding || isModified) {
             this.#nameIndicator._update();
         }
         if (isAdding) {
-            Main.panel.statusArea.quickSettings.addExternalIndicator(
+            this.#nameConnectedIndicators?.disconnectObject(
                 this.#nameIndicator
-            );
+            ); // Logically impossible to be connected here but just in case
+            this.#nameConnectedIndicators = null;
+            const indicators = Main.panel.statusArea.quickSettings._indicators;
+            if (!isKeepFirst || !indicators) {
+                Main.panel.statusArea.quickSettings.addExternalIndicator(
+                    this.#nameIndicator
+                );
+            } else {
+                indicators.insert_child_at_index(this.#nameIndicator, 0);
+                const onChildAdded = () => {
+                    this.#nameConnectedIndicators?.disconnectObject(
+                        this.#nameIndicator
+                    );
+                    this.#nameConnectedIndicators = null;
+                    indicators.remove_child(this.#nameIndicator);
+                    indicators.insert_child_at_index(this.#nameIndicator, 0);
+                    indicators.connectObject(
+                        'child-added',
+                        onChildAdded,
+                        this.#nameIndicator
+                    );
+                    this.#nameConnectedIndicators = indicators;
+                };
+                // Do automatic disconnect on #nameIndicator.destroy()
+                indicators.connectObject(
+                    'child-added',
+                    onChildAdded,
+                    this.#nameIndicator
+                );
+                this.#nameConnectedIndicators = indicators;
+            }
         }
     }
 }

@@ -49,8 +49,11 @@ export default class AdvancedPreferences extends Adw.PreferencesPage {
                     'clock_calendar',
                     'clock_numbering',
                     'clock_locale',
+                    'clock_style',
                     'name_lock_hide',
+                    'name_keep_first',
                     'message_source_icon',
+                    'message_expanded',
                     'about',
                     'allow_log',
                     'reset_row',
@@ -475,9 +478,23 @@ export default class AdvancedPreferences extends Adw.PreferencesPage {
         );
 
         settings.bind(
+            'clock-style',
+            this._clock_style,
+            'text',
+            Gio.SettingsBindFlags.DEFAULT
+        );
+
+        settings.bind(
             'name-lock-hide',
             this._name_lock_hide,
             'selected',
+            Gio.SettingsBindFlags.DEFAULT
+        );
+
+        settings.bind(
+            'name-keep-first',
+            this._name_keep_first,
+            'active',
             Gio.SettingsBindFlags.DEFAULT
         );
 
@@ -490,6 +507,13 @@ export default class AdvancedPreferences extends Adw.PreferencesPage {
             'message-source-icon',
             this._message_source_icon,
             'text',
+            Gio.SettingsBindFlags.DEFAULT
+        );
+
+        settings.bind(
+            'message-expanded',
+            this._message_expanded,
+            'active',
             Gio.SettingsBindFlags.DEFAULT
         );
 
@@ -561,8 +585,11 @@ export default class AdvancedPreferences extends Adw.PreferencesPage {
             'clock-calendar',
             'clock-numbering',
             'clock-locale',
+            'clock-style',
             'name-lock-hide',
+            'name-keep-first',
             'message-source-icon',
+            'message-expanded',
             'allow-log',
         ];
         (isAll ? keysOther.concat(keysAdvanced) : keysAdvanced).forEach((key) =>
