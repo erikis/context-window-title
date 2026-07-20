@@ -554,15 +554,16 @@ export default class ContextButton extends PanelMenu.Button {
             this._focusWindow === null ||
             !(this._isTitleButton || this._isWindowButton)
         ) {
+            const icon = this._newIcon || this._icon;
             if (Main.overview.visible && !Main.overview.closing) {
                 const controls = Main.overview._overview?.controls;
                 if (controls?.dash?.showAppsButton?.checked) {
-                    this._icon.set_icon_name('shell-focus-windows-symbolic');
+                    icon.set_icon_name('shell-focus-windows-symbolic');
                 } else {
-                    this._icon.set_icon_name('shell-focus-desktop-symbolic');
+                    icon.set_icon_name('shell-focus-desktop-symbolic');
                 }
             } else {
-                this._icon.set_icon_name(
+                icon.set_icon_name(
                     this._contextIcon || 'shell-focus-app-grid-symbolic'
                 );
             }
