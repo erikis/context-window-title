@@ -50,7 +50,9 @@ export default class ContextButton extends PanelMenu.Button {
         this._appMenu = new AppMenu(this);
         Main.panel.menuManager.addMenu(this._appMenu);
         this._windowMenu = null; // To be set by _patchAppMenu()
-        const updateMenu = this._patchAppMenu(this._appMenu);
+        this._isWindowMenu = true; // Flag to enable embedded window menu
+        this._isAppMenuPatched = false; // Call _setAppMenuPatched() to change
+        this._updateMenu = null; // To be set by _setAppMenuPatched()
         this.setMenu(this._appMenu);
 
         this._box = new St.BoxLayout({
@@ -90,10 +92,10 @@ export default class ContextButton extends PanelMenu.Button {
 
         this._appMenu.connectObject(
             'open-state-changed',
-            (menu, open) => {
-                if (open) {
-                    if (updateMenu) {
-                        updateMenu();
+            (menu, isOpen) => {
+                if (isOpen) {
+                    if (this._updateMenu) {
+                        this._updateMenu();
                     }
                 } else {
                     if (this._isX11) {
@@ -136,6 +138,20 @@ export default class ContextButton extends PanelMenu.Button {
         super.destroy();
     }
 
+    _setAppMenuPatched(enabled) {
+        if (this._isAppMenuPatched === enabled) {
+            return;
+        }
+        this._isAppMenuPatched = enabled;
+        if (this._isAppMenuPatched) {
+            this._updateMenu = this._patchAppMenu(this._appMenu);
+            // this._updateMenu being set to a function means patch was successful
+        } else if (this._updateMenu) {
+            this._updateMenu = null;
+            this._unpatchAppMenu(this._appMenu);
+        }
+    }
+
     _patchAppMenu(appMenu) {
         // Compatibility checks
         if (
@@ -144,9 +160,13 @@ export default class ContextButton extends PanelMenu.Button {
                 appMenu._windowSection instanceof PopupMenu.PopupMenuSection &&
                 appMenu._openWindowsHeader instanceof
                     PopupMenu.PopupSeparatorMenuItem
-            )
+            ) ||
+            appMenu._openWindowsMenuItem ||
+            appMenu._originalWindowSection ||
+            appMenu._windowMenuItem ||
+            appMenu._overriddenMethods
         ) {
-            return null; // Unsupported - stop here
+            return null; // Unsupported or already patched - stop here
         }
 
         // Convert "Open Windows" from a section to a submenu
@@ -155,9 +175,11 @@ export default class ContextButton extends PanelMenu.Button {
             false
         );
         appMenu.addMenuItem(openWindowsMenuItem, 0);
-        appMenu._windowSection.destroy();
+        appMenu._openWindowsMenuItem = openWindowsMenuItem;
         const openWindowsMenu = openWindowsMenuItem.menu;
+        appMenu._originalWindowSection = appMenu._windowSection;
         appMenu._windowSection = openWindowsMenu;
+        appMenu._originalWindowSection.removeAll();
 
         // Adjust the animation of opening/closing the submenu (but keep arrow as-is)
         const adjustSubmenuEaseProps = (props) => ({
@@ -183,7 +205,11 @@ export default class ContextButton extends PanelMenu.Button {
         let windowMenuItem = null;
         const updateMenu = () => {
             // Open the "Open Windows" submenu by default
-            if (openWindowsMenuItem.is_visible()) {
+            if (
+                (openWindowsMenuItem.is_visible() &&
+                    this._menuOpenWindows !== 1) ||
+                this._menuOpenWindows === 2
+            ) {
                 openWindowsMenu.open();
             }
 
@@ -229,11 +255,13 @@ export default class ContextButton extends PanelMenu.Button {
             this._windowMenu = null;
             windowMenuItem?.destroy();
             windowMenuItem = null;
-            if (appMenu._app) {
+            appMenu._windowMenuItem = null;
+            if (this._isWindowMenu && appMenu._app) {
                 windowMenuItem = new PopupMenu.PopupSubMenuMenuItem(
                     appMenu._app.get_name() || '',
                     false
                 );
+                appMenu._windowMenuItem = windowMenuItem;
                 const windowMenu = windowMenuItem.menu;
                 this._windowMenu = windowMenu; // So it can be emptied in #update()
                 overrideEaseMethod(windowMenu.actor, adjustSubmenuEaseProps);
@@ -243,8 +271,46 @@ export default class ContextButton extends PanelMenu.Button {
                 updateMenu();
             }
         };
+        appMenu._updateWindowsSection();
+
+        // If additonal overrides have been requested, do them now
+        if (this._appMenuOverrides) {
+            appMenu._overriddenMethods = [];
+            for (const [methodName, override] of Object.entries(
+                this._appMenuOverrides
+            )) {
+                if (
+                    !Object.prototype.hasOwnProperty.call(appMenu, methodName)
+                ) {
+                    appMenu._overriddenMethods.push(methodName);
+                    appMenu[methodName] = override;
+                    appMenu[methodName](); // Assuming an update method that should be called
+                }
+            }
+        }
 
         return updateMenu; // Call when menu is being opened
+    }
+
+    _unpatchAppMenu(appMenu) {
+        // Patch checks
+        if (!(appMenu._openWindowsMenuItem && appMenu._originalWindowSection)) {
+            return;
+        }
+
+        appMenu._overriddenMethods?.forEach((methodName) => {
+            delete appMenu[methodName];
+            appMenu[methodName]?.call(appMenu); // Call original update method
+        });
+        delete appMenu._overriddenMethods;
+        appMenu._windowMenuItem?.destroy();
+        delete appMenu._windowMenuItem;
+        appMenu._openWindowsMenuItem.destroy();
+        delete appMenu._openWindowsMenuItem;
+        appMenu._windowSection = appMenu._originalWindowSection;
+        delete appMenu._originalWindowSection;
+        delete appMenu._updateWindowsSection; // Revert to prototype's method
+        appMenu._updateWindowsSection();
     }
 
     _update() {
@@ -302,37 +368,30 @@ export default class ContextButton extends PanelMenu.Button {
         }
 
         const focusWindow = global.display.get_focus_window();
-        if (
-            !isInit &&
-            focusWindow === null &&
-            this._isX11 &&
-            this._appMenu.isOpen
-        ) {
-            // On X11, when opening panel menus, the window loses focus
-            return;
-        }
-        this._windowMenu?.removeAll();
-        if (this._focusWindow) {
-            if (isInit || focusWindow !== this._focusWindow) {
-                this._focusWindow.disconnectObject(this);
-            } else {
+        if (!isInit) {
+            if (focusWindow === null && this._isX11 && this._appMenu?.isOpen) {
+                // On X11, when opening panel menus, the window loses focus
                 return;
             }
-        } else if (this._isContextButton) {
-            if (this._connectedShowAppsButton) {
-                // Used for 'notify::checked'
-                this._connectedShowAppsButton.disconnectObject(this);
-                this._connectedShowAppsButton = null;
-            }
-            if (this._connectedOverview) {
-                // Used for 'hiding' and 'showing'
-                this._connectedOverview.disconnectObject(this);
-                this._connectedOverview = null;
+            if (focusWindow && focusWindow === this._focusWindow) {
+                // When focus returns to same window (probably X11)
+                return;
             }
         }
+
+        // Used for 'notify::checked'
+        this._connectedShowAppsButton?.disconnectObject(this);
+        this._connectedShowAppsButton = null;
+        // Used for 'hiding' and 'showing'
+        this._connectedOverview?.disconnectObject(this);
+        this._connectedOverview = null;
+        // Used for 'notify::title'
+        this._focusWindow?.disconnectObject(this);
+        // Only set _focusWindow to non-null if window/title functionality enabled
         this._focusWindow =
             this._isTitleButton || this._isWindowButton ? focusWindow : null;
 
+        this._windowMenu?.removeAll();
         if (this.#updatePrepare(isInit)) {
             this._isUpdating = true;
             this.#updateOldOut(isQuick);
@@ -353,12 +412,19 @@ export default class ContextButton extends PanelMenu.Button {
         }
 
         let focusApp = null;
-        if (this._focusWindow !== null && this._newIcon !== null) {
+        if (this._focusWindow !== null) {
+            // _newIcon has been set because _isTitleButton || _isWindowButton
             focusApp = Shell.WindowTracker.get_default().get_window_app(
                 this._focusWindow
             );
-            if (focusApp !== null) {
-                this._newIcon.set_gicon(focusApp.get_icon());
+            if (this._iconChange <= 1) {
+                if (focusApp !== null) {
+                    this._newIcon.set_gicon(focusApp.get_icon());
+                }
+            } else if (!this._isContextButton && this._iconChange > 1) {
+                // Only possibility is to set a static icon (if it's the default
+                // app grid icon, it won't make sense, but it can be configured)
+                this._updateContextIcon();
             }
         }
         this._appMenu?.setApp(focusApp);
@@ -376,6 +442,15 @@ export default class ContextButton extends PanelMenu.Button {
         // which not fully handles the pointer leaving while a mouse button is pressed.
         this._isHover = this.hover;
         this.hover = false;
+
+        // If ease time is going to be zero, and the button isn't going to be hidden,
+        // skip ahead in order to avoid flicker (was noticeable when switching workspaces)
+        if (isQuick || this._easeTime === 0) {
+            if (this._focusWindow !== null || this._isContextButton) {
+                this.#updateDo();
+                return;
+            }
+        }
 
         // When switching workspaces, the workspace indicator varies in size throughout its
         // animation, causing the context button to tremble. If the the title is too long
@@ -417,6 +492,7 @@ export default class ContextButton extends PanelMenu.Button {
             this.#update(false, true);
         } else {
             this._updateTitle();
+            // If window/title functionality
             if (this._focusWindow !== null) {
                 this._focusWindow.connectObject(
                     'notify::title',
@@ -432,36 +508,18 @@ export default class ContextButton extends PanelMenu.Button {
                         min_width_set: this._minimumWidth > 0,
                     });
                 }
-            } else if (this._isContextButton) {
+            }
+            // If context functionality (AND not window/title functionality unless a
+            // context icon is going to be used instead of an app icon)
+            if (
+                this._isContextButton &&
+                (this._focusWindow === null || this._iconChange > 1)
+            ) {
                 this._updateContextIcon();
-                let handler = () => this._updateContextIcon();
-                const controls = Main.overview._overview?.controls;
-                if (!this._connectedShowAppsButton) {
-                    this._connectedShowAppsButton =
-                        controls?.dash?.showAppsButton;
-                    this._connectedShowAppsButton?.connectObject(
-                        'notify::checked',
-                        handler,
-                        GObject.ConnectFlags.AFTER,
-                        this
-                    );
-                }
-                if (!this._connectedOverview) {
-                    this._connectedOverview = Main.overview;
-                    this._connectedOverview.connectObject(
-                        'hiding',
-                        handler,
-                        GObject.ConnectFlags.AFTER,
-                        this
-                    );
-                    this._connectedOverview.connectObject(
-                        'showing',
-                        handler,
-                        GObject.ConnectFlags.AFTER,
-                        this
-                    );
-                }
-            } else {
+                this.#connectContext();
+            }
+            // If no functionality is currently possible
+            if (this._focusWindow === null && !this._isContextButton) {
                 // Set zero width instead of calling hide() because easings were
                 // skipped when in conjunction with workspace switch
                 this.set_width(0);
@@ -491,6 +549,36 @@ export default class ContextButton extends PanelMenu.Button {
                     this._updateNewInTimeout = null;
                     return GLib.SOURCE_REMOVE;
                 }
+            );
+        }
+    }
+
+    // Helper method only for use by #updateDo() (code moved out to reduce complexity)
+    #connectContext() {
+        let handler = () => this._updateContextIcon();
+        const controls = Main.overview._overview?.controls;
+        if (!this._connectedShowAppsButton) {
+            this._connectedShowAppsButton = controls?.dash?.showAppsButton;
+            this._connectedShowAppsButton?.connectObject(
+                'notify::checked',
+                handler,
+                GObject.ConnectFlags.AFTER,
+                this
+            );
+        }
+        if (!this._connectedOverview) {
+            this._connectedOverview = Main.overview;
+            this._connectedOverview.connectObject(
+                'hiding',
+                handler,
+                GObject.ConnectFlags.AFTER,
+                this
+            );
+            this._connectedOverview.connectObject(
+                'showing',
+                handler,
+                GObject.ConnectFlags.AFTER,
+                this
             );
         }
     }
@@ -552,17 +640,28 @@ export default class ContextButton extends PanelMenu.Button {
     _updateContextIcon() {
         if (
             this._focusWindow === null ||
-            !(this._isTitleButton || this._isWindowButton)
+            !(this._isTitleButton || this._isWindowButton) ||
+            this._iconChange > 1
         ) {
-            if (Main.overview.visible && !Main.overview.closing) {
+            const icon = this._newIcon || this._icon;
+            if (
+                this._isContextButton &&
+                Main.overview.visible &&
+                !Main.overview.closing &&
+                this._iconChange !== 1 &&
+                this._iconChange !== 3
+            ) {
                 const controls = Main.overview._overview?.controls;
-                if (controls?.dash?.showAppsButton?.checked) {
-                    this._icon.set_icon_name('shell-focus-windows-symbolic');
+                if (
+                    this._isWindowsToggle &&
+                    controls?.dash?.showAppsButton?.checked
+                ) {
+                    icon.set_icon_name('shell-focus-windows-symbolic');
                 } else {
-                    this._icon.set_icon_name('shell-focus-desktop-symbolic');
+                    icon.set_icon_name('shell-focus-desktop-symbolic');
                 }
             } else {
-                this._icon.set_icon_name(
+                icon.set_icon_name(
                     this._contextIcon || 'shell-focus-app-grid-symbolic'
                 );
             }
@@ -717,23 +816,19 @@ export default class ContextButton extends PanelMenu.Button {
                 button === Clutter.BUTTON_MIDDLE)
         ) {
             if (this._isContextButton && !Main.overview.closing) {
-                if (Main.overview.visible && !Main.overview.closing) {
+                if (Main.overview.visible) {
                     const controls = Main.overview._overview?.controls;
-                    if (controls?.dash?.showAppsButton?.checked) {
-                        // Dash to Dock's docking.js sets _fromDesktop = true to indicate that
-                        // the apps button should close the overview and not just the app grid
-                        const showAppsButton = controls.dash.showAppsButton;
-                        if (showAppsButton._fromDesktop === true) {
-                            showAppsButton._fromDesktop = false;
-                        }
-                        showAppsButton.checked = false;
-                    } else {
+                    if (
+                        this._isWindowsToggle &&
+                        controls?.dash?.showAppsButton?.checked
+                    ) {
+                        this.#hideApps(controls);
+                    } else if (!Main.overview.animationInProgress) {
                         Main.overview.hide();
                     }
                 } else {
                     Main.overview.showApps();
                 }
-                this._updateContextIcon();
             }
             return Clutter.EVENT_STOP;
         }
@@ -769,9 +864,25 @@ export default class ContextButton extends PanelMenu.Button {
     _onScroll(event) {
         switch (event.get_scroll_direction()) {
             case Clutter.ScrollDirection.UP:
+            case Clutter.ScrollDirection.DOWN:
                 if (Main.overview.visible) {
                     return this.#onScrollOverview(event);
-                } else if (!this._isWindowButton) {
+                }
+                return this.#onScrollDesktop(event);
+            case Clutter.ScrollDirection.LEFT:
+            case Clutter.ScrollDirection.RIGHT:
+                if (this._isContextButton) {
+                    return Main.wm.handleWorkspaceScroll(event);
+                }
+                break;
+        }
+        return Clutter.EVENT_PROPAGATE;
+    }
+
+    #onScrollDesktop(event) {
+        switch (event.get_scroll_direction()) {
+            case Clutter.ScrollDirection.UP:
+                if (!this._isWindowButton || !this._isDesktopScroll) {
                     if (this._isContextButton) {
                         return Main.wm.handleWorkspaceScroll(event);
                     }
@@ -789,11 +900,9 @@ export default class ContextButton extends PanelMenu.Button {
                         );
                     }
                 }
-                return Clutter.EVENT_STOP;
+                break;
             case Clutter.ScrollDirection.DOWN:
-                if (Main.overview.visible) {
-                    return this.#onScrollOverview(event);
-                } else if (!this._isWindowButton) {
+                if (!this._isWindowButton || !this._isDesktopScroll) {
                     if (this._isContextButton) {
                         return Main.wm.handleWorkspaceScroll(event);
                     }
@@ -825,21 +934,16 @@ export default class ContextButton extends PanelMenu.Button {
                         );
                     }
                 }
-                return Clutter.EVENT_STOP;
-            case Clutter.ScrollDirection.LEFT:
-            case Clutter.ScrollDirection.RIGHT:
-                if (!this._isContextButton) {
-                    return Clutter.EVENT_PROPAGATE;
-                }
-                return Main.wm.handleWorkspaceScroll(event);
-            default:
-                return Clutter.EVENT_PROPAGATE;
+                break;
         }
+        return Clutter.EVENT_STOP;
     }
 
     #onScrollOverview(event) {
         if (!this._isContextButton) {
             return Clutter.EVENT_PROPAGATE;
+        } else if (!this._isOverviewScroll) {
+            return Main.wm.handleWorkspaceScroll(event);
         } else if (!Main.overview.closing) {
             const controls = Main.overview._overview?.controls;
             switch (event.get_scroll_direction()) {
@@ -850,16 +954,22 @@ export default class ContextButton extends PanelMenu.Button {
                     break;
                 case Clutter.ScrollDirection.DOWN:
                     if (controls?.dash?.showAppsButton?.checked) {
-                        const showAppsButton = controls.dash.showAppsButton;
-                        if (showAppsButton._fromDesktop === true) {
-                            showAppsButton._fromDesktop = false;
-                        }
-                        showAppsButton.checked = false;
+                        this.#hideApps(controls);
                     }
                     break;
             }
         }
         return Clutter.EVENT_STOP;
+    }
+
+    #hideApps(controls) {
+        // Dash to Dock's docking.js sets _fromDesktop = true to indicate that
+        // the apps button should close the overview and not just the app grid
+        const showAppsButton = controls.dash.showAppsButton;
+        if (showAppsButton._fromDesktop === true) {
+            showAppsButton._fromDesktop = false;
+        }
+        showAppsButton.checked = false;
     }
 
     _superVFunc(name, defaultRet, ...args) {

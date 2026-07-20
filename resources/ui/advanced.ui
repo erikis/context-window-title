@@ -222,6 +222,20 @@
         </child>
         
         <child>
+          <object class="AdwActionRow">
+            <property name="title" translatable="yes">Icon Change</property>
+            <property name="subtitle" translatable="yes">Whether the icon changes (dynamic by default)</property>
+            <property name="activatable-widget">button_icon_change</property>
+            <child>
+              <object class="GtkDropDown" id="button_icon_change">
+                <property name="valign">center</property>
+                <property name="model">button_icon_change_model</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        
+        <child>
           <object class="AdwActionRow" id="button_menu_keybinding">
             <property name="title" translatable="yes">Keyboard Shortcut</property>
             <property name="subtitle" translatable="yes">Toggles the app menu (none by default; recommendation: Super+C)</property>
@@ -231,6 +245,103 @@
                 <property name="valign">center</property>
               </object>
             </child>
+          </object>
+        </child>
+        
+        <child>
+          <object class="AdwExpanderRow">
+            <property name="title" translatable="yes">Behavior</property>
+            <property name="subtitle" translatable="yes">Change what the button does</property>
+            
+            <child>
+              <object class="AdwActionRow">
+                <property name="title" translatable="yes">Show Windows on Click</property>
+                <property name="subtitle" translatable="yes">When apps are being shown (if disabled, toggle directly to the desktop)</property>
+                <property name="activatable-widget">button_windows_toggle</property>
+                <child>
+                  <object class="GtkSwitch" id="button_windows_toggle">
+                    <property name="valign">center</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+            
+            <child>
+              <object class="AdwActionRow">
+                <property name="title" translatable="yes">Show Apps/Windows on Scroll Up/Down</property>
+                <property name="subtitle" translatable="yes">In the overview</property>
+                <property name="activatable-widget">button_overview_scroll</property>
+                <child>
+                  <object class="GtkSwitch" id="button_overview_scroll">
+                    <property name="valign">center</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+            
+            <child>
+              <object class="AdwActionRow">
+                <property name="title" translatable="yes">Maximize/Unmaximize on Scroll Up/Down</property>
+                <property name="subtitle" translatable="yes">On the desktop</property>
+                <property name="activatable-widget">button_desktop_scroll</property>
+                <child>
+                  <object class="GtkSwitch" id="button_desktop_scroll">
+                    <property name="valign">center</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+            
+          </object>
+        </child>
+        
+        <child>
+          <object class="AdwExpanderRow">
+            <property name="title" translatable="yes">App Menu</property>
+            <property name="subtitle" translatable="yes">Customize the app menu</property>
+            
+            <child>
+              <object class="AdwActionRow">
+                <property name="title" translatable="yes">Patch App Menu</property>
+                <property name="subtitle" translatable="yes">For the button, a window menu is embedded; patch everywhere for a consistent look in the app grid and the dash</property>
+                <property name="activatable-widget">button_menu_patch</property>
+                <child>
+                  <object class="GtkDropDown" id="button_menu_patch">
+                    <property name="valign">center</property>
+                    <property name="model">button_menu_patch_model</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+            
+            <child>
+              <object class="AdwActionRow">
+                <property name="title" translatable="yes">Show Open Windows</property>
+                <property name="subtitle" translatable="yes">Automatic (default) is depending on window count</property>
+                <property name="activatable-widget">button_menu_open_windows</property>
+                <child>
+                  <object class="GtkDropDown" id="button_menu_open_windows">
+                    <property name="valign">center</property>
+                    <property name="model">button_menu_open_windows_model</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+            
+            <child>
+              <object class="AdwActionRow">
+                <property name="title" translatable="yes">Hide Pin/Unpin</property>
+                <property name="subtitle" translatable="yes">Everywhere only works if also patched everywhere</property>
+                <property name="activatable-widget">button_menu_hide_favorite</property>
+                <child>
+                  <object class="GtkDropDown" id="button_menu_hide_favorite">
+                    <property name="valign">center</property>
+                    <property name="model">button_menu_hide_favorite_model</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+            
           </object>
         </child>
         
@@ -309,7 +420,7 @@
         <child>
           <object class="AdwExpanderRow">
             <property name="title" translatable="yes">Extra</property>
-            <property name="subtitle" translatable="yes">Show time zone and change locale options</property>
+            <property name="subtitle" translatable="yes">Show time zone and change locale options and styling</property>
             
             <child>
               <object class="AdwActionRow">
@@ -361,7 +472,13 @@
                 <property name="title" translatable="yes">Time Locale [empty for automatic (default, currently !CURRENT!)]</property>
               </object>
             </child>
-        
+            
+            <child>
+              <object class="AdwEntryRow" id="clock_style">
+                <property name="title" translatable="yes">Style (CSS) [empty for no styling (default)]</property>
+              </object>
+            </child>
+            
           </object>
         </child>
         
@@ -374,12 +491,24 @@
         
         <child>
           <object class="AdwActionRow">
-            <property name="title" translatable="yes">Hide on lock screen</property>
+            <property name="title" translatable="yes">Hide on Lock Screen</property>
             <property name="activatable-widget">name_lock_hide</property>
             <child>
               <object class="GtkDropDown" id="name_lock_hide">
                 <property name="valign">center</property>
                 <property name="model">name_lock_hide_model</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        
+        <child>
+          <object class="AdwActionRow">
+            <property name="title" translatable="yes">Keep First</property>
+            <property name="activatable-widget">name_keep_first</property>
+            <child>
+              <object class="GtkSwitch" id="name_keep_first">
+                <property name="valign">center</property>
               </object>
             </child>
           </object>
@@ -395,6 +524,18 @@
         <child>
           <object class="AdwEntryRow" id="message_source_icon">
             <property name="title" translatable="yes">Icon [empty for automatic (default, currently !CURRENT!)]</property>
+          </object>
+        </child>
+        
+        <child>
+          <object class="AdwActionRow">
+            <property name="title" translatable="yes">Initially Expanded</property>
+            <property name="activatable-widget">message_expanded</property>
+            <child>
+              <object class="GtkSwitch" id="message_expanded">
+                <property name="valign">center</property>
+              </object>
+            </child>
           </object>
         </child>
         
@@ -464,6 +605,35 @@
     </child>
     
   </template>
+  <object class="GtkStringList" id="button_icon_change_model">
+    <items>
+      <item translatable="yes">Dynamic</item>
+      <item translatable="yes">App icon or static</item>
+      <item translatable="yes">No app icon</item>
+      <item translatable="yes">Static</item>
+    </items>
+  </object>
+  <object class="GtkStringList" id="button_menu_patch_model">
+    <items>
+      <item translatable="yes">Off</item>
+      <item translatable="yes">Button only</item>
+      <item translatable="yes">Everywhere</item>
+    </items>
+  </object>
+  <object class="GtkStringList" id="button_menu_open_windows_model">
+    <items>
+      <item translatable="yes">Automatic</item>
+      <item translatable="yes">Always and closed</item>
+      <item translatable="yes">Always and open</item>
+    </items>
+  </object>
+  <object class="GtkStringList" id="button_menu_hide_favorite_model">
+    <items>
+      <item translatable="yes">Don’t hide</item>
+      <item translatable="yes">Button only</item>
+      <item translatable="yes">Everywhere</item>
+    </items>
+  </object>
   <object class="GtkStringList" id="clock_year_model">
     <items>
       <item translatable="yes">Off</item>

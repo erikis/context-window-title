@@ -30,8 +30,15 @@ export default class AdvancedPreferences extends Adw.PreferencesPage {
                     'button_padding_right',
                     'button_icon_size',
                     'button_context_icon',
+                    'button_icon_change',
                     'button_menu_keybinding',
                     'button_menu_keybinding_shortcut',
+                    'button_windows_toggle',
+                    'button_overview_scroll',
+                    'button_desktop_scroll',
+                    'button_menu_patch',
+                    'button_menu_open_windows',
+                    'button_menu_hide_favorite',
                     'clock_year',
                     'clock_month',
                     'clock_weekday',
@@ -42,8 +49,11 @@ export default class AdvancedPreferences extends Adw.PreferencesPage {
                     'clock_calendar',
                     'clock_numbering',
                     'clock_locale',
+                    'clock_style',
                     'name_lock_hide',
+                    'name_keep_first',
                     'message_source_icon',
+                    'message_expanded',
                     'about',
                     'allow_log',
                     'reset_row',
@@ -222,6 +232,13 @@ export default class AdvancedPreferences extends Adw.PreferencesPage {
             Gio.SettingsBindFlags.DEFAULT
         );
 
+        settings.bind(
+            'button-icon-change',
+            this._button_icon_change,
+            'selected',
+            Gio.SettingsBindFlags.DEFAULT
+        );
+
         const keybindingUpdate = (ctx) => {
             const keybindings = ctx.settings.get_strv(ctx.keyName);
             ctx.shortcut.set_accelerator(
@@ -297,6 +314,48 @@ export default class AdvancedPreferences extends Adw.PreferencesPage {
                 keybindingCapture(menuKeybindingContext, keyval, keycode, state)
         );
         menuKeybindingRow.add_controller(menuKeybindingController);
+
+        settings.bind(
+            'button-windows-toggle',
+            this._button_windows_toggle,
+            'active',
+            Gio.SettingsBindFlags.DEFAULT
+        );
+
+        settings.bind(
+            'button-overview-scroll',
+            this._button_overview_scroll,
+            'active',
+            Gio.SettingsBindFlags.DEFAULT
+        );
+
+        settings.bind(
+            'button-desktop-scroll',
+            this._button_desktop_scroll,
+            'active',
+            Gio.SettingsBindFlags.DEFAULT
+        );
+
+        settings.bind(
+            'button-menu-patch',
+            this._button_menu_patch,
+            'selected',
+            Gio.SettingsBindFlags.DEFAULT
+        );
+
+        settings.bind(
+            'button-menu-open-windows',
+            this._button_menu_open_windows,
+            'selected',
+            Gio.SettingsBindFlags.DEFAULT
+        );
+
+        settings.bind(
+            'button-menu-hide-favorite',
+            this._button_menu_hide_favorite,
+            'selected',
+            Gio.SettingsBindFlags.DEFAULT
+        );
 
         settings.bind(
             'clock-year',
@@ -419,9 +478,23 @@ export default class AdvancedPreferences extends Adw.PreferencesPage {
         );
 
         settings.bind(
+            'clock-style',
+            this._clock_style,
+            'text',
+            Gio.SettingsBindFlags.DEFAULT
+        );
+
+        settings.bind(
             'name-lock-hide',
             this._name_lock_hide,
             'selected',
+            Gio.SettingsBindFlags.DEFAULT
+        );
+
+        settings.bind(
+            'name-keep-first',
+            this._name_keep_first,
+            'active',
             Gio.SettingsBindFlags.DEFAULT
         );
 
@@ -434,6 +507,13 @@ export default class AdvancedPreferences extends Adw.PreferencesPage {
             'message-source-icon',
             this._message_source_icon,
             'text',
+            Gio.SettingsBindFlags.DEFAULT
+        );
+
+        settings.bind(
+            'message-expanded',
+            this._message_expanded,
+            'active',
             Gio.SettingsBindFlags.DEFAULT
         );
 
@@ -487,7 +567,14 @@ export default class AdvancedPreferences extends Adw.PreferencesPage {
             'button-padding-right',
             'button-icon-size',
             'button-context-icon',
+            'button-icon-change',
             'context-window-title-menu-keybinding',
+            'button-windows-toggle',
+            'button-overview-scroll',
+            'button-desktop-scroll',
+            'button-menu-patch',
+            'button-menu-open-windows',
+            'button-menu-hide-favorite',
             'clock-year',
             'clock-month',
             'clock-weekday',
@@ -498,8 +585,11 @@ export default class AdvancedPreferences extends Adw.PreferencesPage {
             'clock-calendar',
             'clock-numbering',
             'clock-locale',
+            'clock-style',
             'name-lock-hide',
+            'name-keep-first',
             'message-source-icon',
+            'message-expanded',
             'allow-log',
         ];
         (isAll ? keysOther.concat(keysAdvanced) : keysAdvanced).forEach((key) =>

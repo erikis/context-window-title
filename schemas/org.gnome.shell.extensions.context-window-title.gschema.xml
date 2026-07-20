@@ -67,10 +67,45 @@
       <description>Button icon when on desktop without focused window</description>
       <default>""</default>
     </key>
+    <key name="button-icon-change" type="i">
+      <summary>Button icon change</summary>
+      <description>Whether/how the icon changes</description>
+      <default>0</default>
+    </key>
     <key name="context-window-title-menu-keybinding" type="as">
       <summary>Button menu keybinding</summary>
       <description>Menu keybinding with a globally unique keybinding name</description>
       <default><![CDATA[[]]]></default>
+    </key>
+    <key name="button-windows-toggle" type="b">
+      <summary>Button windows toggle</summary>
+      <description>Whether to include toggling to windows</description>
+      <default>true</default>
+    </key>
+    <key name="button-overview-scroll" type="b">
+      <summary>Button overview scroll</summary>
+      <description>Whether to use specific scroll handling in overview</description>
+      <default>true</default>
+    </key>
+    <key name="button-desktop-scroll" type="b">
+      <summary>Button desktop scroll</summary>
+      <description>Whether to use specific scroll handling on desktop</description>
+      <default>true</default>
+    </key>
+    <key name="button-menu-patch" type="i">
+      <summary>Button menu patch</summary>
+      <description>Whether/how to patch app menu</description>
+      <default>1</default>
+    </key>
+    <key name="button-menu-open-windows" type="i">
+      <summary>Button menu open windows</summary>
+      <description>Whether/how to show open windows</description>
+      <default>0</default>
+    </key>
+    <key name="button-menu-hide-favorite" type="i">
+      <summary>Button menu hide favorite</summary>
+      <description>Whether/how to hide Pin/Unpin menu item</description>
+      <default>1</default>
     </key>
     
     <key name="activate-clock" type="b">
@@ -139,6 +174,11 @@
       <description>Override time locale</description>
       <default>""</default>
     </key>
+    <key name="clock-style" type="s">
+      <summary>Clock style</summary>
+      <description>Clock style (CSS)</description>
+      <default>""</default>
+    </key>
     
     <key name="activate-name" type="b">
       <summary>Activate user/host name feature</summary>
@@ -161,6 +201,11 @@
       <description>Whether to hide user/host name on lock screen</description>
       <default>0</default>
     </key>
+    <key name="name-keep-first" type="b">
+      <summary>Name keep first</summary>
+      <description>Whether to keep user/host name first among indicators</description>
+      <default>false</default>
+    </key>
     
     <key name="activate-message" type="b">
       <summary>Activate lock screen message feature</summary>
@@ -181,6 +226,11 @@
     <key name="message-body" type="s">
       <summary>Lock screen message body</summary>
       <default>""</default>
+    </key>
+    <key name="message-expanded" type="b">
+      <summary>Message expanded</summary>
+      <description>Whether the message is initially expanded</description>
+      <default>false</default>
     </key>
   </schema>
 </schemalist>

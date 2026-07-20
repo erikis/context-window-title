@@ -20,7 +20,11 @@ import GObject from 'gi://GObject';
 import Meta from 'gi://Meta';
 import Shell from 'gi://Shell';
 
-import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
+import { AppMenu } from 'resource:///org/gnome/shell/ui/appMenu.js';
+import {
+    Extension,
+    InjectionManager,
+} from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 import ClockLabel from './widgets/clockLabel.js';
@@ -30,17 +34,22 @@ import LockMessage from './widgets/lockMessage.js';
 import NameIndicator from './widgets/nameIndicator.js';
 
 const NAME = 'ContextWindowTitle ContextExtension'; // Used for console log
+const MENU_KEYBINDING = 'context-window-title-menu-keybinding'; // Keybinding name in the schema
 
 export default class ContextExtension extends Extension {
     #settings = null;
     #defaults = null;
     #sessionMode = null;
     #isLogging = false;
+    #injectionManager = null;
+    #allKeybindings = [];
     #contextButton = null;
-    #menuKeybinding = null;
+    #patchedAppMenus = null;
+    #patchedAppMenuConfig = null;
     #clockLabel = null;
     #originalClockDisplay = null;
     #nameIndicator = null;
+    #nameConnectedIndicators = null;
     #lockMessage = null;
 
     _log(to, ...args) {
@@ -59,6 +68,7 @@ export default class ContextExtension extends Extension {
         if (!this.#defaults) {
             this.#defaults = new Defaults();
         }
+        this.#injectionManager = new InjectionManager();
         this.#onSessionMode(); // This will initialize everything
 
         this.#settings.connectObject(
@@ -87,10 +97,9 @@ export default class ContextExtension extends Extension {
         this.#settings?.disconnectObject(this);
         Main.sessionMode.disconnectObject(this);
 
-        if (this.#menuKeybinding) {
-            Main.wm.removeKeybinding(this.#menuKeybinding);
-            this.#menuKeybinding = null;
-        }
+        this.#removeAllKeybindings();
+
+        this.#unpatchAppMenus();
         this.#contextButton?.destroy();
         this.#contextButton = null;
 
@@ -98,11 +107,15 @@ export default class ContextExtension extends Extension {
         this.#clockLabel = null;
         this.#restoreOriginalClock();
 
+        this.#nameConnectedIndicators = null; // Disconnected on #nameIndicator.destroy()
         this.#nameIndicator?.destroy();
         this.#nameIndicator = null;
 
         this.#lockMessage?.destroy();
         this.#lockMessage = null;
+
+        this.#injectionManager.clear();
+        this.#injectionManager = null;
 
         this.#settings = null;
         this.#defaults = null;
@@ -120,10 +133,7 @@ export default class ContextExtension extends Extension {
         if (mode === 'user' /*|| mode === 'gdm'*/) {
             this.#onSettings(); // This will instantiate the context button, etc.
         } else {
-            if (this.#menuKeybinding) {
-                Main.wm.removeKeybinding(this.#menuKeybinding);
-                this.#menuKeybinding = null;
-            }
+            this.#removeAllKeybindings(); // Remove all keybindings on lock screen
             this.#contextButton?.destroy();
             this.#contextButton = null;
             try {
@@ -148,6 +158,21 @@ export default class ContextExtension extends Extension {
         } else {
             // As the lock screen is closed the message should have been destroyed
             this.#lockMessage = null;
+        }
+    }
+
+    #removeAllKeybindings() {
+        let keybinding;
+        while ((keybinding = this.#allKeybindings.pop())) {
+            Main.wm.removeKeybinding(keybinding);
+        }
+    }
+
+    #removeKeybinding(keybinding) {
+        let index = this.#allKeybindings.indexOf(keybinding);
+        if (index !== -1) {
+            Main.wm.removeKeybinding(keybinding);
+            this.#allKeybindings.splice(index, 1);
         }
     }
 
@@ -178,6 +203,9 @@ export default class ContextExtension extends Extension {
                     0
                 );
                 notificationsBox?._updateVisibility();
+                if (this.#settings.get_boolean('message-expanded')) {
+                    this.#lockMessage.expand(false);
+                }
             } else if (!isMessageActivated && this.#lockMessage !== null) {
                 this.#lockMessage = null;
             }
@@ -234,10 +262,7 @@ export default class ContextExtension extends Extension {
                 isAdding = true;
             }
         } else {
-            if (this.#menuKeybinding) {
-                Main.wm.removeKeybinding(this.#menuKeybinding);
-                this.#menuKeybinding = null;
-            }
+            this.#removeKeybinding(MENU_KEYBINDING);
             this.#contextButton?.destroy();
             this.#contextButton = null;
         }
@@ -257,6 +282,9 @@ export default class ContextExtension extends Extension {
             }
             this.#onSettingsContextConfigure({ isAdding, isModified });
         }
+        // App menus can be patched globally if button is activated even if the
+        // button isn't actually instantiated due to no enabled functionality
+        this.#onSettingsContextAppMenus({ isButtonActivated });
     }
 
     // Break up into multiple, chained functions for readability, isolation,
@@ -387,7 +415,66 @@ export default class ContextExtension extends Extension {
         }
         if (this.#contextButton._contextIcon !== contextIcon) {
             this.#contextButton._contextIcon = contextIcon;
-            this.#contextButton._updateContextIcon();
+            if (!isAdding) {
+                this.#contextButton._updateContextIcon();
+            }
+        }
+        const iconChange = this.#settings.get_int('button-icon-change');
+        if (this.#contextButton._iconChange !== iconChange) {
+            this.#contextButton._iconChange = iconChange;
+            isModified = true;
+        }
+        this.#onSettingsContextConfigureBehavior({ isAdding, isModified });
+    }
+
+    #onSettingsContextConfigureBehavior({ isAdding, isModified }) {
+        const isWindowsToggle = this.#settings.get_boolean(
+            'button-windows-toggle'
+        );
+        if (this.#contextButton._isWindowsToggle !== isWindowsToggle) {
+            this.#contextButton._isWindowsToggle = isWindowsToggle;
+            if (!isAdding) {
+                this.#contextButton._updateContextIcon();
+            }
+        }
+        this.#contextButton._isOverviewScroll = this.#settings.get_boolean(
+            'button-overview-scroll'
+        );
+        this.#contextButton._isDesktopScroll = this.#settings.get_boolean(
+            'button-desktop-scroll'
+        );
+        const menuPatch = this.#settings.get_int('button-menu-patch');
+        if (this.#contextButton._menuPatch !== menuPatch) {
+            this.#contextButton._menuPatch = menuPatch;
+            if (this.#contextButton._appMenu) {
+                this.#contextButton._setAppMenuPatched(menuPatch > 0);
+            }
+        }
+        const menuOpenWindows = this.#settings.get_int(
+            'button-menu-open-windows'
+        );
+        if (this.#contextButton._menuOpenWindows !== menuOpenWindows) {
+            this.#contextButton._menuOpenWindows = menuOpenWindows;
+            if (this.#contextButton._appMenu) {
+                this.#contextButton._appMenu._showSingleWindows =
+                    menuOpenWindows > 0;
+                if (!isAdding) {
+                    this.#contextButton._appMenu._updateWindowsSection();
+                }
+            }
+        }
+        const menuHideFavorite = this.#settings.get_int(
+            'button-menu-hide-favorite'
+        );
+        if (this.#contextButton._menuHideFavorite !== menuHideFavorite) {
+            this.#contextButton._menuHideFavorite = menuHideFavorite;
+            if (this.#contextButton._appMenu) {
+                this.#contextButton._appMenu._enableFavorites =
+                    menuHideFavorite === 0;
+                if (!isAdding) {
+                    this.#contextButton._appMenu._updateFavoriteItem();
+                }
+            }
         }
         this.#onSettingsContextAddOrModify({ isAdding, isModified });
     }
@@ -400,9 +487,8 @@ export default class ContextExtension extends Extension {
                 -1,
                 'left'
             );
-            if (!this.#menuKeybinding) {
-                // Keybinding name in the schema
-                const keybindingName = 'context-window-title-menu-keybinding';
+            const keybindingName = MENU_KEYBINDING;
+            if (this.#allKeybindings.indexOf(keybindingName) === -1) {
                 const keybindingAction = Main.wm.addKeybinding(
                     keybindingName,
                     this.#settings, // Current keybinding is read from the settings
@@ -415,15 +501,135 @@ export default class ContextExtension extends Extension {
                         this.#contextButton?._toggleMenu(true);
                     }
                 );
+                // Return value is Meta.KeyBindingAction.NONE if add was unsuccessful
                 if (keybindingAction !== Meta.KeyBindingAction.NONE) {
                     // Save the keybinding name for later removal
-                    this.#menuKeybinding = keybindingName;
+                    this.#allKeybindings.push(keybindingName);
                 }
             }
         }
         if (isAdding || isModified) {
             // Run _update() after adding to avoid "not on stage" errors
             this.#contextButton._update();
+        }
+    }
+
+    #onSettingsContextAppMenus({ isButtonActivated }) {
+        const menuPatch = this.#settings.get_int('button-menu-patch');
+        if (isButtonActivated && menuPatch === 2) {
+            const isFavoriteHidden =
+                this.#settings.get_int('button-menu-hide-favorite') === 2;
+            const config = this.#patchedAppMenuConfig ?? {
+                _focusWindow: null,
+                _isWindowMenu: false,
+                _menuOpenWindows: 0,
+                _isFavoriteHidden: isFavoriteHidden,
+                _appMenuOverrides: {
+                    _updateFavoriteItem: function () {
+                        // this = AppMenu instance
+                        if (config._isFavoriteHidden) {
+                            if (this._toggleFavoriteItem) {
+                                this._toggleFavoriteItem.visible = false;
+                            }
+                        } else {
+                            AppMenu.prototype._updateFavoriteItem?.call(this);
+                        }
+                    },
+                },
+            };
+            if (!this.#patchedAppMenus) {
+                const patchedAppMenus = new Map();
+                this.#patchedAppMenus = patchedAppMenus;
+                this.#patchedAppMenuConfig = config;
+                const patchAppMenu = ContextButton.prototype._patchAppMenu;
+                const interceptMethod = (originalMethod) => {
+                    const extension = this;
+                    return function () {
+                        // this = AppMenu instance
+                        if (!patchedAppMenus.has(this)) {
+                            const destroy = this.connect('destroy', () => {
+                                // This doesn't seems to happen (GNOME 50), but in case it does
+                                patchedAppMenus.delete(this);
+                            });
+                            let updateMenu = null;
+                            try {
+                                updateMenu = patchAppMenu.call(config, this);
+                            } catch (ex) {
+                                extension._log(
+                                    console.error,
+                                    `${NAME} contextButton _patchAppMenu`,
+                                    ex
+                                );
+                            }
+                            if (updateMenu) {
+                                const open = this.connect(
+                                    'open-state-changed',
+                                    (menu, isOpen) => {
+                                        if (isOpen && updateMenu) {
+                                            updateMenu();
+                                        }
+                                    }
+                                );
+                                patchedAppMenus.set(this, { destroy, open });
+                            } else {
+                                patchedAppMenus.set(this, { destroy });
+                            }
+                        }
+                        originalMethod.apply(this, arguments);
+                    };
+                };
+                this.#injectionManager.overrideMethod(
+                    AppMenu.prototype,
+                    'open',
+                    interceptMethod
+                );
+            }
+            config._menuOpenWindows = this.#settings.get_int(
+                'button-menu-open-windows'
+            ); // Will be read by updateMenu() on open-state-changed
+            if (config._isFavoriteHidden !== isFavoriteHidden) {
+                config._isFavoriteHidden = isFavoriteHidden;
+                this.#patchedAppMenus.forEach((signals, appMenu) => {
+                    try {
+                        appMenu._updateFavoriteItem();
+                    } catch (ex) {
+                        this._log(
+                            console.error,
+                            `${NAME} contextButton _updateFavoriteItem`,
+                            ex
+                        );
+                    }
+                });
+            }
+        } else if (this.#patchedAppMenus) {
+            this.#injectionManager.restoreMethod(AppMenu.prototype, 'open');
+            this.#unpatchAppMenus();
+        }
+    }
+
+    #unpatchAppMenus() {
+        if (this.#patchedAppMenus) {
+            const config = this.#patchedAppMenuConfig;
+            const unpatchAppMenu = ContextButton.prototype._unpatchAppMenu;
+            this.#patchedAppMenus.forEach((signals, appMenu) => {
+                Object.values(signals).forEach((signal) => {
+                    appMenu.disconnect(signal);
+                });
+                if (signals.open !== undefined) {
+                    try {
+                        unpatchAppMenu.call(config, appMenu);
+                    } catch (ex) {
+                        this._log(
+                            console.error,
+                            `${NAME} contextButton _unpatchAppMenu`,
+                            ex
+                        );
+                    }
+                }
+            });
+            this.#patchedAppMenus.clear();
+            this.#patchedAppMenus = null;
+            this.#patchedAppMenuConfig = null;
         }
     }
 
@@ -626,6 +832,10 @@ export default class ContextExtension extends Extension {
             this.#clockLabel._locale = locale;
             isModified = true;
         }
+        let style = this.#settings.get_string('clock-style');
+        if (this.#clockLabel.style !== style) {
+            this.#clockLabel.style = style;
+        }
         this.#onSettingsClockAddOrModify({ isAdding, isModified });
     }
 
@@ -673,6 +883,7 @@ export default class ContextExtension extends Extension {
                 isAdding = true;
             }
         } else {
+            this.#nameConnectedIndicators = null;
             this.#nameIndicator?.destroy();
             this.#nameIndicator = null;
         }
@@ -707,17 +918,65 @@ export default class ContextExtension extends Extension {
             this.#nameIndicator._lockHide = lockHide;
             isModified = true;
         }
-        this.#onSettingsNameAddOrModify({ isAdding, isModified });
+        let isKeepFirst = this.#settings.get_boolean('name-keep-first');
+        if (this.#nameIndicator._isKeepFirst !== isKeepFirst) {
+            this.#nameIndicator._isKeepFirst = isKeepFirst;
+            if (!isAdding) {
+                if (isKeepFirst) {
+                    this.#nameIndicator
+                        .get_parent()
+                        .remove_child(this.#nameIndicator);
+                    isAdding = true; // Re-add to keep first
+                } else {
+                    // No longer keeping first, so disconnect the signal
+                    this.#nameConnectedIndicators?.disconnectObject(
+                        this.#nameIndicator
+                    );
+                    this.#nameConnectedIndicators = null;
+                }
+            }
+        }
+        this.#onSettingsNameAddOrModify({ isAdding, isModified, isKeepFirst });
     }
 
-    #onSettingsNameAddOrModify({ isAdding, isModified }) {
+    #onSettingsNameAddOrModify({ isAdding, isModified, isKeepFirst }) {
         if (isAdding || isModified) {
             this.#nameIndicator._update();
         }
         if (isAdding) {
-            Main.panel.statusArea.quickSettings.addExternalIndicator(
+            this.#nameConnectedIndicators?.disconnectObject(
                 this.#nameIndicator
-            );
+            ); // Logically impossible to be connected here but just in case
+            this.#nameConnectedIndicators = null;
+            const indicators = Main.panel.statusArea.quickSettings._indicators;
+            if (!isKeepFirst || !indicators) {
+                Main.panel.statusArea.quickSettings.addExternalIndicator(
+                    this.#nameIndicator
+                );
+            } else {
+                indicators.insert_child_at_index(this.#nameIndicator, 0);
+                const onChildAdded = () => {
+                    this.#nameConnectedIndicators?.disconnectObject(
+                        this.#nameIndicator
+                    );
+                    this.#nameConnectedIndicators = null;
+                    indicators.remove_child(this.#nameIndicator);
+                    indicators.insert_child_at_index(this.#nameIndicator, 0);
+                    indicators.connectObject(
+                        'child-added',
+                        onChildAdded,
+                        this.#nameIndicator
+                    );
+                    this.#nameConnectedIndicators = indicators;
+                };
+                // Do automatic disconnect on #nameIndicator.destroy()
+                indicators.connectObject(
+                    'child-added',
+                    onChildAdded,
+                    this.#nameIndicator
+                );
+                this.#nameConnectedIndicators = indicators;
+            }
         }
     }
 }

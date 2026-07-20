@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: context-window-title@erikis\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-12 19:34+0200\n"
-"PO-Revision-Date: 2026-07-12 19:35+0200\n"
+"POT-Creation-Date: 2026-07-20 14:48+0200\n"
+"PO-Revision-Date: 2026-07-20 15:07+0200\n"
 "Last-Translator: Erik Isaksson <erikis@github>\n"
 "Language-Team: Erik Isaksson <erikis@github>\n"
 "Language: sv\n"
@@ -118,50 +118,126 @@ msgid "Context Icon [empty for automatic (default, currently !CURRENT!)]"
 msgstr "Kontextikon [tom för automatisk (standard, för närvarande !CURRENT!)]"
 
 #: resources/ui/advanced.ui:226
+msgid "Icon Change"
+msgstr "Ikonändring"
+
+#: resources/ui/advanced.ui:227
+msgid "Whether the icon changes (dynamic by default)"
+msgstr "Huruvida ikonen ändras (dynamisk som standard)"
+
+#: resources/ui/advanced.ui:240
 msgid "Keyboard Shortcut"
 msgstr "Tangentbordsgenväg"
 
-#: resources/ui/advanced.ui:227
+#: resources/ui/advanced.ui:241
 msgid "Toggles the app menu (none by default; recommendation: Super+C)"
 msgstr "Växlar appmenyn (ingen som standard; rekommendation: Super+C)"
 
-#: resources/ui/advanced.ui:242 resources/ui/panel.ui:69
+#: resources/ui/advanced.ui:253
+msgid "Behavior"
+msgstr "Beteende"
+
+#: resources/ui/advanced.ui:254
+msgid "Change what the button does"
+msgstr "Ändra vad knappen gör"
+
+#: resources/ui/advanced.ui:258
+msgid "Show Windows on Click"
+msgstr "Visa fönster vid klick"
+
+#: resources/ui/advanced.ui:259
+msgid "When apps are being shown (if disabled, toggle directly to the desktop)"
+msgstr "När appar visas (om inaktiverad, växla direkt till skrivbordet)"
+
+#: resources/ui/advanced.ui:271
+msgid "Show Apps/Windows on Scroll Up/Down"
+msgstr "Visa appar/fönster vid scrollning upp/ned"
+
+#: resources/ui/advanced.ui:272
+msgid "In the overview"
+msgstr "I översiktsvyn"
+
+#: resources/ui/advanced.ui:284
+msgid "Maximize/Unmaximize on Scroll Up/Down"
+msgstr "Maximera/avmaximera vid scrollning upp/ned"
+
+#: resources/ui/advanced.ui:285
+msgid "On the desktop"
+msgstr "På skrivbordet"
+
+#: resources/ui/advanced.ui:300
+msgid "App Menu"
+msgstr "Appmeny"
+
+#: resources/ui/advanced.ui:301
+msgid "Customize the app menu"
+msgstr "Anpassa appmenyn"
+
+#: resources/ui/advanced.ui:305
+msgid "Patch App Menu"
+msgstr "Patcha appmenyn"
+
+#: resources/ui/advanced.ui:306
+msgid ""
+"For the button, a window menu is embedded; patch everywhere for a consistent "
+"look in the app grid and the dash"
+msgstr ""
+"För knappen inbäddas en fönstermeny; patcha överallt för ett konsekvent "
+"utseende i programrutnätet och snabbstartspanelen"
+
+#: resources/ui/advanced.ui:319
+msgid "Show Open Windows"
+msgstr "Visa Öppna fönster"
+
+#: resources/ui/advanced.ui:320
+msgid "Automatic (default) is depending on window count"
+msgstr "Automatisk (standard) är beroende på antal fönster"
+
+#: resources/ui/advanced.ui:333
+msgid "Hide Pin/Unpin"
+msgstr "Dölj Fäst/Lösgör"
+
+#: resources/ui/advanced.ui:334
+msgid "Everywhere only works if also patched everywhere"
+msgstr "Överallt fungerar endast om även patchad överallt"
+
+#: resources/ui/advanced.ui:353 resources/ui/panel.ui:69
 msgid "Custom Clock"
 msgstr "Anpassad klocka"
 
-#: resources/ui/advanced.ui:246
+#: resources/ui/advanced.ui:357
 msgid "Year"
 msgstr "År"
 
-#: resources/ui/advanced.ui:259
+#: resources/ui/advanced.ui:370
 msgid "Month"
 msgstr "Månad"
 
-#: resources/ui/advanced.ui:272 resources/ui/panel.ui:79
+#: resources/ui/advanced.ui:383 resources/ui/panel.ui:79
 msgid "Weekday"
 msgstr "Veckodag"
 
-#: resources/ui/advanced.ui:285
+#: resources/ui/advanced.ui:396
 msgid "Hour"
 msgstr "Timme"
 
-#: resources/ui/advanced.ui:298 resources/ui/advanced.ui:498
+#: resources/ui/advanced.ui:409 resources/ui/advanced.ui:668
 msgid "Second"
 msgstr "Sekund"
 
-#: resources/ui/advanced.ui:311
+#: resources/ui/advanced.ui:422
 msgid "Extra"
 msgstr "Extra"
 
-#: resources/ui/advanced.ui:312
-msgid "Show time zone and change locale options"
-msgstr "Visa tidszon och ändra språkinställningar"
+#: resources/ui/advanced.ui:423
+msgid "Show time zone and change locale options and styling"
+msgstr "Visa tidszon och ändra språkinställningar och stil"
 
-#: resources/ui/advanced.ui:316
+#: resources/ui/advanced.ui:427
 msgid "Time Zone Name"
 msgstr "Visa tidszon"
 
-#: resources/ui/advanced.ui:329
+#: resources/ui/advanced.ui:440
 msgid ""
 "Time Zone, e.g., America/Los_Angeles (tzdb name) or +08:00 [empty for "
 "automatic (default)]"
@@ -169,139 +245,187 @@ msgstr ""
 "Tidszon, t.ex. America/Los_Angeles (tzdb-namn) eller +08:00 [tom för "
 "automatisk (standard)]"
 
-#: resources/ui/advanced.ui:335
+#: resources/ui/advanced.ui:446
 msgid "Calendar"
 msgstr "Kalender"
 
-#: resources/ui/advanced.ui:348
+#: resources/ui/advanced.ui:459
 msgid "Numeral System"
 msgstr "Talsystem"
 
-#: resources/ui/advanced.ui:361
+#: resources/ui/advanced.ui:472
 msgid "Time Locale [empty for automatic (default, currently !CURRENT!)]"
 msgstr ""
 "Språkinställning för tid [tom för automatisk (standard, för närvarande !"
 "CURRENT!)]"
 
-#: resources/ui/advanced.ui:373 resources/ui/panel.ui:118
+#: resources/ui/advanced.ui:478
+msgid "Style (CSS) [empty for no styling (default)]"
+msgstr "Stil (CSS) [tom för ingen stil (standard)]"
+
+#: resources/ui/advanced.ui:490 resources/ui/panel.ui:118
 msgid "User/Host Name"
 msgstr "Användar-/värdnamn"
 
-#: resources/ui/advanced.ui:377
-msgid "Hide on lock screen"
+#: resources/ui/advanced.ui:494
+msgid "Hide on Lock Screen"
 msgstr "Dölj på låsskärmen"
 
-#: resources/ui/advanced.ui:393 resources/ui/lock.ui:10
+#: resources/ui/advanced.ui:507
+msgid "Keep First"
+msgstr "Behåll först"
+
+#: resources/ui/advanced.ui:522 resources/ui/lock.ui:10
 msgid "Lock Screen Message"
 msgstr "Låsskärmsmeddelande"
 
-#: resources/ui/advanced.ui:397
+#: resources/ui/advanced.ui:526
 msgid "Icon [empty for automatic (default, currently !CURRENT!)]"
 msgstr "Ikon [tom för automatisk (standard, för närvarande !CURRENT!)]"
 
-#: resources/ui/advanced.ui:406
+#: resources/ui/advanced.ui:532
+msgid "Initially Expanded"
+msgstr "Initialt expanderad"
+
+#: resources/ui/advanced.ui:547
 msgid "Other"
 msgstr "Övrigt"
 
-#: resources/ui/advanced.ui:413
+#: resources/ui/advanced.ui:554
 msgid "About !NAME!"
 msgstr "Om !NAME!"
 
-#: resources/ui/advanced.ui:422
+#: resources/ui/advanced.ui:563
 msgid "Allow Logging"
 msgstr "Tillåt loggning"
 
-#: resources/ui/advanced.ui:423
+#: resources/ui/advanced.ui:564
 msgid "Allow writing to the log for debugging"
 msgstr "Tillåt skrivning till loggen för felsökning"
 
-#: resources/ui/advanced.ui:435
+#: resources/ui/advanced.ui:576
 msgid "Reset Preferences"
 msgstr "Återställ inställningar"
 
-#: resources/ui/advanced.ui:436
+#: resources/ui/advanced.ui:577
 msgid "This is irreversible"
 msgstr "Detta är irreversibelt"
 
-#: resources/ui/advanced.ui:443
+#: resources/ui/advanced.ui:584
 msgid "Reset Advanced Preferences"
 msgstr "Återställ avancerade inställningar"
 
-#: resources/ui/advanced.ui:454
+#: resources/ui/advanced.ui:595
 msgid "Reset All Preferences"
 msgstr "Återställ alla inställningar"
 
-#: resources/ui/advanced.ui:469 resources/ui/advanced.ui:497
-#: resources/ui/advanced.ui:506
+#: resources/ui/advanced.ui:610
+msgid "Dynamic"
+msgstr "Dynamisk"
+
+#: resources/ui/advanced.ui:611
+msgid "App icon or static"
+msgstr "Appikon eller statisk"
+
+#: resources/ui/advanced.ui:612
+msgid "No app icon"
+msgstr "Ingen appikon"
+
+#: resources/ui/advanced.ui:613
+msgid "Static"
+msgstr "Statisk"
+
+#: resources/ui/advanced.ui:618 resources/ui/advanced.ui:639
+#: resources/ui/advanced.ui:667 resources/ui/advanced.ui:676
 msgid "Off"
 msgstr "Av"
 
-#: resources/ui/advanced.ui:470 resources/ui/advanced.ui:507
-msgid "On"
-msgstr "På"
+#: resources/ui/advanced.ui:619 resources/ui/advanced.ui:633
+msgid "Button only"
+msgstr "Endast knappen"
 
-#: resources/ui/advanced.ui:471
-msgid "On with era"
-msgstr "På med era"
+#: resources/ui/advanced.ui:620 resources/ui/advanced.ui:634
+msgid "Everywhere"
+msgstr "Överallt"
 
-#: resources/ui/advanced.ui:476 resources/ui/advanced.ui:483
-msgid "Short"
-msgstr "Kort"
+#: resources/ui/advanced.ui:625
+msgid "Automatic"
+msgstr "Automatisk"
 
-#: resources/ui/advanced.ui:477 resources/ui/advanced.ui:484
-msgid "Long"
-msgstr "Långt"
+#: resources/ui/advanced.ui:626
+msgid "Always and closed"
+msgstr "Alltid och stängd"
 
-#: resources/ui/advanced.ui:478
-msgid "Numeric"
-msgstr "Numeriskt"
+#: resources/ui/advanced.ui:627
+msgid "Always and open"
+msgstr "Alltid och öppen"
 
-#: resources/ui/advanced.ui:485
-msgid "Narrow"
-msgstr "Smalt"
-
-#: resources/ui/advanced.ui:490 resources/ui/advanced.ui:514
-#: resources/ui/advanced.ui:519
-msgid "Default"
-msgstr "Standard"
-
-#: resources/ui/advanced.ui:491
-msgid "12h"
-msgstr "12h"
-
-#: resources/ui/advanced.ui:492
-msgid "24h"
-msgstr "24h"
-
-#: resources/ui/advanced.ui:499
-msgid "1/10 Second"
-msgstr "1/10 sekund"
-
-#: resources/ui/advanced.ui:500
-msgid "1/100 Second"
-msgstr "1/100 sekund"
-
-#: resources/ui/advanced.ui:501
-msgid "1/1000 Second"
-msgstr "1/1000 sekund"
-
-#: resources/ui/advanced.ui:508
-msgid "On with offset only"
-msgstr "På med endast förskjutning"
-
-#: resources/ui/advanced.ui:509
-msgid "On with long offset only"
-msgstr "På med endast lång förskjutning"
-
-#: resources/ui/advanced.ui:524
+#: resources/ui/advanced.ui:632 resources/ui/advanced.ui:694
 msgid "Don’t hide"
 msgstr "Dölj inte"
 
-#: resources/ui/advanced.ui:525
+#: resources/ui/advanced.ui:640 resources/ui/advanced.ui:677
+msgid "On"
+msgstr "På"
+
+#: resources/ui/advanced.ui:641
+msgid "On with era"
+msgstr "På med era"
+
+#: resources/ui/advanced.ui:646 resources/ui/advanced.ui:653
+msgid "Short"
+msgstr "Kort"
+
+#: resources/ui/advanced.ui:647 resources/ui/advanced.ui:654
+msgid "Long"
+msgstr "Långt"
+
+#: resources/ui/advanced.ui:648
+msgid "Numeric"
+msgstr "Numeriskt"
+
+#: resources/ui/advanced.ui:655
+msgid "Narrow"
+msgstr "Smalt"
+
+#: resources/ui/advanced.ui:660 resources/ui/advanced.ui:684
+#: resources/ui/advanced.ui:689
+msgid "Default"
+msgstr "Standard"
+
+#: resources/ui/advanced.ui:661
+msgid "12h"
+msgstr "12h"
+
+#: resources/ui/advanced.ui:662
+msgid "24h"
+msgstr "24h"
+
+#: resources/ui/advanced.ui:669
+msgid "1/10 Second"
+msgstr "1/10 sekund"
+
+#: resources/ui/advanced.ui:670
+msgid "1/100 Second"
+msgstr "1/100 sekund"
+
+#: resources/ui/advanced.ui:671
+msgid "1/1000 Second"
+msgstr "1/1000 sekund"
+
+#: resources/ui/advanced.ui:678
+msgid "On with offset only"
+msgstr "På med endast förskjutning"
+
+#: resources/ui/advanced.ui:679
+msgid "On with long offset only"
+msgstr "På med endast lång förskjutning"
+
+#: resources/ui/advanced.ui:695
 msgid "Hide"
 msgstr "Dölj"
 
-#: resources/ui/advanced.ui:526
+#: resources/ui/advanced.ui:696
 msgid "Hide user"
 msgstr "Dölj användare"
 
@@ -428,12 +552,12 @@ msgstr "Kontext + Fönstertitel"
 msgid "TRANSLATOR"
 msgstr "Erik Isaksson https://github.com/erikis"
 
-#: src/preferences/advanced.js:74
+#: src/preferences/advanced.js:84
 #, javascript-format
 msgid "!VALUE! for symbolic icon style and !CURRENT!% saturation"
 msgstr "!VALUE! för symbolisk ikonstil och !CURRENT! % färgmättnad"
 
-#: src/preferences/advanced.js:234
+#: src/preferences/advanced.js:251
 msgid "Press key… (Esc or click to cancel, Backspace to remove)"
 msgstr ""
 "Tryck tangent… (Esc eller klicka för att avbryta, Backsteg för att ta bort)"
