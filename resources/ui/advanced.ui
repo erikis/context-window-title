@@ -248,6 +248,53 @@
           </object>
         </child>
         
+        <child>
+          <object class="AdwExpanderRow">
+            <property name="title" translatable="yes">Behavior</property>
+            <property name="subtitle" translatable="yes">Change what the button does</property>
+            
+            <child>
+              <object class="AdwActionRow">
+                <property name="title" translatable="yes">Show Windows on Click</property>
+                <property name="subtitle" translatable="yes">When apps are being shown (if disabled, toggle directly to the desktop)</property>
+                <property name="activatable-widget">button_windows_toggle</property>
+                <child>
+                  <object class="GtkSwitch" id="button_windows_toggle">
+                    <property name="valign">center</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+            
+            <child>
+              <object class="AdwActionRow">
+                <property name="title" translatable="yes">Show Apps/Windows on Scroll Up/Down</property>
+                <property name="subtitle" translatable="yes">In the overview</property>
+                <property name="activatable-widget">button_overview_scroll</property>
+                <child>
+                  <object class="GtkSwitch" id="button_overview_scroll">
+                    <property name="valign">center</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+            
+            <child>
+              <object class="AdwActionRow">
+                <property name="title" translatable="yes">Maximize/Unmaximize on Scroll Up/Down</property>
+                <property name="subtitle" translatable="yes">On the desktop</property>
+                <property name="activatable-widget">button_desktop_scroll</property>
+                <child>
+                  <object class="GtkSwitch" id="button_desktop_scroll">
+                    <property name="valign">center</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+            
+          </object>
+        </child>
+        
       </object>
     </child>
     

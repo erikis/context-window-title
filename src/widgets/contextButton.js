@@ -593,7 +593,10 @@ export default class ContextButton extends PanelMenu.Button {
                 this._iconChange !== 3
             ) {
                 const controls = Main.overview._overview?.controls;
-                if (controls?.dash?.showAppsButton?.checked) {
+                if (
+                    this._isWindowsToggle &&
+                    controls?.dash?.showAppsButton?.checked
+                ) {
                     icon.set_icon_name('shell-focus-windows-symbolic');
                 } else {
                     icon.set_icon_name('shell-focus-desktop-symbolic');
@@ -754,23 +757,19 @@ export default class ContextButton extends PanelMenu.Button {
                 button === Clutter.BUTTON_MIDDLE)
         ) {
             if (this._isContextButton && !Main.overview.closing) {
-                if (Main.overview.visible && !Main.overview.closing) {
+                if (Main.overview.visible) {
                     const controls = Main.overview._overview?.controls;
-                    if (controls?.dash?.showAppsButton?.checked) {
-                        // Dash to Dock's docking.js sets _fromDesktop = true to indicate that
-                        // the apps button should close the overview and not just the app grid
-                        const showAppsButton = controls.dash.showAppsButton;
-                        if (showAppsButton._fromDesktop === true) {
-                            showAppsButton._fromDesktop = false;
-                        }
-                        showAppsButton.checked = false;
-                    } else {
+                    if (
+                        this._isWindowsToggle &&
+                        controls?.dash?.showAppsButton?.checked
+                    ) {
+                        this.#hideApps(controls);
+                    } else if (!Main.overview.animationInProgress) {
                         Main.overview.hide();
                     }
                 } else {
                     Main.overview.showApps();
                 }
-                this._updateContextIcon();
             }
             return Clutter.EVENT_STOP;
         }
@@ -806,9 +805,25 @@ export default class ContextButton extends PanelMenu.Button {
     _onScroll(event) {
         switch (event.get_scroll_direction()) {
             case Clutter.ScrollDirection.UP:
+            case Clutter.ScrollDirection.DOWN:
                 if (Main.overview.visible) {
                     return this.#onScrollOverview(event);
-                } else if (!this._isWindowButton) {
+                }
+                return this.#onScrollDesktop(event);
+            case Clutter.ScrollDirection.LEFT:
+            case Clutter.ScrollDirection.RIGHT:
+                if (this._isContextButton) {
+                    return Main.wm.handleWorkspaceScroll(event);
+                }
+                break;
+        }
+        return Clutter.EVENT_PROPAGATE;
+    }
+
+    #onScrollDesktop(event) {
+        switch (event.get_scroll_direction()) {
+            case Clutter.ScrollDirection.UP:
+                if (!this._isWindowButton || !this._isDesktopScroll) {
                     if (this._isContextButton) {
                         return Main.wm.handleWorkspaceScroll(event);
                     }
@@ -826,11 +841,9 @@ export default class ContextButton extends PanelMenu.Button {
                         );
                     }
                 }
-                return Clutter.EVENT_STOP;
+                break;
             case Clutter.ScrollDirection.DOWN:
-                if (Main.overview.visible) {
-                    return this.#onScrollOverview(event);
-                } else if (!this._isWindowButton) {
+                if (!this._isWindowButton || !this._isDesktopScroll) {
                     if (this._isContextButton) {
                         return Main.wm.handleWorkspaceScroll(event);
                     }
@@ -862,21 +875,16 @@ export default class ContextButton extends PanelMenu.Button {
                         );
                     }
                 }
-                return Clutter.EVENT_STOP;
-            case Clutter.ScrollDirection.LEFT:
-            case Clutter.ScrollDirection.RIGHT:
-                if (!this._isContextButton) {
-                    return Clutter.EVENT_PROPAGATE;
-                }
-                return Main.wm.handleWorkspaceScroll(event);
-            default:
-                return Clutter.EVENT_PROPAGATE;
+                break;
         }
+        return Clutter.EVENT_STOP;
     }
 
     #onScrollOverview(event) {
         if (!this._isContextButton) {
             return Clutter.EVENT_PROPAGATE;
+        } else if (!this._isOverviewScroll) {
+            return Main.wm.handleWorkspaceScroll(event);
         } else if (!Main.overview.closing) {
             const controls = Main.overview._overview?.controls;
             switch (event.get_scroll_direction()) {
@@ -887,16 +895,22 @@ export default class ContextButton extends PanelMenu.Button {
                     break;
                 case Clutter.ScrollDirection.DOWN:
                     if (controls?.dash?.showAppsButton?.checked) {
-                        const showAppsButton = controls.dash.showAppsButton;
-                        if (showAppsButton._fromDesktop === true) {
-                            showAppsButton._fromDesktop = false;
-                        }
-                        showAppsButton.checked = false;
+                        this.#hideApps(controls);
                     }
                     break;
             }
         }
         return Clutter.EVENT_STOP;
+    }
+
+    #hideApps(controls) {
+        // Dash to Dock's docking.js sets _fromDesktop = true to indicate that
+        // the apps button should close the overview and not just the app grid
+        const showAppsButton = controls.dash.showAppsButton;
+        if (showAppsButton._fromDesktop === true) {
+            showAppsButton._fromDesktop = false;
+        }
+        showAppsButton.checked = false;
     }
 
     _superVFunc(name, defaultRet, ...args) {

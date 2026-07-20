@@ -77,6 +77,21 @@
       <description>Menu keybinding with a globally unique keybinding name</description>
       <default><![CDATA[[]]]></default>
     </key>
+    <key name="button-windows-toggle" type="b">
+      <summary>Button windows toggle</summary>
+      <description>Whether to include toggling to windows</description>
+      <default>true</default>
+    </key>
+    <key name="button-overview-scroll" type="b">
+      <summary>Button overview scroll</summary>
+      <description>Whether to use specific scroll handling in overview</description>
+      <default>true</default>
+    </key>
+    <key name="button-desktop-scroll" type="b">
+      <summary>Button desktop scroll</summary>
+      <description>Whether to use specific scroll handling on desktop</description>
+      <default>true</default>
+    </key>
     
     <key name="activate-clock" type="b">
       <summary>Activate custom clock feature</summary>

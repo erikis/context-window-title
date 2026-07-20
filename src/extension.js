@@ -395,13 +395,34 @@ export default class ContextExtension extends Extension {
         }
         if (this.#contextButton._contextIcon !== contextIcon) {
             this.#contextButton._contextIcon = contextIcon;
-            this.#contextButton._updateContextIcon();
+            if (!isAdding) {
+                this.#contextButton._updateContextIcon();
+            }
         }
         const iconChange = this.#settings.get_int('button-icon-change');
         if (this.#contextButton._iconChange !== iconChange) {
             this.#contextButton._iconChange = iconChange;
             isModified = true;
         }
+        this.#onSettingsContextConfigureBehavior({ isAdding, isModified });
+    }
+
+    #onSettingsContextConfigureBehavior({ isAdding, isModified }) {
+        const isWindowsToggle = this.#settings.get_boolean(
+            'button-windows-toggle'
+        );
+        if (this.#contextButton._isWindowsToggle !== isWindowsToggle) {
+            this.#contextButton._isWindowsToggle = isWindowsToggle;
+            if (!isAdding) {
+                this.#contextButton._updateContextIcon();
+            }
+        }
+        this.#contextButton._isOverviewScroll = this.#settings.get_boolean(
+            'button-overview-scroll'
+        );
+        this.#contextButton._isDesktopScroll = this.#settings.get_boolean(
+            'button-desktop-scroll'
+        );
         this.#onSettingsContextAddOrModify({ isAdding, isModified });
     }
 

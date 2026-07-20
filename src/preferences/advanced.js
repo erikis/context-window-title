@@ -33,6 +33,9 @@ export default class AdvancedPreferences extends Adw.PreferencesPage {
                     'button_icon_change',
                     'button_menu_keybinding',
                     'button_menu_keybinding_shortcut',
+                    'button_windows_toggle',
+                    'button_overview_scroll',
+                    'button_desktop_scroll',
                     'clock_year',
                     'clock_month',
                     'clock_weekday',
@@ -307,6 +310,27 @@ export default class AdvancedPreferences extends Adw.PreferencesPage {
         menuKeybindingRow.add_controller(menuKeybindingController);
 
         settings.bind(
+            'button-windows-toggle',
+            this._button_windows_toggle,
+            'active',
+            Gio.SettingsBindFlags.DEFAULT
+        );
+
+        settings.bind(
+            'button-overview-scroll',
+            this._button_overview_scroll,
+            'active',
+            Gio.SettingsBindFlags.DEFAULT
+        );
+
+        settings.bind(
+            'button-desktop-scroll',
+            this._button_desktop_scroll,
+            'active',
+            Gio.SettingsBindFlags.DEFAULT
+        );
+
+        settings.bind(
             'clock-year',
             this._clock_year,
             'selected',
@@ -497,6 +521,9 @@ export default class AdvancedPreferences extends Adw.PreferencesPage {
             'button-context-icon',
             'button-icon-change',
             'context-window-title-menu-keybinding',
+            'button-windows-toggle',
+            'button-overview-scroll',
+            'button-desktop-scroll',
             'clock-year',
             'clock-month',
             'clock-weekday',
