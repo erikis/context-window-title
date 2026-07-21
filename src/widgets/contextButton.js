@@ -345,16 +345,12 @@ export default class ContextButton extends PanelMenu.Button {
                 );
             }
         } else if (!this._isWindowButton && !this._isTitleButton) {
-            if (this._connectedDisplay) {
-                // Used for 'notify::focus-window'
-                this._connectedDisplay.disconnectObject(this);
-                this._connectedDisplay = null;
-            }
-            if (this._connectedTracker) {
-                // Used for 'notify::focus-app'
-                this._connectedTracker.disconnectObject(this);
-                this._connectedTracker = null;
-            }
+            // Used for 'notify::focus-window'
+            this._connectedDisplay?.disconnectObject(this);
+            this._connectedDisplay = null;
+            // Used for 'notify::focus-app'
+            this._connectedTracker?.disconnectObject(this);
+            this._connectedTracker = null;
         }
         this.#update(true);
     }
@@ -389,7 +385,7 @@ export default class ContextButton extends PanelMenu.Button {
         this._focusWindow?.disconnectObject(this);
         // Only set _focusWindow to non-null if window/title functionality enabled
         this._focusWindow =
-            this._isTitleButton || this._isWindowButton ? focusWindow : null;
+            this._isWindowButton || this._isTitleButton ? focusWindow : null;
 
         this._windowMenu?.removeAll();
         if (this.#updatePrepare(isInit)) {
@@ -399,7 +395,7 @@ export default class ContextButton extends PanelMenu.Button {
     }
 
     #updatePrepare(isInit) {
-        if (isInit || this._isTitleButton || this._isWindowButton) {
+        if (isInit || this._isWindowButton || this._isTitleButton) {
             this._newIcon = new St.Icon({
                 fallback_gicon: this._fallbackIcon,
                 icon_size: this._iconSize,
@@ -413,7 +409,7 @@ export default class ContextButton extends PanelMenu.Button {
 
         let focusApp = null;
         if (this._focusWindow !== null) {
-            // _newIcon has been set because _isTitleButton || _isWindowButton
+            // _newIcon has been set because _isWindowButton || _isTitleButton
             focusApp = Shell.WindowTracker.get_default().get_window_app(
                 this._focusWindow
             );
@@ -494,12 +490,14 @@ export default class ContextButton extends PanelMenu.Button {
             this._updateTitle();
             // If window/title functionality
             if (this._focusWindow !== null) {
-                this._focusWindow.connectObject(
-                    'notify::title',
-                    () => this._updateTitle(),
-                    GObject.ConnectFlags.AFTER,
-                    this
-                );
+                if (this._isTitleButton) {
+                    this._focusWindow.connectObject(
+                        'notify::title',
+                        () => this._updateTitle(),
+                        GObject.ConnectFlags.AFTER,
+                        this
+                    );
+                }
                 if (!this._isContextButton) {
                     this.set({
                         width: -1, // Restore after using zero width to hide (see below)
@@ -516,7 +514,9 @@ export default class ContextButton extends PanelMenu.Button {
                 (this._focusWindow === null || this._iconChange > 1)
             ) {
                 this._updateContextIcon();
-                this.#connectContext();
+                if (this._iconChange !== 1 && this._iconChange !== 3) {
+                    this.#connectContext();
+                }
             }
             // If no functionality is currently possible
             if (this._focusWindow === null && !this._isContextButton) {
@@ -553,7 +553,6 @@ export default class ContextButton extends PanelMenu.Button {
         }
     }
 
-    // Helper method only for use by #updateDo() (code moved out to reduce complexity)
     #connectContext() {
         let handler = () => this._updateContextIcon();
         const controls = Main.overview._overview?.controls;
@@ -565,6 +564,7 @@ export default class ContextButton extends PanelMenu.Button {
                 GObject.ConnectFlags.AFTER,
                 this
             );
+            // Reconnected in #reconnectShowApps() if showAppsButton changes
         }
         if (!this._connectedOverview) {
             this._connectedOverview = Main.overview;
@@ -665,11 +665,11 @@ export default class ContextButton extends PanelMenu.Button {
                     this._contextIcon || 'shell-focus-app-grid-symbolic'
                 );
             }
-            this._reconnectShowAppsButton();
+            this.#reconnectShowApps();
         }
     }
 
-    _reconnectShowAppsButton() {
+    #reconnectShowApps() {
         // If another extension (e.g., Dash to Dock) has replaced the
         // showAppsButton, disconnect and reconnect to the new button
         const controls = Main.overview._overview?.controls;
