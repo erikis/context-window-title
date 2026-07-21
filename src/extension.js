@@ -99,6 +99,9 @@ export default class ContextExtension extends Extension {
 
         this.#removeAllKeybindings();
 
+        this.#injectionManager?.clear();
+        this.#injectionManager = null;
+
         this.#unpatchAppMenus();
         this.#contextButton?.destroy();
         this.#contextButton = null;
@@ -113,9 +116,6 @@ export default class ContextExtension extends Extension {
 
         this.#lockMessage?.destroy();
         this.#lockMessage = null;
-
-        this.#injectionManager.clear();
-        this.#injectionManager = null;
 
         this.#settings = null;
         this.#defaults = null;
@@ -548,7 +548,7 @@ export default class ContextExtension extends Extension {
                         // this = AppMenu instance
                         if (!patchedAppMenus.has(this)) {
                             const destroy = this.connect('destroy', () => {
-                                // This doesn't seems to happen (GNOME 50), but in case it does
+                                // This doesn't seem to happen (GNOME 50), but in case it does
                                 patchedAppMenus.delete(this);
                             });
                             let updateMenu = null;
