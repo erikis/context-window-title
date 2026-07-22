@@ -560,6 +560,7 @@ export default class ContextExtension extends Extension {
                                 );
                             }
                             if (updateMenu) {
+                                // Successfully patched
                                 const open = this.connect(
                                     'open-state-changed',
                                     (menu, isOpen) => {
@@ -588,14 +589,16 @@ export default class ContextExtension extends Extension {
             if (config._isFavoriteHidden !== isFavoriteHidden) {
                 config._isFavoriteHidden = isFavoriteHidden;
                 this.#patchedAppMenus.forEach((signals, appMenu) => {
-                    try {
-                        appMenu._updateFavoriteItem();
-                    } catch (ex) {
-                        this._log(
-                            console.error,
-                            `${NAME} contextButton _updateFavoriteItem`,
-                            ex
-                        );
+                    if (signals.open !== undefined) {
+                        try {
+                            appMenu._updateFavoriteItem();
+                        } catch (ex) {
+                            this._log(
+                                console.error,
+                                `${NAME} contextButton _updateFavoriteItem`,
+                                ex
+                            );
+                        }
                     }
                 });
             }
