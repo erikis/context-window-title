@@ -204,11 +204,10 @@ export default class ContextButton extends PanelMenu.Button {
         // When updating the app menu as it opens
         let windowMenuItem = null;
         const updateMenu = () => {
-            // Open the "Open Windows" submenu by default
+            // Open the "Open Windows" submenu initially
             if (
-                (openWindowsMenuItem.is_visible() &&
-                    this._menuOpenWindows !== 1) ||
-                this._menuOpenWindows === 2
+                openWindowsMenuItem.is_visible() &&
+                this._menuOpenWindows !== 1
             ) {
                 openWindowsMenu.open();
             }
