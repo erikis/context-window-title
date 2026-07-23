@@ -77,18 +77,18 @@
       <description>Menu keybinding with a globally unique keybinding name</description>
       <default><![CDATA[[]]]></default>
     </key>
-    <key name="button-windows-toggle" type="b">
-      <summary>Button windows toggle</summary>
+    <key name="button-toggle-windows" type="b">
+      <summary>Button toggle windows</summary>
       <description>Whether to include toggling to windows</description>
       <default>true</default>
     </key>
-    <key name="button-overview-scroll" type="b">
-      <summary>Button overview scroll</summary>
+    <key name="button-scroll-overview" type="b">
+      <summary>Button scroll overview</summary>
       <description>Whether to use specific scroll handling in overview</description>
       <default>true</default>
     </key>
-    <key name="button-desktop-scroll" type="b">
-      <summary>Button desktop scroll</summary>
+    <key name="button-scroll-desktop" type="b">
+      <summary>Button scroll desktop</summary>
       <description>Whether to use specific scroll handling on desktop</description>
       <default>true</default>
     </key>

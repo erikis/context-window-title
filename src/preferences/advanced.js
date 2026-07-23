@@ -33,9 +33,9 @@ export default class AdvancedPreferences extends Adw.PreferencesPage {
                     'button_icon_change',
                     'button_menu_keybinding',
                     'button_menu_keybinding_shortcut',
-                    'button_windows_toggle',
-                    'button_overview_scroll',
-                    'button_desktop_scroll',
+                    'button_toggle_windows',
+                    'button_scroll_overview',
+                    'button_scroll_desktop',
                     'button_menu_patch',
                     'button_menu_open_windows',
                     'button_menu_hide_favorite',
@@ -316,22 +316,22 @@ export default class AdvancedPreferences extends Adw.PreferencesPage {
         menuKeybindingRow.add_controller(menuKeybindingController);
 
         settings.bind(
-            'button-windows-toggle',
-            this._button_windows_toggle,
+            'button-toggle-windows',
+            this._button_toggle_windows,
             'active',
             Gio.SettingsBindFlags.DEFAULT
         );
 
         settings.bind(
-            'button-overview-scroll',
-            this._button_overview_scroll,
+            'button-scroll-overview',
+            this._button_scroll_overview,
             'active',
             Gio.SettingsBindFlags.DEFAULT
         );
 
         settings.bind(
-            'button-desktop-scroll',
-            this._button_desktop_scroll,
+            'button-scroll-desktop',
+            this._button_scroll_desktop,
             'active',
             Gio.SettingsBindFlags.DEFAULT
         );
@@ -569,9 +569,9 @@ export default class AdvancedPreferences extends Adw.PreferencesPage {
             'button-context-icon',
             'button-icon-change',
             'context-window-title-menu-keybinding',
-            'button-windows-toggle',
-            'button-overview-scroll',
-            'button-desktop-scroll',
+            'button-toggle-windows',
+            'button-scroll-overview',
+            'button-scroll-desktop',
             'button-menu-patch',
             'button-menu-open-windows',
             'button-menu-hide-favorite',
