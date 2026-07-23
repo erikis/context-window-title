@@ -257,9 +257,9 @@
               <object class="AdwActionRow">
                 <property name="title" translatable="yes">Show Windows on Click</property>
                 <property name="subtitle" translatable="yes">When apps are being shown (if disabled, toggle directly to the desktop)</property>
-                <property name="activatable-widget">button_windows_toggle</property>
+                <property name="activatable-widget">button_toggle_windows</property>
                 <child>
-                  <object class="GtkSwitch" id="button_windows_toggle">
+                  <object class="GtkSwitch" id="button_toggle_windows">
                     <property name="valign">center</property>
                   </object>
                 </child>
@@ -270,9 +270,9 @@
               <object class="AdwActionRow">
                 <property name="title" translatable="yes">Show Apps/Windows on Scroll Up/Down</property>
                 <property name="subtitle" translatable="yes">In the overview</property>
-                <property name="activatable-widget">button_overview_scroll</property>
+                <property name="activatable-widget">button_scroll_overview</property>
                 <child>
-                  <object class="GtkSwitch" id="button_overview_scroll">
+                  <object class="GtkSwitch" id="button_scroll_overview">
                     <property name="valign">center</property>
                   </object>
                 </child>
@@ -283,9 +283,9 @@
               <object class="AdwActionRow">
                 <property name="title" translatable="yes">Maximize/Unmaximize on Scroll Up/Down</property>
                 <property name="subtitle" translatable="yes">On the desktop</property>
-                <property name="activatable-widget">button_desktop_scroll</property>
+                <property name="activatable-widget">button_scroll_desktop</property>
                 <child>
-                  <object class="GtkSwitch" id="button_desktop_scroll">
+                  <object class="GtkSwitch" id="button_scroll_desktop">
                     <property name="valign">center</property>
                   </object>
                 </child>

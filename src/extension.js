@@ -49,7 +49,6 @@ export default class ContextExtension extends Extension {
     #clockLabel = null;
     #originalClockDisplay = null;
     #nameIndicator = null;
-    #nameConnectedIndicators = null;
     #lockMessage = null;
 
     _log(to, ...args) {
@@ -99,6 +98,9 @@ export default class ContextExtension extends Extension {
 
         this.#removeAllKeybindings();
 
+        this.#injectionManager?.clear();
+        this.#injectionManager = null;
+
         this.#unpatchAppMenus();
         this.#contextButton?.destroy();
         this.#contextButton = null;
@@ -107,15 +109,11 @@ export default class ContextExtension extends Extension {
         this.#clockLabel = null;
         this.#restoreOriginalClock();
 
-        this.#nameConnectedIndicators = null; // Disconnected on #nameIndicator.destroy()
         this.#nameIndicator?.destroy();
         this.#nameIndicator = null;
 
         this.#lockMessage?.destroy();
         this.#lockMessage = null;
-
-        this.#injectionManager.clear();
-        this.#injectionManager = null;
 
         this.#settings = null;
         this.#defaults = null;
@@ -429,7 +427,7 @@ export default class ContextExtension extends Extension {
 
     #onSettingsContextConfigureBehavior({ isAdding, isModified }) {
         const isWindowsToggle = this.#settings.get_boolean(
-            'button-windows-toggle'
+            'button-toggle-windows'
         );
         if (this.#contextButton._isWindowsToggle !== isWindowsToggle) {
             this.#contextButton._isWindowsToggle = isWindowsToggle;
@@ -438,10 +436,10 @@ export default class ContextExtension extends Extension {
             }
         }
         this.#contextButton._isOverviewScroll = this.#settings.get_boolean(
-            'button-overview-scroll'
+            'button-scroll-overview'
         );
         this.#contextButton._isDesktopScroll = this.#settings.get_boolean(
-            'button-desktop-scroll'
+            'button-scroll-desktop'
         );
         const menuPatch = this.#settings.get_int('button-menu-patch');
         if (this.#contextButton._menuPatch !== menuPatch) {
@@ -548,7 +546,7 @@ export default class ContextExtension extends Extension {
                         // this = AppMenu instance
                         if (!patchedAppMenus.has(this)) {
                             const destroy = this.connect('destroy', () => {
-                                // This doesn't seems to happen (GNOME 50), but in case it does
+                                // This doesn't seem to happen (GNOME 50), but in case it does
                                 patchedAppMenus.delete(this);
                             });
                             let updateMenu = null;
@@ -562,6 +560,7 @@ export default class ContextExtension extends Extension {
                                 );
                             }
                             if (updateMenu) {
+                                // Successfully patched
                                 const open = this.connect(
                                     'open-state-changed',
                                     (menu, isOpen) => {
@@ -590,14 +589,16 @@ export default class ContextExtension extends Extension {
             if (config._isFavoriteHidden !== isFavoriteHidden) {
                 config._isFavoriteHidden = isFavoriteHidden;
                 this.#patchedAppMenus.forEach((signals, appMenu) => {
-                    try {
-                        appMenu._updateFavoriteItem();
-                    } catch (ex) {
-                        this._log(
-                            console.error,
-                            `${NAME} contextButton _updateFavoriteItem`,
-                            ex
-                        );
+                    if (signals.open !== undefined) {
+                        try {
+                            appMenu._updateFavoriteItem();
+                        } catch (ex) {
+                            this._log(
+                                console.error,
+                                `${NAME} contextButton _updateFavoriteItem`,
+                                ex
+                            );
+                        }
                     }
                 });
             }
@@ -883,7 +884,6 @@ export default class ContextExtension extends Extension {
                 isAdding = true;
             }
         } else {
-            this.#nameConnectedIndicators = null;
             this.#nameIndicator?.destroy();
             this.#nameIndicator = null;
         }
@@ -922,18 +922,11 @@ export default class ContextExtension extends Extension {
         if (this.#nameIndicator._isKeepFirst !== isKeepFirst) {
             this.#nameIndicator._isKeepFirst = isKeepFirst;
             if (!isAdding) {
-                if (isKeepFirst) {
-                    this.#nameIndicator
-                        .get_parent()
-                        .remove_child(this.#nameIndicator);
-                    isAdding = true; // Re-add to keep first
-                } else {
-                    // No longer keeping first, so disconnect the signal
-                    this.#nameConnectedIndicators?.disconnectObject(
-                        this.#nameIndicator
-                    );
-                    this.#nameConnectedIndicators = null;
-                }
+                // Re-add the indicator in the appropriate location
+                this.#nameIndicator?.destroy();
+                this.#nameIndicator = null;
+                this.#onSettingsName(); // Start over, isAdding will be true
+                return;
             }
         }
         this.#onSettingsNameAddOrModify({ isAdding, isModified, isKeepFirst });
@@ -944,10 +937,6 @@ export default class ContextExtension extends Extension {
             this.#nameIndicator._update();
         }
         if (isAdding) {
-            this.#nameConnectedIndicators?.disconnectObject(
-                this.#nameIndicator
-            ); // Logically impossible to be connected here but just in case
-            this.#nameConnectedIndicators = null;
             const indicators = Main.panel.statusArea.quickSettings._indicators;
             if (!isKeepFirst || !indicators) {
                 Main.panel.statusArea.quickSettings.addExternalIndicator(
@@ -956,10 +945,13 @@ export default class ContextExtension extends Extension {
             } else {
                 indicators.insert_child_at_index(this.#nameIndicator, 0);
                 const onChildAdded = () => {
-                    this.#nameConnectedIndicators?.disconnectObject(
-                        this.#nameIndicator
-                    );
-                    this.#nameConnectedIndicators = null;
+                    const position = indicators
+                        .get_children()
+                        .indexOf(this.#nameIndicator);
+                    if (position <= 0) {
+                        return; // Already first (or somehow not found)
+                    }
+                    indicators.disconnectObject(this.#nameIndicator);
                     indicators.remove_child(this.#nameIndicator);
                     indicators.insert_child_at_index(this.#nameIndicator, 0);
                     indicators.connectObject(
@@ -967,15 +959,12 @@ export default class ContextExtension extends Extension {
                         onChildAdded,
                         this.#nameIndicator
                     );
-                    this.#nameConnectedIndicators = indicators;
                 };
-                // Do automatic disconnect on #nameIndicator.destroy()
                 indicators.connectObject(
                     'child-added',
                     onChildAdded,
-                    this.#nameIndicator
+                    this.#nameIndicator // Disconnect on #nameIndicator destroy
                 );
-                this.#nameConnectedIndicators = indicators;
             }
         }
     }
