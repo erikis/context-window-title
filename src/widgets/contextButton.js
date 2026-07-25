@@ -650,21 +650,25 @@ export default class ContextButton extends PanelMenu.Button {
                 this._iconChange !== 1 &&
                 this._iconChange !== 3
             ) {
-                const controls = Main.overview._overview?.controls;
-                if (
-                    this._isWindowsToggle &&
-                    controls?.dash?.showAppsButton?.checked
-                ) {
-                    icon.set_icon_name('shell-focus-windows-symbolic');
-                } else {
-                    icon.set_icon_name('shell-focus-desktop-symbolic');
-                }
+                this.#updateContextIconOverview(icon);
             } else {
-                icon.set_icon_name(
-                    this._contextIcon || 'shell-focus-app-grid-symbolic'
-                );
+                icon.set_icon_name(this._contextIcon);
             }
             this.#reconnectShowApps();
+        }
+    }
+
+    #updateContextIconOverview(icon) {
+        const controls = Main.overview._overview?.controls;
+        if (this._isWindowsToggle && controls?.dash?.showAppsButton?.checked) {
+            icon.set_icon_name('shell-focus-windows-symbolic');
+        } else if (
+            !this._isDesktopToggle &&
+            controls?.dash?.showAppsButton?.checked === false
+        ) {
+            icon.set_icon_name('shell-focus-app-grid-symbolic');
+        } else {
+            icon.set_icon_name('shell-focus-desktop-symbolic');
         }
     }
 
@@ -816,15 +820,7 @@ export default class ContextButton extends PanelMenu.Button {
         ) {
             if (this._isContextButton && !Main.overview.closing) {
                 if (Main.overview.visible) {
-                    const controls = Main.overview._overview?.controls;
-                    if (
-                        this._isWindowsToggle &&
-                        controls?.dash?.showAppsButton?.checked
-                    ) {
-                        this.#hideApps(controls);
-                    } else if (!Main.overview.animationInProgress) {
-                        Main.overview.hide();
-                    }
+                    this.#onClickContextOverview();
                 } else {
                     Main.overview.showApps();
                 }
@@ -832,6 +828,20 @@ export default class ContextButton extends PanelMenu.Button {
             return Clutter.EVENT_STOP;
         }
         return undefined; // Don't handle if not actually context usage
+    }
+
+    #onClickContextOverview() {
+        const controls = Main.overview._overview?.controls;
+        if (this._isWindowsToggle && controls?.dash?.showAppsButton?.checked) {
+            this.#hideApps(controls);
+        } else if (
+            !this._isDesktopToggle &&
+            controls?.dash?.showAppsButton?.checked === false
+        ) {
+            controls.dash.showAppsButton.checked = true;
+        } else if (!Main.overview.animationInProgress) {
+            Main.overview.hide();
+        }
     }
 
     #onClickWindow(button) {

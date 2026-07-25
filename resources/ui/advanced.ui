@@ -268,6 +268,19 @@
             
             <child>
               <object class="AdwActionRow">
+                <property name="title" translatable="yes">Show Desktop on Click</property>
+                <property name="subtitle" translatable="yes">When windows are being shown (if disabled, toggle back to apps)</property>
+                <property name="activatable-widget">button_toggle_desktop</property>
+                <child>
+                  <object class="GtkSwitch" id="button_toggle_desktop">
+                    <property name="valign">center</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+            
+            <child>
+              <object class="AdwActionRow">
                 <property name="title" translatable="yes">Show Apps/Windows on Scroll Up/Down</property>
                 <property name="subtitle" translatable="yes">In the overview</property>
                 <property name="activatable-widget">button_scroll_overview</property>

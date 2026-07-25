@@ -435,6 +435,15 @@ export default class ContextExtension extends Extension {
                 this.#contextButton._updateContextIcon();
             }
         }
+        const isDesktopToggle = this.#settings.get_boolean(
+            'button-toggle-desktop'
+        );
+        if (this.#contextButton._isDesktopToggle !== isDesktopToggle) {
+            this.#contextButton._isDesktopToggle = isDesktopToggle;
+            if (!isAdding) {
+                this.#contextButton._updateContextIcon();
+            }
+        }
         this.#contextButton._isOverviewScroll = this.#settings.get_boolean(
             'button-scroll-overview'
         );

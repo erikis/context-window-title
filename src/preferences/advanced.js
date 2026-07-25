@@ -34,6 +34,7 @@ export default class AdvancedPreferences extends Adw.PreferencesPage {
                     'button_menu_keybinding',
                     'button_menu_keybinding_shortcut',
                     'button_toggle_windows',
+                    'button_toggle_desktop',
                     'button_scroll_overview',
                     'button_scroll_desktop',
                     'button_menu_patch',
@@ -323,6 +324,13 @@ export default class AdvancedPreferences extends Adw.PreferencesPage {
         );
 
         settings.bind(
+            'button-toggle-desktop',
+            this._button_toggle_desktop,
+            'active',
+            Gio.SettingsBindFlags.DEFAULT
+        );
+
+        settings.bind(
             'button-scroll-overview',
             this._button_scroll_overview,
             'active',
@@ -570,6 +578,7 @@ export default class AdvancedPreferences extends Adw.PreferencesPage {
             'button-icon-change',
             'context-window-title-menu-keybinding',
             'button-toggle-windows',
+            'button-toggle-desktop',
             'button-scroll-overview',
             'button-scroll-desktop',
             'button-menu-patch',
