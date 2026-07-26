@@ -13,6 +13,8 @@ import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 import { WindowMenu } from 'resource:///org/gnome/shell/ui/windowMenu.js';
 
+import * as Values from '../preferences/values.js';
+
 const GNOME_POST_49 = parseInt(Config.PACKAGE_VERSION) >= 49;
 
 export default class ContextButton extends PanelMenu.Button {
@@ -207,7 +209,8 @@ export default class ContextButton extends PanelMenu.Button {
             // Open the "Open Windows" submenu initially
             if (
                 openWindowsMenuItem.is_visible() &&
-                this._menuOpenWindows !== 1
+                this._menuOpenWindows !==
+                    Values.ButtonMenuOpenWindows.ALWAYS_AND_CLOSED
             ) {
                 openWindowsMenu.open();
             }
@@ -412,11 +415,16 @@ export default class ContextButton extends PanelMenu.Button {
             focusApp = Shell.WindowTracker.get_default().get_window_app(
                 this._focusWindow
             );
-            if (this._iconChange <= 1) {
+            if (
+                this._iconChange <= Values.ButtonIconChange.APP_ICON_OR_STATIC
+            ) {
                 if (focusApp !== null) {
                     this._newIcon.set_gicon(focusApp.get_icon());
                 }
-            } else if (!this._isContextButton && this._iconChange > 1) {
+            } else if (
+                !this._isContextButton &&
+                this._iconChange >= Values.ButtonIconChange.NO_APP_ICON
+            ) {
                 // Only possibility is to set a static icon (if it's the default
                 // app grid icon, it won't make sense, but it can be configured)
                 this._updateContextIcon();
@@ -510,10 +518,15 @@ export default class ContextButton extends PanelMenu.Button {
             // context icon is going to be used instead of an app icon)
             if (
                 this._isContextButton &&
-                (this._focusWindow === null || this._iconChange > 1)
+                (this._focusWindow === null ||
+                    this._iconChange >= Values.ButtonIconChange.NO_APP_ICON)
             ) {
                 this._updateContextIcon();
-                if (this._iconChange !== 1 && this._iconChange !== 3) {
+                if (
+                    this._iconChange !==
+                        Values.ButtonIconChange.APP_ICON_OR_STATIC &&
+                    this._iconChange !== Values.ButtonIconChange.STATIC
+                ) {
                     this.#connectContext();
                 }
             }
@@ -640,15 +653,16 @@ export default class ContextButton extends PanelMenu.Button {
         if (
             this._focusWindow === null ||
             !(this._isTitleButton || this._isWindowButton) ||
-            this._iconChange > 1
+            this._iconChange >= Values.ButtonIconChange.NO_APP_ICON
         ) {
             const icon = this._newIcon || this._icon;
             if (
                 this._isContextButton &&
                 Main.overview.visible &&
                 !Main.overview.closing &&
-                this._iconChange !== 1 &&
-                this._iconChange !== 3
+                this._iconChange !==
+                    Values.ButtonIconChange.APP_ICON_OR_STATIC &&
+                this._iconChange !== Values.ButtonIconChange.STATIC
             ) {
                 this.#updateContextIconOverview(icon);
             } else {
