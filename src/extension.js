@@ -457,7 +457,10 @@ export default class ContextExtension extends Extension {
         this.#contextButton._isDesktopScroll = this.#settings.get_boolean(
             'button-scroll-desktop'
         );
-        const menuPatch = this.#settings.get_int('button-menu-patch');
+        let menuPatch = this.#settings.get_int('button-menu-patch');
+        if (menuPatch < 0 || menuPatch > 2) {
+            menuPatch = Values.ButtonMenuPatch.BUTTON_ONLY;
+        }
         if (this.#contextButton._menuPatch !== menuPatch) {
             this.#contextButton._menuPatch = menuPatch;
             if (this.#contextButton._appMenu) {
@@ -466,9 +469,12 @@ export default class ContextExtension extends Extension {
                 );
             }
         }
-        const menuOpenWindows = this.#settings.get_int(
+        let menuOpenWindows = this.#settings.get_int(
             'button-menu-open-windows'
         );
+        if (menuOpenWindows < 0 || menuOpenWindows > 2) {
+            menuOpenWindows = Values.ButtonMenuOpenWindows.AUTOMATIC;
+        }
         if (this.#contextButton._menuOpenWindows !== menuOpenWindows) {
             this.#contextButton._menuOpenWindows = menuOpenWindows;
             if (this.#contextButton._appMenu) {
@@ -480,9 +486,12 @@ export default class ContextExtension extends Extension {
                 }
             }
         }
-        const menuHideFavorite = this.#settings.get_int(
+        let menuHideFavorite = this.#settings.get_int(
             'button-menu-hide-favorite'
         );
+        if (menuHideFavorite < 0 || menuHideFavorite > 2) {
+            menuHideFavorite = Values.ButtonMenuHideFavorite.BUTTON_ONLY;
+        }
         if (this.#contextButton._menuHideFavorite !== menuHideFavorite) {
             this.#contextButton._menuHideFavorite = menuHideFavorite;
             if (this.#contextButton._appMenu) {
@@ -533,10 +542,10 @@ export default class ContextExtension extends Extension {
     }
 
     #onSettingsContextAppMenus({ isButtonActivated }) {
-        const menuPatch = this.#settings.get_int('button-menu-patch');
         if (
             isButtonActivated &&
-            menuPatch === Values.ButtonMenuPatch.EVERYWHERE
+            this.#settings.get_int('button-menu-patch') ===
+                Values.ButtonMenuPatch.EVERYWHERE
         ) {
             const isFavoriteHidden =
                 this.#settings.get_int('button-menu-hide-favorite') ===
@@ -544,7 +553,7 @@ export default class ContextExtension extends Extension {
             const config = this.#patchedAppMenuConfig ?? {
                 _focusWindow: null,
                 _isWindowMenu: false,
-                _menuOpenWindows: 0,
+                _menuOpenWindows: Values.ButtonMenuOpenWindows.ALWAYS_AND_OPEN,
                 _isFavoriteHidden: isFavoriteHidden,
                 _appMenuOverrides: {
                     _updateFavoriteItem: function () {
@@ -607,9 +616,16 @@ export default class ContextExtension extends Extension {
                     interceptMethod
                 );
             }
-            config._menuOpenWindows = this.#settings.get_int(
+            let menuOpenWindows = this.#settings.get_int(
                 'button-menu-open-windows'
-            ); // Will be read by updateMenu() on open-state-changed
+            );
+            if (
+                menuOpenWindows !==
+                Values.ButtonMenuOpenWindows.ALWAYS_AND_CLOSED
+            ) {
+                menuOpenWindows = Values.ButtonMenuOpenWindows.ALWAYS_AND_OPEN;
+            }
+            config._menuOpenWindows = menuOpenWindows;
             if (config._isFavoriteHidden !== isFavoriteHidden) {
                 config._isFavoriteHidden = isFavoriteHidden;
                 this.#patchedAppMenus.forEach((signals, appMenu) => {
