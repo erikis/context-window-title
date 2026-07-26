@@ -718,7 +718,7 @@ export default class ContextExtension extends Extension {
             opt.minute = 'numeric';
         }
         let year = this.#settings.get_int('clock-year');
-        if (!isDateClock || year < 0 || year > 3) {
+        if (!isDateClock || year < 0 || year > 2) {
             year = Values.ClockYear.OFF;
         }
         if (this.#clockLabel._year !== year) {
