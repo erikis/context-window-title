@@ -31,6 +31,7 @@ export default class ContextButton extends PanelMenu.Button {
         this._isUpdating = false;
         this._isDirty = false;
         this._isHover = false;
+        this._isActuallyApps = false;
         this._focusWindow = null;
         this._focusApp = null;
         this._updateNewInTimeout = null;
@@ -567,10 +568,10 @@ export default class ContextButton extends PanelMenu.Button {
 
     #connectContext() {
         let handler = () => this._updateContextIcon();
-        const controls = Main.overview._overview?.controls;
+        const showAppsButton = Main.overview.dash.showAppsButton;
         if (!this._connectedShowAppsButton) {
-            this._connectedShowAppsButton = controls?.dash?.showAppsButton;
-            this._connectedShowAppsButton?.connectObject(
+            this._connectedShowAppsButton = showAppsButton;
+            this._connectedShowAppsButton.connectObject(
                 'notify::checked',
                 handler,
                 GObject.ConnectFlags.AFTER,
@@ -672,13 +673,13 @@ export default class ContextButton extends PanelMenu.Button {
     }
 
     #updateContextIconOverview(icon) {
-        const controls = Main.overview._overview?.controls;
-        if (this._isWindowsToggle && controls?.dash?.showAppsButton?.checked) {
-            icon.set_icon_name('shell-focus-windows-symbolic');
-        } else if (
-            !this._isDesktopToggle &&
-            controls?.dash?.showAppsButton?.checked === false
+        const showAppsButton = Main.overview.dash.showAppsButton;
+        if (
+            this._isWindowsToggle &&
+            (showAppsButton.checked || this._isActuallyApps)
         ) {
+            icon.set_icon_name('shell-focus-windows-symbolic');
+        } else if (!this._isDesktopToggle && !showAppsButton.checked) {
             icon.set_icon_name('shell-focus-app-grid-symbolic');
         } else {
             icon.set_icon_name('shell-focus-desktop-symbolic');
@@ -688,15 +689,14 @@ export default class ContextButton extends PanelMenu.Button {
     #reconnectShowApps() {
         // If another extension (e.g., Dash to Dock) has replaced the
         // showAppsButton, disconnect and reconnect to the new button
-        const controls = Main.overview._overview?.controls;
-        const showAppsButton = controls?.dash?.showAppsButton;
+        const showAppsButton = Main.overview.dash.showAppsButton;
         if (
             this._connectedShowAppsButton &&
             showAppsButton !== this._connectedShowAppsButton
         ) {
             this._connectedShowAppsButton.disconnectObject(this);
             this._connectedShowAppsButton = showAppsButton;
-            this._connectedShowAppsButton?.connectObject(
+            this._connectedShowAppsButton.connectObject(
                 'notify::checked',
                 () => this._updateContextIcon(),
                 GObject.ConnectFlags.AFTER,
@@ -838,7 +838,12 @@ export default class ContextButton extends PanelMenu.Button {
                 if (Main.overview.visible) {
                     this.#onClickContextOverview();
                 } else {
+                    // Prevent updating context icon and initially detecting
+                    // overview while showAppsButton.checked is still false
+                    // (usually visible in a stutter on first click after startup)
+                    this._isActuallyApps = true;
                     Main.overview.showApps();
+                    this._isActuallyApps = false;
                 }
             }
             return Clutter.EVENT_STOP;
@@ -847,14 +852,11 @@ export default class ContextButton extends PanelMenu.Button {
     }
 
     #onClickContextOverview() {
-        const controls = Main.overview._overview?.controls;
-        if (this._isWindowsToggle && controls?.dash?.showAppsButton?.checked) {
-            this.#hideApps(controls);
-        } else if (
-            !this._isDesktopToggle &&
-            controls?.dash?.showAppsButton?.checked === false
-        ) {
-            controls.dash.showAppsButton.checked = true;
+        const showAppsButton = Main.overview.dash.showAppsButton;
+        if (this._isWindowsToggle && showAppsButton.checked) {
+            this.#hideApps(showAppsButton);
+        } else if (!this._isDesktopToggle && !showAppsButton.checked) {
+            showAppsButton.checked = true;
         } else if (!Main.overview.animationInProgress) {
             Main.overview.hide();
         }
@@ -970,16 +972,16 @@ export default class ContextButton extends PanelMenu.Button {
         } else if (!this._isOverviewScroll) {
             return Main.wm.handleWorkspaceScroll(event);
         } else if (!Main.overview.closing) {
-            const controls = Main.overview._overview?.controls;
+            const showAppsButton = Main.overview.dash.showAppsButton;
             switch (event.get_scroll_direction()) {
                 case Clutter.ScrollDirection.UP:
-                    if (controls?.dash?.showAppsButton?.checked === false) {
-                        controls.dash.showAppsButton.checked = true;
+                    if (!showAppsButton.checked) {
+                        showAppsButton.checked = true;
                     }
                     break;
                 case Clutter.ScrollDirection.DOWN:
-                    if (controls?.dash?.showAppsButton?.checked) {
-                        this.#hideApps(controls);
+                    if (showAppsButton.checked) {
+                        this.#hideApps(showAppsButton);
                     }
                     break;
             }
@@ -987,10 +989,9 @@ export default class ContextButton extends PanelMenu.Button {
         return Clutter.EVENT_STOP;
     }
 
-    #hideApps(controls) {
+    #hideApps(showAppsButton) {
         // Dash to Dock's docking.js sets _fromDesktop = true to indicate that
         // the apps button should close the overview and not just the app grid
-        const showAppsButton = controls.dash.showAppsButton;
         if (showAppsButton._fromDesktop === true) {
             showAppsButton._fromDesktop = false;
         }
