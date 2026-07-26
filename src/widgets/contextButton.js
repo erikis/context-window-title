@@ -710,7 +710,10 @@ export default class ContextButton extends PanelMenu.Button {
         if (appMenu && this._focusApp) {
             appMenu.toggle();
             if (isFocused && appMenu.isOpen) {
-                appMenu.firstMenuItem.active = true;
+                const menuItem = appMenu.firstMenuItem;
+                if (menuItem?.can_focus) {
+                    menuItem.active = true;
+                }
             }
         }
     }
