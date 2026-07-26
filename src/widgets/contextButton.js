@@ -635,14 +635,13 @@ export default class ContextButton extends PanelMenu.Button {
             typeof title === 'string' &&
             title.length > 0
         ) {
-            // If title width is configured to be fixed then always show padding
-            // Otherwise, hide padding if title is empty
-            if (this._titleWidth < 0) {
+            if (!this._padding.visible) {
                 this._padding.show();
             }
             this._title.set_text(title);
         } else {
             this._title.set_text('');
+            // Hide the padding if the title width is dynamic
             if (this._titleWidth < 0) {
                 this._padding.hide();
             }
