@@ -19,6 +19,7 @@ import Clutter from 'gi://Clutter';
 import GObject from 'gi://GObject';
 import Meta from 'gi://Meta';
 import Shell from 'gi://Shell';
+import St from 'gi://St';
 
 import { AppMenu } from 'resource:///org/gnome/shell/ui/appMenu.js';
 import {
@@ -47,6 +48,7 @@ export default class ContextExtension extends Extension {
     #contextButton = null;
     #patchedAppMenus = null;
     #patchedAppMenuConfig = null;
+    #isAdjustingSubMenu = false;
     #clockLabel = null;
     #originalClockDisplay = null;
     #nameIndicator = null;
@@ -101,6 +103,7 @@ export default class ContextExtension extends Extension {
 
         this.#injectionManager?.clear();
         this.#injectionManager = null;
+        this.#isAdjustingSubMenu = false;
 
         this.#unpatchAppMenus();
         this.#contextButton?.destroy();
@@ -457,6 +460,10 @@ export default class ContextExtension extends Extension {
         this.#contextButton._isDesktopScroll = this.#settings.get_boolean(
             'button-scroll-desktop'
         );
+        this.#onSettingsContextConfigureAppMenu({ isAdding, isModified });
+    }
+
+    #onSettingsContextConfigureAppMenu({ isAdding, isModified }) {
         let menuPatch = this.#settings.get_int('button-menu-patch');
         if (menuPatch < 0 || menuPatch > 2) {
             menuPatch = Values.ButtonMenuPatch.BUTTON_ONLY;
@@ -502,6 +509,15 @@ export default class ContextExtension extends Extension {
                     this.#contextButton._appMenu._updateFavoriteItem();
                 }
             }
+        }
+        let menuAdjustSubmenu = this.#settings.get_int(
+            'button-menu-adjust-submenu'
+        );
+        if (menuAdjustSubmenu < 0 || menuAdjustSubmenu > 2) {
+            menuAdjustSubmenu = Values.ButtonMenuAdjustSubMenu.APP_MENU_ONLY;
+        }
+        if (this.#contextButton._menuAdjustSubMenu !== menuAdjustSubmenu) {
+            this.#contextButton._menuAdjustSubMenu = menuAdjustSubmenu;
         }
         this.#onSettingsContextAddOrModify({ isAdding, isModified });
     }
@@ -555,6 +571,10 @@ export default class ContextExtension extends Extension {
                 _isWindowMenu: false,
                 _menuOpenWindows: Values.ButtonMenuOpenWindows.ALWAYS_AND_OPEN,
                 _isFavoriteHidden: isFavoriteHidden,
+                _menuAdjustSubMenu:
+                    Values.ButtonMenuAdjustSubMenu.APP_MENU_ONLY,
+                _adjustSubMenuEaseProps:
+                    ContextButton.prototype._adjustSubMenuEaseProps,
                 _appMenuOverrides: {
                     _updateFavoriteItem: function () {
                         // this = AppMenu instance
@@ -607,7 +627,7 @@ export default class ContextExtension extends Extension {
                                 patchedAppMenus.set(this, { destroy });
                             }
                         }
-                        originalMethod.apply(this, arguments);
+                        return originalMethod.apply(this, arguments);
                     };
                 };
                 this.#injectionManager.overrideMethod(
@@ -626,6 +646,14 @@ export default class ContextExtension extends Extension {
                 menuOpenWindows = Values.ButtonMenuOpenWindows.ALWAYS_AND_OPEN;
             }
             config._menuOpenWindows = menuOpenWindows;
+            let menuAdjustSubmenu = this.#settings.get_int(
+                'button-menu-adjust-submenu'
+            );
+            if (menuAdjustSubmenu !== Values.ButtonMenuAdjustSubMenu.OFF) {
+                menuAdjustSubmenu =
+                    Values.ButtonMenuAdjustSubMenu.APP_MENU_ONLY;
+            }
+            config._menuAdjustSubMenu = menuAdjustSubmenu;
             if (config._isFavoriteHidden !== isFavoriteHidden) {
                 config._isFavoriteHidden = isFavoriteHidden;
                 this.#patchedAppMenus.forEach((signals, appMenu) => {
@@ -645,6 +673,45 @@ export default class ContextExtension extends Extension {
         } else if (this.#patchedAppMenus) {
             this.#injectionManager.restoreMethod(AppMenu.prototype, 'open');
             this.#unpatchAppMenus();
+        }
+        if (
+            isButtonActivated &&
+            this.#settings.get_int('button-menu-adjust-submenu') ===
+                Values.ButtonMenuAdjustSubMenu.EVERYWHERE
+        ) {
+            if (!this.#isAdjustingSubMenu) {
+                const config = {
+                    _menuAdjustSubMenu:
+                        Values.ButtonMenuAdjustSubMenu.EVERYWHERE,
+                    _adjustSubMenuEaseProps:
+                        ContextButton.prototype._adjustSubMenuEaseProps,
+                };
+                const interceptMethod = (originalMethod) => {
+                    return function (props) {
+                        // this = St.ScrollView instance
+                        if (this.style_class === 'popup-sub-menu') {
+                            return originalMethod.call(
+                                this,
+                                config._adjustSubMenuEaseProps(props)
+                            );
+                        }
+                        // If not a popup submenu, keep everything as-is
+                        return originalMethod.apply(this, arguments);
+                    };
+                };
+                this.#injectionManager.overrideMethod(
+                    St.ScrollView.prototype,
+                    'ease',
+                    interceptMethod
+                );
+                this.#isAdjustingSubMenu = true;
+            }
+        } else if (this.#isAdjustingSubMenu) {
+            this.#injectionManager.restoreMethod(
+                St.ScrollView.prototype,
+                'ease'
+            );
+            this.#isAdjustingSubMenu = false;
         }
     }
 

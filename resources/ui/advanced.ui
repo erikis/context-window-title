@@ -355,6 +355,20 @@
               </object>
             </child>
             
+            <child>
+              <object class="AdwActionRow">
+                <property name="title" translatable="yes">Adjust Submenu Easing</property>
+                <property name="subtitle" translatable="yes">Speeds up open/close submenu animation</property>
+                <property name="activatable-widget">button_menu_adjust_submenu</property>
+                <child>
+                  <object class="GtkDropDown" id="button_menu_adjust_submenu">
+                    <property name="valign">center</property>
+                    <property name="model">button_menu_adjust_submenu_model</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+            
           </object>
         </child>
         
@@ -644,6 +658,13 @@
     <items>
       <item translatable="yes">Don’t hide</item>
       <item translatable="yes">Button only</item>
+      <item translatable="yes">Everywhere</item>
+    </items>
+  </object>
+  <object class="GtkStringList" id="button_menu_adjust_submenu_model">
+    <items>
+      <item translatable="yes">Off</item>
+      <item translatable="yes">App menu only</item>
       <item translatable="yes">Everywhere</item>
     </items>
   </object>

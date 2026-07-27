@@ -40,6 +40,7 @@ export default class AdvancedPreferences extends Adw.PreferencesPage {
                     'button_menu_patch',
                     'button_menu_open_windows',
                     'button_menu_hide_favorite',
+                    'button_menu_adjust_submenu',
                     'clock_year',
                     'clock_month',
                     'clock_weekday',
@@ -366,6 +367,13 @@ export default class AdvancedPreferences extends Adw.PreferencesPage {
         );
 
         settings.bind(
+            'button-menu-adjust-submenu',
+            this._button_menu_adjust_submenu,
+            'selected',
+            Gio.SettingsBindFlags.DEFAULT
+        );
+
+        settings.bind(
             'clock-year',
             this._clock_year,
             'selected',
@@ -584,6 +592,7 @@ export default class AdvancedPreferences extends Adw.PreferencesPage {
             'button-menu-patch',
             'button-menu-open-windows',
             'button-menu-hide-favorite',
+            'button-menu-adjust-submenu',
             'clock-year',
             'clock-month',
             'clock-weekday',
