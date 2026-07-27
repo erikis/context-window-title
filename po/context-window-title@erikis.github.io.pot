@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: context-window-title@erikis.github.io\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-25 17:46+0200\n"
+"POT-Creation-Date: 2026-07-27 12:20+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -202,227 +202,241 @@ msgstr ""
 msgid "Everywhere only works if also patched everywhere"
 msgstr ""
 
-#: resources/ui/advanced.ui:366 resources/ui/panel.ui:69
+#: resources/ui/advanced.ui:360
+msgid "Adjust Submenu Easing"
+msgstr ""
+
+#: resources/ui/advanced.ui:361
+msgid "Speeds up open/close submenu animation"
+msgstr ""
+
+#: resources/ui/advanced.ui:380 resources/ui/panel.ui:69
 msgid "Custom Clock"
 msgstr ""
 
-#: resources/ui/advanced.ui:370
+#: resources/ui/advanced.ui:384
 msgid "Year"
 msgstr ""
 
-#: resources/ui/advanced.ui:383
+#: resources/ui/advanced.ui:397
 msgid "Month"
 msgstr ""
 
-#: resources/ui/advanced.ui:396 resources/ui/panel.ui:79
+#: resources/ui/advanced.ui:410 resources/ui/panel.ui:79
 msgid "Weekday"
 msgstr ""
 
-#: resources/ui/advanced.ui:409
+#: resources/ui/advanced.ui:423
 msgid "Hour"
 msgstr ""
 
-#: resources/ui/advanced.ui:422 resources/ui/advanced.ui:681
+#: resources/ui/advanced.ui:436 resources/ui/advanced.ui:702
 msgid "Second"
 msgstr ""
 
-#: resources/ui/advanced.ui:435
+#: resources/ui/advanced.ui:449
 msgid "Extra"
 msgstr ""
 
-#: resources/ui/advanced.ui:436
+#: resources/ui/advanced.ui:450
 msgid "Show time zone and change locale options and styling"
 msgstr ""
 
-#: resources/ui/advanced.ui:440
+#: resources/ui/advanced.ui:454
 msgid "Time Zone Name"
 msgstr ""
 
-#: resources/ui/advanced.ui:453
+#: resources/ui/advanced.ui:467
 msgid ""
 "Time Zone, e.g., America/Los_Angeles (tzdb name) or +08:00 [empty for "
 "automatic (default)]"
 msgstr ""
 
-#: resources/ui/advanced.ui:459
+#: resources/ui/advanced.ui:473
 msgid "Calendar"
 msgstr ""
 
-#: resources/ui/advanced.ui:472
+#: resources/ui/advanced.ui:486
 msgid "Numeral System"
 msgstr ""
 
-#: resources/ui/advanced.ui:485
+#: resources/ui/advanced.ui:499
 msgid "Time Locale [empty for automatic (default, currently !CURRENT!)]"
 msgstr ""
 
-#: resources/ui/advanced.ui:491
+#: resources/ui/advanced.ui:505
 msgid "Style (CSS) [empty for no styling (default)]"
 msgstr ""
 
-#: resources/ui/advanced.ui:503 resources/ui/panel.ui:118
+#: resources/ui/advanced.ui:517 resources/ui/panel.ui:118
 msgid "User/Host Name"
 msgstr ""
 
-#: resources/ui/advanced.ui:507
+#: resources/ui/advanced.ui:521
 msgid "Hide on Lock Screen"
 msgstr ""
 
-#: resources/ui/advanced.ui:520
+#: resources/ui/advanced.ui:534
 msgid "Keep First"
 msgstr ""
 
-#: resources/ui/advanced.ui:535 resources/ui/lock.ui:10
+#: resources/ui/advanced.ui:549 resources/ui/lock.ui:10
 msgid "Lock Screen Message"
 msgstr ""
 
-#: resources/ui/advanced.ui:539
+#: resources/ui/advanced.ui:553
 msgid "Icon [empty for automatic (default, currently !CURRENT!)]"
 msgstr ""
 
-#: resources/ui/advanced.ui:545
+#: resources/ui/advanced.ui:559
 msgid "Initially Expanded"
 msgstr ""
 
-#: resources/ui/advanced.ui:560
+#: resources/ui/advanced.ui:574
 msgid "Other"
 msgstr ""
 
-#: resources/ui/advanced.ui:567
+#: resources/ui/advanced.ui:581
 msgid "About !NAME!"
 msgstr ""
 
-#: resources/ui/advanced.ui:576
+#: resources/ui/advanced.ui:590
 msgid "Allow Logging"
 msgstr ""
 
-#: resources/ui/advanced.ui:577
+#: resources/ui/advanced.ui:591
 msgid "Allow writing to the log for debugging"
 msgstr ""
 
-#: resources/ui/advanced.ui:589
+#: resources/ui/advanced.ui:603
 msgid "Reset Preferences"
 msgstr ""
 
-#: resources/ui/advanced.ui:590
+#: resources/ui/advanced.ui:604
 msgid "This is irreversible"
 msgstr ""
 
-#: resources/ui/advanced.ui:597
+#: resources/ui/advanced.ui:611
 msgid "Reset Advanced Preferences"
 msgstr ""
 
-#: resources/ui/advanced.ui:608
+#: resources/ui/advanced.ui:622
 msgid "Reset All Preferences"
 msgstr ""
 
-#: resources/ui/advanced.ui:623
+#: resources/ui/advanced.ui:637
 msgid "Dynamic"
 msgstr ""
 
-#: resources/ui/advanced.ui:624
+#: resources/ui/advanced.ui:638
 msgid "App icon or static"
 msgstr ""
 
-#: resources/ui/advanced.ui:625
+#: resources/ui/advanced.ui:639
 msgid "No app icon"
 msgstr ""
 
-#: resources/ui/advanced.ui:626
+#: resources/ui/advanced.ui:640
 msgid "Static"
 msgstr ""
 
-#: resources/ui/advanced.ui:631 resources/ui/advanced.ui:652
-#: resources/ui/advanced.ui:680 resources/ui/advanced.ui:689
+#: resources/ui/advanced.ui:645 resources/ui/advanced.ui:666
+#: resources/ui/advanced.ui:673 resources/ui/advanced.ui:701
+#: resources/ui/advanced.ui:710
 msgid "Off"
 msgstr ""
 
-#: resources/ui/advanced.ui:632 resources/ui/advanced.ui:646
+#: resources/ui/advanced.ui:646 resources/ui/advanced.ui:660
 msgid "Button only"
 msgstr ""
 
-#: resources/ui/advanced.ui:633 resources/ui/advanced.ui:647
+#: resources/ui/advanced.ui:647 resources/ui/advanced.ui:661
+#: resources/ui/advanced.ui:668
 msgid "Everywhere"
 msgstr ""
 
-#: resources/ui/advanced.ui:638
+#: resources/ui/advanced.ui:652
 msgid "Automatic"
 msgstr ""
 
-#: resources/ui/advanced.ui:639
+#: resources/ui/advanced.ui:653
 msgid "Always and closed"
 msgstr ""
 
-#: resources/ui/advanced.ui:640
+#: resources/ui/advanced.ui:654
 msgid "Always and open"
 msgstr ""
 
-#: resources/ui/advanced.ui:645 resources/ui/advanced.ui:707
+#: resources/ui/advanced.ui:659 resources/ui/advanced.ui:728
 msgid "Don’t hide"
 msgstr ""
 
-#: resources/ui/advanced.ui:653 resources/ui/advanced.ui:690
+#: resources/ui/advanced.ui:667
+msgid "App menu only"
+msgstr ""
+
+#: resources/ui/advanced.ui:674 resources/ui/advanced.ui:711
 msgid "On"
 msgstr ""
 
-#: resources/ui/advanced.ui:654
+#: resources/ui/advanced.ui:675
 msgid "On with era"
 msgstr ""
 
-#: resources/ui/advanced.ui:659 resources/ui/advanced.ui:666
+#: resources/ui/advanced.ui:680 resources/ui/advanced.ui:687
 msgid "Short"
 msgstr ""
 
-#: resources/ui/advanced.ui:660 resources/ui/advanced.ui:667
+#: resources/ui/advanced.ui:681 resources/ui/advanced.ui:688
 msgid "Long"
 msgstr ""
 
-#: resources/ui/advanced.ui:661
+#: resources/ui/advanced.ui:682
 msgid "Numeric"
 msgstr ""
 
-#: resources/ui/advanced.ui:668
+#: resources/ui/advanced.ui:689
 msgid "Narrow"
 msgstr ""
 
-#: resources/ui/advanced.ui:673 resources/ui/advanced.ui:697
-#: resources/ui/advanced.ui:702
+#: resources/ui/advanced.ui:694 resources/ui/advanced.ui:718
+#: resources/ui/advanced.ui:723
 msgid "Default"
 msgstr ""
 
-#: resources/ui/advanced.ui:674
+#: resources/ui/advanced.ui:695
 msgid "12h"
 msgstr ""
 
-#: resources/ui/advanced.ui:675
+#: resources/ui/advanced.ui:696
 msgid "24h"
 msgstr ""
 
-#: resources/ui/advanced.ui:682
+#: resources/ui/advanced.ui:703
 msgid "1/10 Second"
 msgstr ""
 
-#: resources/ui/advanced.ui:683
+#: resources/ui/advanced.ui:704
 msgid "1/100 Second"
 msgstr ""
 
-#: resources/ui/advanced.ui:684
+#: resources/ui/advanced.ui:705
 msgid "1/1000 Second"
 msgstr ""
 
-#: resources/ui/advanced.ui:691
+#: resources/ui/advanced.ui:712
 msgid "On with offset only"
 msgstr ""
 
-#: resources/ui/advanced.ui:692
+#: resources/ui/advanced.ui:713
 msgid "On with long offset only"
 msgstr ""
 
-#: resources/ui/advanced.ui:708
+#: resources/ui/advanced.ui:729
 msgid "Hide"
 msgstr ""
 
-#: resources/ui/advanced.ui:709
+#: resources/ui/advanced.ui:730
 msgid "Hide user"
 msgstr ""
 
@@ -538,12 +552,12 @@ msgstr ""
 msgid "TRANSLATOR"
 msgstr ""
 
-#: src/preferences/advanced.js:85
+#: src/preferences/advanced.js:86
 #, javascript-format
 msgid "!VALUE! for symbolic icon style and !CURRENT!% saturation"
 msgstr ""
 
-#: src/preferences/advanced.js:252
+#: src/preferences/advanced.js:253
 msgid "Press key… (Esc or click to cancel, Backspace to remove)"
 msgstr ""
 
