@@ -5,6 +5,8 @@ import St from 'gi://St';
 
 import { SystemIndicator } from 'resource:///org/gnome/shell/ui/quickSettings.js';
 
+import * as Values from '../preferences/values.js';
+
 export default class NameIndicator extends SystemIndicator {
     static {
         GObject.registerClass(this);
@@ -22,9 +24,11 @@ export default class NameIndicator extends SystemIndicator {
         const hostname = GLib.get_host_name();
         const indexOfDomain = hostname.indexOf('.');
         const isLockScreen = this._sessionMode === 'unlock-dialog';
-        const isHidden = isLockScreen && this._lockHide === 1;
+        const isHidden =
+            isLockScreen && this._lockHide === Values.NameLockHide.HIDE;
         const isUserName =
-            this._isUserName && (!isLockScreen || this._lockHide !== 2);
+            this._isUserName &&
+            (!isLockScreen || this._lockHide !== Values.NameLockHide.HIDE_USER);
         const isHostName = this._isHostName;
         const isDomainName = this._isDomainName;
         let name = '';

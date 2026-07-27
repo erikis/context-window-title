@@ -82,6 +82,11 @@
       <description>Whether to include toggling to windows</description>
       <default>true</default>
     </key>
+    <key name="button-toggle-desktop" type="b">
+      <summary>Button toggle desktop</summary>
+      <description>Whether to include toggling to desktop</description>
+      <default>true</default>
+    </key>
     <key name="button-scroll-overview" type="b">
       <summary>Button scroll overview</summary>
       <description>Whether to use specific scroll handling in overview</description>

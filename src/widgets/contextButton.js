@@ -13,6 +13,8 @@ import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 import { WindowMenu } from 'resource:///org/gnome/shell/ui/windowMenu.js';
 
+import * as Values from '../preferences/values.js';
+
 const GNOME_POST_49 = parseInt(Config.PACKAGE_VERSION) >= 49;
 
 export default class ContextButton extends PanelMenu.Button {
@@ -29,6 +31,7 @@ export default class ContextButton extends PanelMenu.Button {
         this._isUpdating = false;
         this._isDirty = false;
         this._isHover = false;
+        this._isActuallyApps = false;
         this._focusWindow = null;
         this._focusApp = null;
         this._updateNewInTimeout = null;
@@ -207,7 +210,8 @@ export default class ContextButton extends PanelMenu.Button {
             // Open the "Open Windows" submenu initially
             if (
                 openWindowsMenuItem.is_visible() &&
-                this._menuOpenWindows !== 1
+                this._menuOpenWindows !==
+                    Values.ButtonMenuOpenWindows.ALWAYS_AND_CLOSED
             ) {
                 openWindowsMenu.open();
             }
@@ -412,11 +416,16 @@ export default class ContextButton extends PanelMenu.Button {
             focusApp = Shell.WindowTracker.get_default().get_window_app(
                 this._focusWindow
             );
-            if (this._iconChange <= 1) {
+            if (
+                this._iconChange <= Values.ButtonIconChange.APP_ICON_OR_STATIC
+            ) {
                 if (focusApp !== null) {
                     this._newIcon.set_gicon(focusApp.get_icon());
                 }
-            } else if (!this._isContextButton && this._iconChange > 1) {
+            } else if (
+                !this._isContextButton &&
+                this._iconChange >= Values.ButtonIconChange.NO_APP_ICON
+            ) {
                 // Only possibility is to set a static icon (if it's the default
                 // app grid icon, it won't make sense, but it can be configured)
                 this._updateContextIcon();
@@ -510,10 +519,15 @@ export default class ContextButton extends PanelMenu.Button {
             // context icon is going to be used instead of an app icon)
             if (
                 this._isContextButton &&
-                (this._focusWindow === null || this._iconChange > 1)
+                (this._focusWindow === null ||
+                    this._iconChange >= Values.ButtonIconChange.NO_APP_ICON)
             ) {
                 this._updateContextIcon();
-                if (this._iconChange !== 1 && this._iconChange !== 3) {
+                if (
+                    this._iconChange !==
+                        Values.ButtonIconChange.APP_ICON_OR_STATIC &&
+                    this._iconChange !== Values.ButtonIconChange.STATIC
+                ) {
                     this.#connectContext();
                 }
             }
@@ -554,10 +568,10 @@ export default class ContextButton extends PanelMenu.Button {
 
     #connectContext() {
         let handler = () => this._updateContextIcon();
-        const controls = Main.overview._overview?.controls;
+        const showAppsButton = Main.overview.dash.showAppsButton;
         if (!this._connectedShowAppsButton) {
-            this._connectedShowAppsButton = controls?.dash?.showAppsButton;
-            this._connectedShowAppsButton?.connectObject(
+            this._connectedShowAppsButton = showAppsButton;
+            this._connectedShowAppsButton.connectObject(
                 'notify::checked',
                 handler,
                 GObject.ConnectFlags.AFTER,
@@ -622,14 +636,13 @@ export default class ContextButton extends PanelMenu.Button {
             typeof title === 'string' &&
             title.length > 0
         ) {
-            // If title width is configured to be fixed then always show padding
-            // Otherwise, hide padding if title is empty
-            if (this._titleWidth < 0) {
+            if (!this._padding.visible) {
                 this._padding.show();
             }
             this._title.set_text(title);
         } else {
             this._title.set_text('');
+            // Hide the padding if the title width is dynamic
             if (this._titleWidth < 0) {
                 this._padding.hide();
             }
@@ -640,46 +653,50 @@ export default class ContextButton extends PanelMenu.Button {
         if (
             this._focusWindow === null ||
             !(this._isTitleButton || this._isWindowButton) ||
-            this._iconChange > 1
+            this._iconChange >= Values.ButtonIconChange.NO_APP_ICON
         ) {
             const icon = this._newIcon || this._icon;
             if (
                 this._isContextButton &&
                 Main.overview.visible &&
                 !Main.overview.closing &&
-                this._iconChange !== 1 &&
-                this._iconChange !== 3
+                this._iconChange !==
+                    Values.ButtonIconChange.APP_ICON_OR_STATIC &&
+                this._iconChange !== Values.ButtonIconChange.STATIC
             ) {
-                const controls = Main.overview._overview?.controls;
-                if (
-                    this._isWindowsToggle &&
-                    controls?.dash?.showAppsButton?.checked
-                ) {
-                    icon.set_icon_name('shell-focus-windows-symbolic');
-                } else {
-                    icon.set_icon_name('shell-focus-desktop-symbolic');
-                }
+                this.#updateContextIconOverview(icon);
             } else {
-                icon.set_icon_name(
-                    this._contextIcon || 'shell-focus-app-grid-symbolic'
-                );
+                icon.set_icon_name(this._contextIcon);
             }
             this.#reconnectShowApps();
+        }
+    }
+
+    #updateContextIconOverview(icon) {
+        const showAppsButton = Main.overview.dash.showAppsButton;
+        if (
+            this._isWindowsToggle &&
+            (showAppsButton.checked || this._isActuallyApps)
+        ) {
+            icon.set_icon_name('shell-focus-windows-symbolic');
+        } else if (!this._isDesktopToggle && !showAppsButton.checked) {
+            icon.set_icon_name('shell-focus-app-grid-symbolic');
+        } else {
+            icon.set_icon_name('shell-focus-desktop-symbolic');
         }
     }
 
     #reconnectShowApps() {
         // If another extension (e.g., Dash to Dock) has replaced the
         // showAppsButton, disconnect and reconnect to the new button
-        const controls = Main.overview._overview?.controls;
-        const showAppsButton = controls?.dash?.showAppsButton;
+        const showAppsButton = Main.overview.dash.showAppsButton;
         if (
             this._connectedShowAppsButton &&
             showAppsButton !== this._connectedShowAppsButton
         ) {
             this._connectedShowAppsButton.disconnectObject(this);
             this._connectedShowAppsButton = showAppsButton;
-            this._connectedShowAppsButton?.connectObject(
+            this._connectedShowAppsButton.connectObject(
                 'notify::checked',
                 () => this._updateContextIcon(),
                 GObject.ConnectFlags.AFTER,
@@ -693,7 +710,10 @@ export default class ContextButton extends PanelMenu.Button {
         if (appMenu && this._focusApp) {
             appMenu.toggle();
             if (isFocused && appMenu.isOpen) {
-                appMenu.firstMenuItem.active = true;
+                const menuItem = appMenu.firstMenuItem;
+                if (menuItem?.can_focus) {
+                    menuItem.active = true;
+                }
             }
         }
     }
@@ -816,22 +836,30 @@ export default class ContextButton extends PanelMenu.Button {
         ) {
             if (this._isContextButton && !Main.overview.closing) {
                 if (Main.overview.visible) {
-                    const controls = Main.overview._overview?.controls;
-                    if (
-                        this._isWindowsToggle &&
-                        controls?.dash?.showAppsButton?.checked
-                    ) {
-                        this.#hideApps(controls);
-                    } else if (!Main.overview.animationInProgress) {
-                        Main.overview.hide();
-                    }
+                    this.#onClickContextOverview();
                 } else {
+                    // Prevent updating context icon and initially detecting
+                    // overview while showAppsButton.checked is still false
+                    // (usually visible in a stutter on first click after startup)
+                    this._isActuallyApps = true;
                     Main.overview.showApps();
+                    this._isActuallyApps = false;
                 }
             }
             return Clutter.EVENT_STOP;
         }
         return undefined; // Don't handle if not actually context usage
+    }
+
+    #onClickContextOverview() {
+        const showAppsButton = Main.overview.dash.showAppsButton;
+        if (this._isWindowsToggle && showAppsButton.checked) {
+            this.#hideApps(showAppsButton);
+        } else if (!this._isDesktopToggle && !showAppsButton.checked) {
+            showAppsButton.checked = true;
+        } else if (!Main.overview.animationInProgress) {
+            Main.overview.hide();
+        }
     }
 
     #onClickWindow(button) {
@@ -944,16 +972,16 @@ export default class ContextButton extends PanelMenu.Button {
         } else if (!this._isOverviewScroll) {
             return Main.wm.handleWorkspaceScroll(event);
         } else if (!Main.overview.closing) {
-            const controls = Main.overview._overview?.controls;
+            const showAppsButton = Main.overview.dash.showAppsButton;
             switch (event.get_scroll_direction()) {
                 case Clutter.ScrollDirection.UP:
-                    if (controls?.dash?.showAppsButton?.checked === false) {
-                        controls.dash.showAppsButton.checked = true;
+                    if (!showAppsButton.checked) {
+                        showAppsButton.checked = true;
                     }
                     break;
                 case Clutter.ScrollDirection.DOWN:
-                    if (controls?.dash?.showAppsButton?.checked) {
-                        this.#hideApps(controls);
+                    if (showAppsButton.checked) {
+                        this.#hideApps(showAppsButton);
                     }
                     break;
             }
@@ -961,10 +989,9 @@ export default class ContextButton extends PanelMenu.Button {
         return Clutter.EVENT_STOP;
     }
 
-    #hideApps(controls) {
+    #hideApps(showAppsButton) {
         // Dash to Dock's docking.js sets _fromDesktop = true to indicate that
         // the apps button should close the overview and not just the app grid
-        const showAppsButton = controls.dash.showAppsButton;
         if (showAppsButton._fromDesktop === true) {
             showAppsButton._fromDesktop = false;
         }

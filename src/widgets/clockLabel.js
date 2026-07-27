@@ -5,6 +5,7 @@ import Pango from 'gi://Pango';
 import St from 'gi://St';
 
 import ContextButton from './contextButton.js';
+import * as Values from '../preferences/values.js';
 
 export default class ClockLabel extends St.Label {
     static {
@@ -21,9 +22,9 @@ export default class ClockLabel extends St.Label {
         this._isStopped = true;
         this._locale = undefined; // Use runtime's default locale
         this._options = {};
-        this._second = 0; // 0 = showing second is off
+        this._second = Values.ClockSecond.OFF;
         this._f = null; // Intl.DateTimeFormat
-        this._t = null; // timeout
+        this._t = null; // Timeout
         this._u = false; // Already updated
     }
 
@@ -74,8 +75,9 @@ export default class ClockLabel extends St.Label {
                     nowSeconds -= nowSeconds % 1000; // Completed seconds only (in ms)
                     const second = this._second;
                     if (
-                        (second === 1 && nowSeconds !== lastSeconds) ||
-                        (second === 0 &&
+                        (second === Values.ClockSecond.SECOND &&
+                            nowSeconds !== lastSeconds) ||
+                        (second === Values.ClockSecond.OFF &&
                             nowSeconds - (nowSeconds % 60) !==
                                 lastSeconds - (lastSeconds % 60))
                     ) {
@@ -158,16 +160,16 @@ export default class ClockLabel extends St.Label {
             // Function to use for calculating how many ms until next update
             let n = null;
             switch (this._second) {
-                case 1: // Second is on - wait up to 1 s
+                case Values.ClockSecond.SECOND: // Second is on - wait up to 1 s
                     n = (now) => 1000 - now.getMilliseconds();
                     break;
-                case 2:
+                case Values.ClockSecond.SECOND_10TH:
                     n = (now) => 100 - (now.getMilliseconds() % 100);
                     break;
-                case 3:
+                case Values.ClockSecond.SECOND_100TH:
                     n = (now) => 10 - (now.getMilliseconds() % 10);
                     break;
-                case 4:
+                case Values.ClockSecond.SECOND_1000TH:
                     n = () => 1;
                     break;
                 default: // Second is off - wait up to 60 s
@@ -205,7 +207,7 @@ export default class ClockLabel extends St.Label {
                 return GLib.SOURCE_REMOVE; // Already removed, but also don't set new expiry
             };
             c = u;
-            if (this._second === 4) {
+            if (this._second === Values.ClockSecond.SECOND_1000TH) {
                 // Optimization for 1 ms updates: keep same timeout running
                 c = () => {
                     this.#updateTime();

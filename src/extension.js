@@ -32,6 +32,7 @@ import ContextButton from './widgets/contextButton.js';
 import Defaults from './preferences/defaults.js';
 import LockMessage from './widgets/lockMessage.js';
 import NameIndicator from './widgets/nameIndicator.js';
+import * as Values from './preferences/values.js';
 
 const NAME = 'ContextWindowTitle ContextExtension'; // Used for console log
 const MENU_KEYBINDING = 'context-window-title-menu-keybinding'; // Keybinding name in the schema
@@ -137,7 +138,10 @@ export default class ContextExtension extends Extension {
             try {
                 if (this.#nameIndicator) {
                     this.#nameIndicator._sessionMode = mode;
-                    if (this.#nameIndicator._lockHide > 0) {
+                    if (
+                        this.#nameIndicator._lockHide >=
+                        Values.NameLockHide.HIDE
+                    ) {
                         this.#nameIndicator._update();
                     }
                 }
@@ -417,7 +421,10 @@ export default class ContextExtension extends Extension {
                 this.#contextButton._updateContextIcon();
             }
         }
-        const iconChange = this.#settings.get_int('button-icon-change');
+        let iconChange = this.#settings.get_int('button-icon-change');
+        if (iconChange < 0 || iconChange > 3) {
+            iconChange = Values.ButtonIconChange.DYNAMIC;
+        }
         if (this.#contextButton._iconChange !== iconChange) {
             this.#contextButton._iconChange = iconChange;
             isModified = true;
@@ -435,40 +442,62 @@ export default class ContextExtension extends Extension {
                 this.#contextButton._updateContextIcon();
             }
         }
+        const isDesktopToggle = this.#settings.get_boolean(
+            'button-toggle-desktop'
+        );
+        if (this.#contextButton._isDesktopToggle !== isDesktopToggle) {
+            this.#contextButton._isDesktopToggle = isDesktopToggle;
+            if (!isAdding) {
+                this.#contextButton._updateContextIcon();
+            }
+        }
         this.#contextButton._isOverviewScroll = this.#settings.get_boolean(
             'button-scroll-overview'
         );
         this.#contextButton._isDesktopScroll = this.#settings.get_boolean(
             'button-scroll-desktop'
         );
-        const menuPatch = this.#settings.get_int('button-menu-patch');
+        let menuPatch = this.#settings.get_int('button-menu-patch');
+        if (menuPatch < 0 || menuPatch > 2) {
+            menuPatch = Values.ButtonMenuPatch.BUTTON_ONLY;
+        }
         if (this.#contextButton._menuPatch !== menuPatch) {
             this.#contextButton._menuPatch = menuPatch;
             if (this.#contextButton._appMenu) {
-                this.#contextButton._setAppMenuPatched(menuPatch > 0);
+                this.#contextButton._setAppMenuPatched(
+                    menuPatch >= Values.ButtonMenuPatch.BUTTON_ONLY
+                );
             }
         }
-        const menuOpenWindows = this.#settings.get_int(
+        let menuOpenWindows = this.#settings.get_int(
             'button-menu-open-windows'
         );
+        if (menuOpenWindows < 0 || menuOpenWindows > 2) {
+            menuOpenWindows = Values.ButtonMenuOpenWindows.AUTOMATIC;
+        }
         if (this.#contextButton._menuOpenWindows !== menuOpenWindows) {
             this.#contextButton._menuOpenWindows = menuOpenWindows;
             if (this.#contextButton._appMenu) {
                 this.#contextButton._appMenu._showSingleWindows =
-                    menuOpenWindows > 0;
+                    menuOpenWindows >=
+                    Values.ButtonMenuOpenWindows.ALWAYS_AND_CLOSED;
                 if (!isAdding) {
                     this.#contextButton._appMenu._updateWindowsSection();
                 }
             }
         }
-        const menuHideFavorite = this.#settings.get_int(
+        let menuHideFavorite = this.#settings.get_int(
             'button-menu-hide-favorite'
         );
+        if (menuHideFavorite < 0 || menuHideFavorite > 2) {
+            menuHideFavorite = Values.ButtonMenuHideFavorite.BUTTON_ONLY;
+        }
         if (this.#contextButton._menuHideFavorite !== menuHideFavorite) {
             this.#contextButton._menuHideFavorite = menuHideFavorite;
             if (this.#contextButton._appMenu) {
                 this.#contextButton._appMenu._enableFavorites =
-                    menuHideFavorite === 0;
+                    menuHideFavorite ===
+                    Values.ButtonMenuHideFavorite.DO_NOT_HIDE;
                 if (!isAdding) {
                     this.#contextButton._appMenu._updateFavoriteItem();
                 }
@@ -513,14 +542,18 @@ export default class ContextExtension extends Extension {
     }
 
     #onSettingsContextAppMenus({ isButtonActivated }) {
-        const menuPatch = this.#settings.get_int('button-menu-patch');
-        if (isButtonActivated && menuPatch === 2) {
+        if (
+            isButtonActivated &&
+            this.#settings.get_int('button-menu-patch') ===
+                Values.ButtonMenuPatch.EVERYWHERE
+        ) {
             const isFavoriteHidden =
-                this.#settings.get_int('button-menu-hide-favorite') === 2;
+                this.#settings.get_int('button-menu-hide-favorite') ===
+                Values.ButtonMenuHideFavorite.EVERYWHERE;
             const config = this.#patchedAppMenuConfig ?? {
                 _focusWindow: null,
                 _isWindowMenu: false,
-                _menuOpenWindows: 0,
+                _menuOpenWindows: Values.ButtonMenuOpenWindows.ALWAYS_AND_OPEN,
                 _isFavoriteHidden: isFavoriteHidden,
                 _appMenuOverrides: {
                     _updateFavoriteItem: function () {
@@ -583,9 +616,16 @@ export default class ContextExtension extends Extension {
                     interceptMethod
                 );
             }
-            config._menuOpenWindows = this.#settings.get_int(
+            let menuOpenWindows = this.#settings.get_int(
                 'button-menu-open-windows'
-            ); // Will be read by updateMenu() on open-state-changed
+            );
+            if (
+                menuOpenWindows !==
+                Values.ButtonMenuOpenWindows.ALWAYS_AND_CLOSED
+            ) {
+                menuOpenWindows = Values.ButtonMenuOpenWindows.ALWAYS_AND_OPEN;
+            }
+            config._menuOpenWindows = menuOpenWindows;
             if (config._isFavoriteHidden !== isFavoriteHidden) {
                 config._isFavoriteHidden = isFavoriteHidden;
                 this.#patchedAppMenus.forEach((signals, appMenu) => {
@@ -694,22 +734,22 @@ export default class ContextExtension extends Extension {
             opt.minute = 'numeric';
         }
         let year = this.#settings.get_int('clock-year');
-        if (!isDateClock || year < 0 || year > 3) {
-            year = 0;
+        if (!isDateClock || year < 0 || year > 2) {
+            year = Values.ClockYear.OFF;
         }
         if (this.#clockLabel._year !== year) {
             this.#clockLabel._year = year;
             isModified = true;
         }
-        if (year > 0) {
+        if (year >= Values.ClockYear.ON) {
             opt.year = 'numeric';
         }
-        if (year > 1) {
+        if (year === Values.ClockYear.ON_WITH_ERA) {
             opt.era = 'short';
         }
         let month = this.#settings.get_int('clock-month');
         if (month < 0 || month > 2) {
-            month = 0;
+            month = Values.ClockMonth.SHORT;
         }
         if (this.#clockLabel._month !== month) {
             this.#clockLabel._month = month;
@@ -717,8 +757,9 @@ export default class ContextExtension extends Extension {
         }
         if (isDateClock) {
             opt.month = 'short'; // default
-            if (month > 0) {
-                opt.month = month === 1 ? 'long' : 'numeric';
+            if (month >= Values.ClockMonth.LONG) {
+                opt.month =
+                    month === Values.ClockMonth.LONG ? 'long' : 'numeric';
             }
         }
         this.#onSettingsClockConfigureAdvanced({
@@ -739,7 +780,7 @@ export default class ContextExtension extends Extension {
     }) {
         let weekday = this.#settings.get_int('clock-weekday');
         if (weekday < 0 || weekday > 2) {
-            weekday = 0;
+            weekday = Values.ClockWeekday.SHORT;
         }
         if (this.#clockLabel._weekday !== weekday) {
             this.#clockLabel._weekday = weekday;
@@ -747,33 +788,34 @@ export default class ContextExtension extends Extension {
         }
         if (isWeekdayClock) {
             opt.weekday = 'short'; // default
-            if (weekday > 0) {
-                opt.weekday = weekday === 1 ? 'long' : 'narrow';
+            if (weekday >= Values.ClockWeekday.LONG) {
+                opt.weekday =
+                    weekday === Values.ClockWeekday.LONG ? 'long' : 'narrow';
             }
         }
         let hour = this.#settings.get_int('clock-hour');
         if (!isTimeClock || hour < 0 || hour > 2) {
-            hour = 0;
+            hour = Values.ClockHour.DEFAULT;
         }
         if (this.#clockLabel._hour !== hour) {
             this.#clockLabel._hour = hour;
             isModified = true;
         }
-        if (hour > 0) {
-            opt.hour12 = hour === 1; // If false, force 24h
+        if (hour >= Values.ClockHour.H12) {
+            opt.hour12 = hour === Values.ClockHour.H12; // If false, force 24h
         }
         let second = this.#settings.get_int('clock-second');
         if (!isTimeClock || second < 0 || second > 4) {
-            second = 0;
+            second = Values.ClockSecond.OFF;
         }
         if (this.#clockLabel._second !== second) {
             this.#clockLabel._second = second;
             isModified = true;
         }
-        if (second > 0) {
+        if (second >= Values.ClockSecond.SECOND) {
             opt.second = '2-digit';
         }
-        if (second > 1) {
+        if (second >= Values.ClockSecond.SECOND_10TH) {
             opt.fractionalSecondDigits = second - 1;
         }
         this.#onSettingsClockConfigureExtra({
@@ -787,17 +829,17 @@ export default class ContextExtension extends Extension {
     #onSettingsClockConfigureExtra({ isAdding, isModified, isTimeClock, opt }) {
         let timeZoneName = this.#settings.get_int('clock-time-zone-name');
         if (!isTimeClock || timeZoneName < 0 || timeZoneName > 3) {
-            timeZoneName = 0;
+            timeZoneName = Values.ClockTimeZoneName.OFF;
         }
         if (this.#clockLabel._timeZoneName !== timeZoneName) {
             this.#clockLabel._timeZoneName = timeZoneName;
             isModified = true;
         }
-        if (timeZoneName > 0) {
+        if (timeZoneName >= Values.ClockTimeZoneName.ON) {
             opt.timeZoneName =
-                timeZoneName === 1
+                timeZoneName === Values.ClockTimeZoneName.ON
                     ? 'short'
-                    : timeZoneName === 2
+                    : timeZoneName === Values.ClockTimeZoneName.ON_OFFSET
                       ? 'shortOffset'
                       : 'longOffset';
         }
@@ -912,7 +954,7 @@ export default class ContextExtension extends Extension {
     #onSettingsNameConfigure({ isAdding, isModified }) {
         let lockHide = this.#settings.get_int('name-lock-hide');
         if (lockHide < 0 || lockHide > 2) {
-            lockHide = 1; // 1 = hide
+            lockHide = Values.NameLockHide.HIDE;
         }
         if (this.#nameIndicator._lockHide !== lockHide) {
             this.#nameIndicator._lockHide = lockHide;
