@@ -25,6 +25,12 @@ export const ButtonMenuHideFavorite = Object.freeze({
     EVERYWHERE: 2,
 });
 
+export const ButtonMenuAdjustSubMenu = Object.freeze({
+    OFF: 0,
+    APP_MENU_ONLY: 1,
+    EVERYWHERE: 2,
+});
+
 export const ClockYear = Object.freeze({
     OFF: 0,
     ON: 1,

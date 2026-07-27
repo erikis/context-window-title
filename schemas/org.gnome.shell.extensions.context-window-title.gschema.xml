@@ -112,6 +112,11 @@
       <description>Whether/how to hide Pin/Unpin menu item</description>
       <default>1</default>
     </key>
+    <key name="button-menu-adjust-submenu" type="i">
+      <summary>Button menu adjust submenu</summary>
+      <description>Whether/how to adjust submenu easing</description>
+      <default>1</default>
+    </key>
     
     <key name="activate-clock" type="b">
       <summary>Activate custom clock feature</summary>

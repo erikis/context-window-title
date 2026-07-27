@@ -185,24 +185,17 @@ export default class ContextButton extends PanelMenu.Button {
         appMenu._originalWindowSection.removeAll();
 
         // Adjust the animation of opening/closing the submenu (but keep arrow as-is)
-        const adjustSubmenuEaseProps = (props) => ({
-            ...props,
-            // Prevent appearance of overshooting
-            height: Math.max(0, props.height - 12),
-            // Cut duration by half
-            duration: props.duration === 0 ? 0 : 125,
-        });
         // The ease method comes from gnome-shell's js/ui/environment.js
-        const overrideEaseMethod = (actor, adjustProps) => {
+        const overrideEaseMethod = (actor) => {
             if (!Object.prototype.hasOwnProperty.call(actor, 'ease')) {
                 actor.ease = (props) =>
                     Clutter.Actor.prototype.ease.call(
                         actor,
-                        adjustProps(props)
+                        this._adjustSubMenuEaseProps(props)
                     );
             }
         };
-        overrideEaseMethod(openWindowsMenu.actor, adjustSubmenuEaseProps);
+        overrideEaseMethod(openWindowsMenu.actor);
 
         // When updating the app menu as it opens
         let windowMenuItem = null;
@@ -267,7 +260,7 @@ export default class ContextButton extends PanelMenu.Button {
                 appMenu._windowMenuItem = windowMenuItem;
                 const windowMenu = windowMenuItem.menu;
                 this._windowMenu = windowMenu; // So it can be emptied in #update()
-                overrideEaseMethod(windowMenu.actor, adjustSubmenuEaseProps);
+                overrideEaseMethod(windowMenu.actor);
                 appMenu.addMenuItem(windowMenuItem, 0);
             }
             if (appMenu.isOpen) {
@@ -293,6 +286,19 @@ export default class ContextButton extends PanelMenu.Button {
         }
 
         return updateMenu; // Call when menu is being opened
+    }
+
+    _adjustSubMenuEaseProps(props) {
+        if (this._menuAdjustSubMenu === Values.ButtonMenuAdjustSubMenu.OFF) {
+            return props;
+        }
+        return {
+            ...props,
+            // Prevent appearance of overshooting
+            height: Math.max(0, props.height - 12),
+            // Cut duration by half
+            duration: props.duration === 0 ? 0 : 125,
+        };
     }
 
     _unpatchAppMenu(appMenu) {
