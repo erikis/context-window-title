@@ -71,15 +71,15 @@ export default class ClockLabel extends St.Label {
                 'notify::text',
                 () => {
                     // Only call #updateTime() if we're actually on a new second/minute
-                    let nowSeconds = Date.now(); // Get epoch
-                    nowSeconds -= nowSeconds % 1000; // Completed seconds only (in ms)
+                    let nowSeconds = Date.now(); // Get milliseconds since the epoch
+                    nowSeconds -= nowSeconds % 1000; // Keep completed seconds only
                     const second = this._second;
                     if (
                         (second === Values.ClockSecond.SECOND &&
                             nowSeconds !== lastSeconds) ||
                         (second === Values.ClockSecond.OFF &&
-                            nowSeconds - (nowSeconds % 60) !==
-                                lastSeconds - (lastSeconds % 60))
+                            nowSeconds - (nowSeconds % 60000) !==
+                                lastSeconds - (lastSeconds % 60000))
                     ) {
                         lastSeconds = nowSeconds;
                         if (this.mapped) {
