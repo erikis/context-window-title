@@ -36,6 +36,26 @@ Run `make install`.
 
 Install a release .zip using `gnome-extensions install` followed by the release file name. Use `-f` to overwrite an existing extension.
 
+## Settings
+
+All settings are accessible through the preferences UI.
+
+To list all settings and their current values in the terminal, run:
+
+```
+gsettings --schemadir ~/.local/share/gnome-shell/extensions/context-window-title@erikis.github.io/schemas list-recursively org.gnome.shell.extensions.context-window-title
+```
+
+For information about the settings, see the [schema](schemas/org.gnome.shell.extensions.context-window-title.gschema.xml) and [values](src/preferences/values.js).
+
+To set a value, e.g., multiple keyboard shortcuts for the app menu:
+
+```
+gsettings --schemadir ~/.local/share/gnome-shell/extensions/context-window-title@erikis.github.io/schemas set org.gnome.shell.extensions.context-window-title context-window-title-menu-keybinding "['<Super>c','<Shift><Super>TouchpadOff']"
+```
+
+This should assign both Super+C and the assistant ("Copilot") key as keyboard shortcuts for the app menu. When properly recognized in newer system versions, `'<Shift><Super>TouchpadOff'` should be changed to `'Assistant'`. In the preferences UI, only one keyboard shortcut can be set or viewed per setting.
+
 ## Translate
 
 Add your language to po/LINGUAS and then run `make languages`. Modify the generated .po file. Use [gnome-shell](https://gitlab.gnome.org/GNOME/gnome-shell/-/tree/main/po) for reference.
