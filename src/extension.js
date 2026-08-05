@@ -296,14 +296,16 @@ export default class ContextExtension extends Extension {
     // and keeping ESLint happy
     #onSettingsContextConfigure({ isAdding, isModified }) {
         let saturation = this.#settings.get_int('button-saturation');
-        if (saturation === -1 || saturation < -3) {
+        if (saturation === Values.AUTOMATIC || saturation < -3) {
             saturation = this.#defaults.buttonSaturation;
         }
         if (this.#contextButton._saturation !== saturation) {
             this.#contextButton._saturation = saturation;
-            const isSymbolic = saturation < 0; // Symbolic icon setting -2/-3
+            const isSymbolic = saturation <= Values.ButtonSaturation.SYMBOLIC;
             if (isSymbolic) {
-                saturation = saturation === -3 ? 0 : 100; // -3 for desaturation too
+                const isDesaturated =
+                    saturation === Values.ButtonSaturation.SYMBOLIC_DESATURATED;
+                saturation = isDesaturated ? 0 : 100;
             }
             if (saturation < 100) {
                 if (!this.#contextButton._desaturate) {
