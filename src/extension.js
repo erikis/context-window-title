@@ -692,7 +692,7 @@ export default class ContextExtension extends Extension {
                         if (this.style_class === 'popup-sub-menu') {
                             return originalMethod.call(
                                 this,
-                                config._adjustSubMenuEaseProps(props)
+                                config._adjustSubMenuEaseProps(this, props)
                             );
                         }
                         // If not a popup submenu, keep everything as-is
