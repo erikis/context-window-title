@@ -16,6 +16,7 @@ import { WindowMenu } from 'resource:///org/gnome/shell/ui/windowMenu.js';
 import * as Values from '../preferences/values.js';
 
 const GNOME_POST_49 = parseInt(Config.PACKAGE_VERSION) >= 49;
+const BASE_PADDING = 6; // $base_padding from gnome-shell's _common.scss (in px)
 
 export default class ContextButton extends PanelMenu.Button {
     static {
@@ -45,10 +46,9 @@ export default class ContextButton extends PanelMenu.Button {
         // In gnome-shell's data/theme/gnome-shell-sass/widgets/_panel.scss:
         // -natural-hpadding: $base_padding * 2;
         // -minimum-hpadding: $base_padding;
-        // where: $base_padding: 6px;
         // Reduce the 'natural' padding to the 'minimum', which can be compensated
-        // by adding a default of 6px internal padding left and right
-        this.set_style('-minimum-hpadding: 6px; -natural-hpadding: 6px');
+        // by adding a default of $base_padding internal padding left and right
+        this.style = `-minimum-hpadding: ${BASE_PADDING}px; -natural-hpadding: ${BASE_PADDING}px`;
 
         this._appMenu = new AppMenu(this);
         Main.panel.menuManager.addMenu(this._appMenu);
@@ -59,7 +59,7 @@ export default class ContextButton extends PanelMenu.Button {
         this.setMenu(this._appMenu);
 
         this._box = new St.BoxLayout({
-            style: 'padding-left: 6px; padding-right: 6px',
+            style: `padding-left: ${BASE_PADDING}px; padding-right: ${BASE_PADDING}px`,
         });
         this._fallbackIcon = new Gio.ThemedIcon({
             name: 'application-x-sharedlib-symbolic',
@@ -191,7 +191,7 @@ export default class ContextButton extends PanelMenu.Button {
                 actor.ease = (props) =>
                     Clutter.Actor.prototype.ease.call(
                         actor,
-                        this._adjustSubMenuEaseProps(props)
+                        this._adjustSubMenuEaseProps(actor, props)
                     );
             }
         };
@@ -288,17 +288,39 @@ export default class ContextButton extends PanelMenu.Button {
         return updateMenu; // Call when menu is being opened
     }
 
-    _adjustSubMenuEaseProps(props) {
+    _adjustSubMenuEaseProps(actor, props) {
         if (this._menuAdjustSubMenu === Values.ButtonMenuAdjustSubMenu.OFF) {
             return props;
         }
-        return {
-            ...props,
-            // Prevent appearance of overshooting
-            height: Math.max(0, props.height - 12),
-            // Cut duration by half
-            duration: props.duration === 0 ? 0 : 125,
-        };
+        const newProps = { ...props };
+
+        // Cut duration by half, matching mid-point of arrow rotation
+        if (props.duration === 250) {
+            newProps.duration = 125;
+        }
+
+        // Prevent appearance of overshooting
+        if (props.height >= 0 && props['margin-bottom'] === undefined) {
+            // .popup-sub-menu has margin-bottom: $base_padding, so that when the submenu
+            // is open, there is some vertical space before the next menu item.
+            // However, this seems to not be properly accounted for during easing.
+            if (props.height >= BASE_PADDING) {
+                newProps.height -= BASE_PADDING;
+            }
+
+            // Animate the margin-bottom property
+            const isOpening = props.height > 0;
+            newProps['margin-bottom'] = isOpening ? BASE_PADDING : 0;
+            const origStyle = actor.style; // Probably null
+            actor.style = `${origStyle ?? ''}; margin-bottom: ${isOpening ? 0 : BASE_PADDING}px`;
+            const onComplete = props.onComplete;
+            newProps.onComplete = () => {
+                actor.style = origStyle;
+                onComplete?.();
+            };
+        }
+
+        return newProps;
     }
 
     _unpatchAppMenu(appMenu) {

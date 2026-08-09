@@ -1,3 +1,12 @@
+// Special values for settings with otherwise quantitative values
+
+export const AUTOMATIC = -1;
+
+export const ButtonSaturation = Object.freeze({
+    SYMBOLIC: -2,
+    SYMBOLIC_DESATURATED: -3,
+});
+
 // Corresponding to the string lists in advanced.ui
 
 export const ButtonIconChange = Object.freeze({
