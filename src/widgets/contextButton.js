@@ -72,7 +72,6 @@ export default class ContextButton extends PanelMenu.Button {
         this._title = new St.Label({ y_align: Clutter.ActorAlign.CENTER });
         this._box.add_child(this._title);
         this.add_child(this._box);
-        this._maxTitleWidth = -1;
 
         // GNOME 49+ has Clutter.ClickGesture
         if (Clutter.ClickGesture) {
