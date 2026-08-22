@@ -16,6 +16,7 @@ import { WindowMenu } from 'resource:///org/gnome/shell/ui/windowMenu.js';
 import * as Values from '../preferences/values.js';
 
 const GNOME_POST_49 = parseInt(Config.PACKAGE_VERSION) >= 49;
+const CLICK_GESTURE = GNOME_POST_49; // Also enables use of LongPressGesture
 const BASE_PADDING = 6; // $base_padding from gnome-shell's _common.scss (in px)
 
 export default class ContextButton extends PanelMenu.Button {
@@ -26,9 +27,9 @@ export default class ContextButton extends PanelMenu.Button {
     _init() {
         super._init(0, null, true); // true for dontCreateMenu
 
-        this._isTitleButton = false;
         this._isContextButton = false;
         this._isWindowButton = false;
+        this._isTitleButton = false;
         this._isUpdating = false;
         this._isDirty = false;
         this._isHover = false;
@@ -73,18 +74,37 @@ export default class ContextButton extends PanelMenu.Button {
         this._box.add_child(this._title);
         this.add_child(this._box);
 
-        // GNOME 49+ has Clutter.ClickGesture
-        if (Clutter.ClickGesture) {
-            if (this._clickGesture) {
-                this.remove_action(this._clickGesture);
-            }
+        // GNOME 49+ has Clutter.ClickGesture and LongPressGesture
+        if (this._clickGesture) {
+            // Set and added by PanelMenu.Button
+            this.remove_action(this._clickGesture);
+        }
+        if (CLICK_GESTURE) {
             this._clickGesture = new Clutter.ClickGesture();
             this._clickGesture.connectObject(
                 'recognize',
-                (gesture) => this._onClick(gesture, true),
+                (gesture) => {
+                    this._onClick(gesture, true);
+                },
                 this
             );
             this.add_action(this._clickGesture);
+            this._longPressGesture = new Clutter.LongPressGesture();
+            this._longPressGesture.connectObject(
+                'may-recognize',
+                (gesture) =>
+                    this._focusWindow &&
+                    gesture.get_button() === Clutter.BUTTON_PRIMARY,
+                this
+            );
+            this._longPressGesture.connectObject(
+                'recognize',
+                () => {
+                    this._onLongPress();
+                },
+                this
+            );
+            this.add_action(this._longPressGesture);
         }
         this.connectObject(
             'scroll-event',
@@ -125,6 +145,7 @@ export default class ContextButton extends PanelMenu.Button {
         // the object (this) is destroyed. See gnome-shell's js/misc/signalTracker.js.
         // No signals are connected using connect() requiring manual disconnect on destroy.
         this._clickGesture = null;
+        this._longPressGesture = null;
         this._windowMenu = null; // Submenu of the app menu
         if (this._appMenu) {
             Main.panel.menuManager.removeMenu(this._appMenu);
@@ -573,20 +594,19 @@ export default class ContextButton extends PanelMenu.Button {
                 this.hover = true;
             }
             // Give a moment for widths to be calculated
-            if (this._updateNewInTimeout !== null) {
-                GLib.source_remove(this._updateNewInTimeout);
-                this._updateNewInTimeout = null;
-            }
+            const removeUpdateNewInTimeout = () => {
+                if (this._updateNewInTimeout !== null) {
+                    GLib.source_remove(this._updateNewInTimeout);
+                    this._updateNewInTimeout = null;
+                }
+            };
+            removeUpdateNewInTimeout();
             this._updateNewInTimeout = GLib.timeout_add(
                 GLib.PRIORITY_DEFAULT,
                 0,
                 () => {
-                    try {
-                        this.#updateNewIn();
-                    } catch {
-                        // Just remove the timeout
-                    }
-                    this._updateNewInTimeout = null;
+                    removeUpdateNewInTimeout();
+                    this.#updateNewIn();
                     return GLib.SOURCE_REMOVE;
                 }
             );
@@ -810,6 +830,14 @@ export default class ContextButton extends PanelMenu.Button {
                 }
                 return Clutter.EVENT_PROPAGATE;
         }
+    }
+
+    _onLongPress() {
+        return this._onPress({
+            // Simulate secondary button press
+            type: () => Clutter.EventType.BUTTON_PRESS,
+            get_button: () => Clutter.BUTTON_SECONDARY,
+        });
     }
 
     _onClick(event, isGesture = false) {
@@ -1077,6 +1105,7 @@ export default class ContextButton extends PanelMenu.Button {
         if (ret !== Clutter.EVENT_PROPAGATE) {
             return ret;
         }
+        this.#startLongPressTimeout();
         return this._superVFunc(
             'vfunc_button_press_event',
             Clutter.EVENT_PROPAGATE,
@@ -1085,17 +1114,21 @@ export default class ContextButton extends PanelMenu.Button {
     }
 
     vfunc_button_release_event(event) {
+        this.#stopLongPressTimeout();
         if (!this.hover) {
             this._isHover = false;
-        } else if (
-            !Clutter.ClickGesture &&
-            (!this._isX11 || this._isContextButton)
-        ) {
+        } else {
+            if (this._longPressHandled) {
+                return Clutter.EVENT_STOP;
+            }
+            // Implemented using ClickGesture in GNOME 49+
             // Manually implement click gestures for older GNOME versions because
             // ClickAction disrupted vfunc calls
-            let ret = this._onClick(event);
-            if (ret !== Clutter.EVENT_PROPAGATE) {
-                return ret;
+            if (!CLICK_GESTURE) {
+                let ret = this._onClick(event);
+                if (ret !== Clutter.EVENT_PROPAGATE) {
+                    return ret;
+                }
             }
         }
         return this._superVFunc(
@@ -1107,8 +1140,7 @@ export default class ContextButton extends PanelMenu.Button {
 
     vfunc_touch_event(event) {
         if (this._isX11) {
-            // If we're on X11, disable this touch handler due to it not working well
-            // On X11, touch (but not long touch) still works through button press/release
+            // On X11, touch is handled as button press/release
             return Clutter.EVENT_STOP;
         }
         switch (event.type()) {
@@ -1119,50 +1151,22 @@ export default class ContextButton extends PanelMenu.Button {
                         return ret;
                     }
                 }
-                // Custom long-press touch implementation (necessary also in newer GNOME
-                // versions because LongPressGesture detects mouse buttons besides touch)
-                this._longPressHandled = false;
-                if (this._longPressTimeout !== null) {
-                    GLib.source_remove(this._longPressTimeout);
-                    this._longPressTimeout = null;
-                }
-                this._longPressTimeout = GLib.timeout_add(
-                    GLib.PRIORITY_DEFAULT,
-                    Clutter.Settings.get_default().longPressDuration,
-                    () => {
-                        try {
-                            if (this._focusWindow) {
-                                let ret = this._onPress({
-                                    // Simulate secondary button press
-                                    type: () => Clutter.EventType.BUTTON_PRESS,
-                                    get_button: () => Clutter.BUTTON_SECONDARY,
-                                });
-                                this._longPressHandled =
-                                    ret !== Clutter.EVENT_PROPAGATE;
-                            }
-                        } catch {
-                            // Just remove the timeout
-                        }
-                        this._longPressTimeout = null;
-                        return GLib.SOURCE_REMOVE;
-                    }
-                );
+                this.#startLongPressTimeout();
                 break;
             case Clutter.EventType.TOUCH_END:
-                if (this._longPressTimeout !== null) {
-                    GLib.source_remove(this._longPressTimeout);
-                    this._longPressTimeout = null;
-                    this._longPressHandled = false;
-                }
+                this.#stopLongPressTimeout();
                 if (!this.hover) {
                     this._isHover = false;
                 } else {
                     if (this._longPressHandled) {
                         return Clutter.EVENT_STOP;
                     }
-                    let ret = this._onClick(event);
-                    if (ret !== Clutter.EVENT_PROPAGATE) {
-                        return ret;
+                    // Implemented using ClickGesture in GNOME 49+
+                    if (!CLICK_GESTURE) {
+                        let ret = this._onClick(event);
+                        if (ret !== Clutter.EVENT_PROPAGATE) {
+                            return ret;
+                        }
                     }
                 }
                 break;
@@ -1172,6 +1176,34 @@ export default class ContextButton extends PanelMenu.Button {
             Clutter.EVENT_PROPAGATE,
             event
         );
+    }
+
+    #startLongPressTimeout() {
+        if (CLICK_GESTURE) {
+            // Implemented using LongPressGesture in GNOME 49+
+            return;
+        }
+        this.#stopLongPressTimeout();
+        this._longPressTimeout = GLib.timeout_add(
+            GLib.PRIORITY_DEFAULT,
+            Clutter.Settings.get_default().longPressDuration,
+            () => {
+                this.#stopLongPressTimeout();
+                if (this._focusWindow) {
+                    let ret = this._onLongPress();
+                    this._longPressHandled = ret !== Clutter.EVENT_PROPAGATE;
+                }
+                return GLib.SOURCE_REMOVE;
+            }
+        );
+    }
+
+    #stopLongPressTimeout() {
+        if (this._longPressTimeout !== null) {
+            GLib.source_remove(this._longPressTimeout);
+            this._longPressTimeout = null;
+            this._longPressHandled = false;
+        }
     }
 
     vfunc_event(/* event */) {
