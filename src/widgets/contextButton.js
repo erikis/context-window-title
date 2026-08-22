@@ -15,7 +15,9 @@ import { WindowMenu } from 'resource:///org/gnome/shell/ui/windowMenu.js';
 
 import * as Values from '../preferences/values.js';
 
-const GNOME_POST_49 = parseInt(Config.PACKAGE_VERSION) >= 49;
+const GNOME_MAJOR = parseInt(Config.PACKAGE_VERSION);
+const GNOME_POST_49 = GNOME_MAJOR >= 49;
+const GNOME_POST_51 = GNOME_MAJOR >= 51;
 const CLICK_GESTURE = GNOME_POST_49; // Also enables use of LongPressGesture
 const BASE_PADDING = 6; // $base_padding from gnome-shell's _common.scss (in px)
 
@@ -226,7 +228,9 @@ export default class ContextButton extends PanelMenu.Button {
                 this._menuOpenWindows !==
                     Values.ButtonMenuOpenWindows.ALWAYS_AND_CLOSED
             ) {
-                openWindowsMenu.open();
+                openWindowsMenu.open(
+                    GNOME_POST_51 ? { animate: false } : false
+                );
             }
 
             // Populate the embedded window menu
