@@ -108,11 +108,6 @@ export default class ContextButton extends PanelMenu.Button {
             );
             this.add_action(this._longPressGesture);
         }
-        this.connectObject(
-            'scroll-event',
-            (actor, event) => this._onScroll(event),
-            this
-        );
 
         this._appMenu.connectObject(
             'open-state-changed',
@@ -1208,6 +1203,10 @@ export default class ContextButton extends PanelMenu.Button {
             this._longPressTimeout = null;
             this._longPressHandled = false;
         }
+    }
+
+    vfunc_scroll_event(event) {
+        return this._onScroll(event);
     }
 
     vfunc_event(/* event */) {
