@@ -46,7 +46,8 @@ export default class ContextExtension extends Extension {
     #injectionManager = null;
     #allKeybindings = [];
     #contextButton = null;
-    #patchedAppMenus = null;
+    #isPatchingAppMenu = false;
+    #patchedAppMenuRef = null;
     #patchedAppMenuConfig = null;
     #isAdjustingSubMenu = false;
     #clockLabel = null;
@@ -105,7 +106,7 @@ export default class ContextExtension extends Extension {
         this.#injectionManager = null;
         this.#isAdjustingSubMenu = false;
 
-        this.#unpatchAppMenus();
+        this.#unpatchAppMenu();
         this.#contextButton?.destroy();
         this.#contextButton = null;
 
@@ -575,6 +576,8 @@ export default class ContextExtension extends Extension {
                 _isFavoriteHidden: isFavoriteHidden,
                 _menuAdjustSubMenu:
                     Values.ButtonMenuAdjustSubMenu.APP_MENU_ONLY,
+                _patchAppMenu: ContextButton.prototype._patchAppMenu,
+                _unpatchAppMenu: ContextButton.prototype._unpatchAppMenu,
                 _adjustSubMenuEaseProps:
                     ContextButton.prototype._adjustSubMenuEaseProps,
                 _appMenuOverrides: {
@@ -590,23 +593,35 @@ export default class ContextExtension extends Extension {
                     },
                 },
             };
-            if (!this.#patchedAppMenus) {
-                const patchedAppMenus = new Map();
-                this.#patchedAppMenus = patchedAppMenus;
+            if (!this.#isPatchingAppMenu) {
                 this.#patchedAppMenuConfig = config;
-                const patchAppMenu = ContextButton.prototype._patchAppMenu;
                 const interceptMethod = (originalMethod) => {
                     const extension = this;
                     return function () {
                         // this = AppMenu instance
-                        if (!patchedAppMenus.has(this)) {
-                            const destroy = this.connect('destroy', () => {
-                                // This doesn't seem to happen (GNOME 50), but in case it does
-                                patchedAppMenus.delete(this);
-                            });
+                        let currentlyPatched = null;
+                        if (extension.#patchedAppMenuRef) {
+                            currentlyPatched =
+                                extension.#patchedAppMenuRef.deref();
+                            if (currentlyPatched && this !== currentlyPatched) {
+                                currentlyPatched.disconnectObject(extension);
+                                try {
+                                    config._unpatchAppMenu(currentlyPatched);
+                                } catch (ex) {
+                                    this._log(
+                                        console.error,
+                                        `${NAME} contextButton _unpatchAppMenu`,
+                                        ex
+                                    );
+                                }
+                                currentlyPatched = null;
+                                extension.#patchedAppMenuRef = null;
+                            }
+                        }
+                        if (!currentlyPatched) {
                             let updateMenu = null;
                             try {
-                                updateMenu = patchAppMenu.call(config, this);
+                                updateMenu = config._patchAppMenu(this);
                             } catch (ex) {
                                 extension._log(
                                     console.error,
@@ -616,17 +631,25 @@ export default class ContextExtension extends Extension {
                             }
                             if (updateMenu) {
                                 // Successfully patched
-                                const open = this.connect(
+                                extension.#patchedAppMenuRef = new WeakRef(
+                                    this
+                                );
+                                this.connectObject(
+                                    'destroy',
+                                    () => {
+                                        extension.#patchedAppMenuRef = null;
+                                    },
+                                    extension
+                                );
+                                this.connectObject(
                                     'open-state-changed',
                                     (menu, isOpen) => {
                                         if (isOpen && updateMenu) {
                                             updateMenu();
                                         }
-                                    }
+                                    },
+                                    extension
                                 );
-                                patchedAppMenus.set(this, { destroy, open });
-                            } else {
-                                patchedAppMenus.set(this, { destroy });
                             }
                         }
                         return originalMethod.apply(this, arguments);
@@ -637,6 +660,7 @@ export default class ContextExtension extends Extension {
                     'open',
                     interceptMethod
                 );
+                this.#isPatchingAppMenu = true;
             }
             let menuOpenWindows = this.#settings.get_int(
                 'button-menu-open-windows'
@@ -658,10 +682,11 @@ export default class ContextExtension extends Extension {
             config._menuAdjustSubMenu = menuAdjustSubmenu;
             if (config._isFavoriteHidden !== isFavoriteHidden) {
                 config._isFavoriteHidden = isFavoriteHidden;
-                this.#patchedAppMenus.forEach((signals, appMenu) => {
-                    if (signals.open !== undefined) {
+                if (this.#patchedAppMenuRef) {
+                    const currentlyPatched = this.#patchedAppMenuRef.deref();
+                    if (currentlyPatched) {
                         try {
-                            appMenu._updateFavoriteItem();
+                            currentlyPatched._updateFavoriteItem();
                         } catch (ex) {
                             this._log(
                                 console.error,
@@ -670,11 +695,11 @@ export default class ContextExtension extends Extension {
                             );
                         }
                     }
-                });
+                }
             }
-        } else if (this.#patchedAppMenus) {
+        } else if (this.#isPatchingAppMenu) {
             this.#injectionManager.restoreMethod(AppMenu.prototype, 'open');
-            this.#unpatchAppMenus();
+            this.#unpatchAppMenu();
         }
         if (
             isButtonActivated &&
@@ -717,17 +742,15 @@ export default class ContextExtension extends Extension {
         }
     }
 
-    #unpatchAppMenus() {
-        if (this.#patchedAppMenus) {
+    #unpatchAppMenu() {
+        if (this.#isPatchingAppMenu) {
             const config = this.#patchedAppMenuConfig;
-            const unpatchAppMenu = ContextButton.prototype._unpatchAppMenu;
-            this.#patchedAppMenus.forEach((signals, appMenu) => {
-                Object.values(signals).forEach((signal) => {
-                    appMenu.disconnect(signal);
-                });
-                if (signals.open !== undefined) {
+            if (this.#patchedAppMenuRef) {
+                const currentlyPatched = this.#patchedAppMenuRef.deref();
+                if (currentlyPatched) {
+                    currentlyPatched.disconnectObject(this);
                     try {
-                        unpatchAppMenu.call(config, appMenu);
+                        config._unpatchAppMenu(currentlyPatched);
                     } catch (ex) {
                         this._log(
                             console.error,
@@ -736,10 +759,10 @@ export default class ContextExtension extends Extension {
                         );
                     }
                 }
-            });
-            this.#patchedAppMenus.clear();
-            this.#patchedAppMenus = null;
+                this.#patchedAppMenuRef = null;
+            }
             this.#patchedAppMenuConfig = null;
+            this.#isPatchingAppMenu = false;
         }
     }
 
