@@ -17,6 +17,7 @@ import * as Values from '../preferences/values.js';
 
 const GNOME_MAJOR = parseInt(Config.PACKAGE_VERSION);
 const GNOME_POST_49 = GNOME_MAJOR >= 49;
+const GNOME_POST_50 = GNOME_MAJOR >= 50;
 const GNOME_POST_51 = GNOME_MAJOR >= 51;
 const CLICK_GESTURE = GNOME_POST_49; // Also enables use of LongPressGesture
 const BASE_PADDING = 6; // $base_padding from gnome-shell's _common.scss (in px)
@@ -52,6 +53,31 @@ export default class ContextButton extends PanelMenu.Button {
         // Reduce the 'natural' padding to the 'minimum', which can be compensated
         // by adding a default of $base_padding internal padding left and right
         this.style = `-minimum-hpadding: ${BASE_PADDING}px; -natural-hpadding: ${BASE_PADDING}px`;
+
+        // When focused, handle space key press as a primary button click
+        if (GNOME_POST_50) {
+            const keyController = new Clutter.KeyController(); // GNOME 50+ only
+            keyController.connectObject(
+                'key-press',
+                () => {
+                    // Don't handle key presses with modifier keys
+                    const [, symbol] = keyController.get_key();
+                    const [, pressed, latched] = keyController.get_state();
+                    if (pressed || latched) {
+                        return Clutter.EVENT_PROPAGATE;
+                    }
+
+                    // Handle space, but reserve Enter for opening the menu
+                    if (this._isContextButton && symbol === Clutter.KEY_space) {
+                        this.#onClickContext(Clutter.BUTTON_PRIMARY);
+                        return Clutter.EVENT_STOP;
+                    }
+                    return Clutter.EVENT_PROPAGATE;
+                },
+                this
+            );
+            this.add_action(keyController);
+        }
 
         this._appMenu = new AppMenu(this);
         Main.panel.menuManager.addMenu(this._appMenu);
