@@ -753,12 +753,18 @@ export default class ContextButton extends PanelMenu.Button {
                 this._padding.show();
             }
             this._title.set_text(title);
+            this.accessible_name = title;
         } else {
             this._title.set_text('');
+
             // Hide the padding if the title width is dynamic
             if (this._titleWidth < 0) {
                 this._padding.hide();
             }
+
+            // Even though no title is visible, set the accessible name to the app name
+            // as indication that there is an app menu
+            this.accessible_name = this._focusApp?.get_name() || '';
         }
     }
 
