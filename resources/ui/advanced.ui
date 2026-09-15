@@ -236,6 +236,20 @@
         </child>
         
         <child>
+          <object class="AdwActionRow">
+            <property name="title" translatable="yes">Title Type</property>
+            <property name="subtitle" translatable="yes">Also reduces the granularity of updates if possible</property>
+            <property name="activatable-widget">button_title_type</property>
+            <child>
+              <object class="GtkDropDown" id="button_title_type">
+                <property name="valign">center</property>
+                <property name="model">button_title_type_model</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        
+        <child>
           <object class="AdwActionRow" id="button_menu_keybinding">
             <property name="title" translatable="yes">Keyboard Shortcut</property>
             <property name="subtitle" translatable="yes">Toggles the app menu (none by default; recommendation: Super+C)</property>
@@ -638,6 +652,13 @@
       <item translatable="yes">App icon or static</item>
       <item translatable="yes">No app icon</item>
       <item translatable="yes">Static</item>
+    </items>
+  </object>
+  <object class="GtkStringList" id="button_title_type_model">
+    <items>
+      <item translatable="yes">Window</item>
+      <item translatable="yes">App</item>
+      <item translatable="yes">No title</item>
     </items>
   </object>
   <object class="GtkStringList" id="button_menu_patch_model">

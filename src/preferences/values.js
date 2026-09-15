@@ -16,6 +16,12 @@ export const ButtonIconChange = Object.freeze({
     STATIC: 3,
 });
 
+export const ButtonTitleType = Object.freeze({
+    WINDOW: 0,
+    APP: 1,
+    NO_TITLE: 2,
+});
+
 export const ButtonMenuPatch = Object.freeze({
     OFF: 0,
     BUTTON_ONLY: 1,
