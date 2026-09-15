@@ -31,6 +31,7 @@ export default class AdvancedPreferences extends Adw.PreferencesPage {
                     'button_icon_size',
                     'button_context_icon',
                     'button_icon_change',
+                    'button_title_type',
                     'button_menu_keybinding',
                     'button_menu_keybinding_shortcut',
                     'button_toggle_windows',
@@ -237,6 +238,13 @@ export default class AdvancedPreferences extends Adw.PreferencesPage {
         settings.bind(
             'button-icon-change',
             this._button_icon_change,
+            'selected',
+            Gio.SettingsBindFlags.DEFAULT
+        );
+
+        settings.bind(
+            'button-title-type',
+            this._button_title_type,
             'selected',
             Gio.SettingsBindFlags.DEFAULT
         );
@@ -584,6 +592,7 @@ export default class AdvancedPreferences extends Adw.PreferencesPage {
             'button-icon-size',
             'button-context-icon',
             'button-icon-change',
+            'button-title-type',
             'context-window-title-menu-keybinding',
             'button-toggle-windows',
             'button-toggle-desktop',

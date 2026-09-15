@@ -439,6 +439,14 @@ export default class ContextExtension extends Extension {
     }
 
     #onSettingsContextConfigureBehavior({ isAdding, isModified }) {
+        let titleType = this.#settings.get_int('button-title-type');
+        if (titleType < 0 || titleType > 2) {
+            titleType = Values.ButtonTitleType.WINDOW;
+        }
+        if (this.#contextButton._titleType !== titleType) {
+            this.#contextButton._titleType = titleType;
+            isModified = true;
+        }
         const isWindowsToggle = this.#settings.get_boolean(
             'button-toggle-windows'
         );

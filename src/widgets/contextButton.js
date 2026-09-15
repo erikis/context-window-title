@@ -369,7 +369,42 @@ export default class ContextButton extends PanelMenu.Button {
                 this._connectedDisplay = global.display;
                 this._connectedDisplay.connectObject(
                     'notify::focus-window',
-                    () => this.#update(),
+                    () => {
+                        if (this._titleType === Values.ButtonTitleType.WINDOW) {
+                            // Run update for every new focused window
+                            this.#update();
+                            return;
+                        }
+
+                        const focusWindow =
+                            this._isWindowButton || this._isTitleButton
+                                ? global.display.get_focus_window()
+                                : null;
+                        const focusApp = focusWindow
+                            ? Shell.WindowTracker.get_default().get_window_app(
+                                  focusWindow
+                              )
+                            : null;
+                        if (
+                            focusApp !== this._focusApp &&
+                            (this._titleType === Values.ButtonTitleType.APP ||
+                                (this._titleType ===
+                                    Values.ButtonTitleType.NO_TITLE &&
+                                    this._iconChange <=
+                                        Values.ButtonIconChange
+                                            .APP_ICON_OR_STATIC))
+                        ) {
+                            // Run update for every new focused app
+                            this.#update();
+                            return;
+                        }
+
+                        // Keep focused window and app up-to-date without an update
+                        this._focusWindow = focusWindow;
+                        this._windowMenu?.removeAll();
+                        this._appMenu?.setApp(focusApp);
+                        this._focusApp = focusApp;
+                    },
                     this
                 );
             }
@@ -676,12 +711,18 @@ export default class ContextButton extends PanelMenu.Button {
     }
 
     _updateTitle() {
-        let title = this._focusWindow?.get_title();
-        if (
-            this._isTitleButton &&
-            typeof title === 'string' &&
-            title.length > 0
-        ) {
+        let title;
+        if (this._isTitleButton) {
+            switch (this._titleType) {
+                case Values.ButtonTitleType.WINDOW:
+                    title = this._focusWindow?.get_title();
+                    break;
+                case Values.ButtonTitleType.APP:
+                    title = this._focusApp?.get_name();
+                    break;
+            }
+        }
+        if (typeof title === 'string' && title.length > 0) {
             if (!this._padding.visible) {
                 this._padding.show();
             }
