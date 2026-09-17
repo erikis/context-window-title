@@ -365,7 +365,7 @@ msgstr "Fönster"
 
 #: resources/ui/advanced.ui:660
 msgid "App"
-msgstr "Program"
+msgstr "App"
 
 #: resources/ui/advanced.ui:661
 msgid "No title"
