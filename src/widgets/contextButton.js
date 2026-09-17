@@ -614,14 +614,6 @@ export default class ContextButton extends PanelMenu.Button {
                         this
                     );
                 }
-                if (!this._isContextButton) {
-                    this.set({
-                        width: -1, // Restore after using zero width to hide (see below)
-                        min_width:
-                            this._minimumWidth > 0 ? this._minimumWidth : 1,
-                        min_width_set: this._minimumWidth > 0,
-                    });
-                }
             }
             // If context functionality (AND not window/title functionality unless a
             // context icon is going to be used instead of an app icon)
@@ -643,12 +635,19 @@ export default class ContextButton extends PanelMenu.Button {
             if (this._focusWindow === null && !this._isContextButton) {
                 // Set zero width instead of calling hide() because easings were
                 // skipped when in conjunction with workspace switch
-                this.set_width(0);
+                this.set({ can_focus: false, width: 0 });
                 if (this._isHover) {
                     this.hover = true;
                 }
                 this._isUpdating = false;
                 return;
+            } else if (!this.can_focus) {
+                this.set({
+                    can_focus: true,
+                    width: -1, // Restore after using zero width to hide (see above)
+                    min_width: this._minimumWidth > 0 ? this._minimumWidth : 1,
+                    min_width_set: this._minimumWidth > 0,
+                });
             }
             if (this._isHover) {
                 this.hover = true;

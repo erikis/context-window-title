@@ -355,10 +355,13 @@ export default class ContextExtension extends Extension {
         }
         if (this.#contextButton._minimumWidth !== minimumWidth) {
             this.#contextButton._minimumWidth = minimumWidth;
-            this.#contextButton.set({
-                min_width: minimumWidth > 0 ? minimumWidth : 1,
-                min_width_set: minimumWidth > 0,
-            });
+            // Don't apply minimum width if currently hidden
+            if (this.#contextButton.can_focus) {
+                this.#contextButton.set({
+                    min_width: minimumWidth > 0 ? minimumWidth : 1,
+                    min_width_set: minimumWidth > 0,
+                });
+            }
         }
         this.#onSettingsContextConfigureComponents({ isAdding, isModified });
     }
