@@ -15,7 +15,8 @@ The context button can function both as a toggle from desktop to apps, windows, 
 ## Tips
 
 - A **minimum width** can make the context button easier to click and touch. In the preferences, under Advanced, Context Button, set Minimum Width to a value such as 384 px.
-- A **keyboard shortcut** can be set for opening the app menu. In the preferences, under Advanced, Context Button, click on Keyboard Shortcut and press the key combination that you want to use, such as Super+C.
+- Instead of the **window title**, the current **app name** can be displayed on the context button. In the preferences, under Advanced, Context Button, set Title Type to App. It's also possible to not display a title and only show the app icon.
+- A **keyboard shortcut** can be set for opening the app menu. In the preferences, under Advanced, Context Button, click on Keyboard Shortcut and press the key combination that you want to use, such as Super+C. See below for use of the [assistant](#settings) ("Copilot") key.
 - The **look of the app menu** with an Open Windows submenu can be applied to menus in the app grid and the dash as well. In the preferences, under Advanced, Context Button, App Menu, set Patch App Menu to Everywhere.
 - The context button's **cycle can be reversed**. In the preferences, under Advanced, Context Button, Behavior, disable both Show Windows on Click (when showing apps) and Show Desktop on Click (when showing windows). The starting point when the button is clicked while on the desktop is always to show apps.
 - If you prefer **monochrome icons**, the saturation can be reduced and/or a symbolic icon style applied. In the preferences, under Advanced, Context Button, set Saturation to either 0% or one of the special values -2 or -3 for symbolic icon style and 100% or 0% saturation, respectively. Not all icons have a symbolic style and the saturation also applies to the title which may contain emojis. With symbolic icons, a smaller **icon size** might look better, such as 16 px to match the indicators on the system menu button. The icon size can be changed in the preferences under Advanced, Context Button, Components.
@@ -51,10 +52,10 @@ For information about the settings, see the [schema](schemas/org.gnome.shell.ext
 To set a value, e.g., multiple keyboard shortcuts for the app menu:
 
 ```
-gsettings --schemadir ~/.local/share/gnome-shell/extensions/context-window-title@erikis.github.io/schemas set org.gnome.shell.extensions.context-window-title context-window-title-menu-keybinding "['<Super>c','<Shift><Super>TouchpadOff']"
+gsettings --schemadir ~/.local/share/gnome-shell/extensions/context-window-title@erikis.github.io/schemas set org.gnome.shell.extensions.context-window-title context-window-title-menu-keybinding "['<Super>c','<Shift><Super>TouchpadOff', '<Shift><Super>F23', 'Assistant']"
 ```
 
-This should assign both Super+C and the assistant ("Copilot") key as keyboard shortcuts for the app menu. When properly recognized in newer system versions, `'<Shift><Super>TouchpadOff'` should be changed to `'Assistant'`. In the preferences UI, only one keyboard shortcut can be set or viewed per setting.
+This should assign both Super+C and the assistant ("Copilot") key as keyboard shortcuts for the app menu (using different variants of the assistant key, as it might be recognized differently depending on GNOME and system versions). However, in the preferences UI, only a single keyboard shortcut can be set and viewed.
 
 ## Translate
 
