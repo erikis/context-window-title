@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: context-window-title@erikis.github.io\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-15 14:24+0200\n"
+"POT-Creation-Date: 2026-09-27 15:14+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -137,326 +137,334 @@ msgid "Toggles the app menu (none by default; recommendation: Super+C)"
 msgstr ""
 
 #: resources/ui/advanced.ui:267
-msgid "Behavior"
+msgid "Super Key"
 msgstr ""
 
 #: resources/ui/advanced.ui:268
+msgid "Use the “overlay” key for context functionality"
+msgstr ""
+
+#: resources/ui/advanced.ui:280
+msgid "Behavior"
+msgstr ""
+
+#: resources/ui/advanced.ui:281
 msgid "Change what the button does"
 msgstr ""
 
-#: resources/ui/advanced.ui:272
+#: resources/ui/advanced.ui:285
 msgid "Show Windows on Click"
 msgstr ""
 
-#: resources/ui/advanced.ui:273
+#: resources/ui/advanced.ui:286
 msgid "When apps are being shown (if disabled, toggle directly to the desktop)"
 msgstr ""
 
-#: resources/ui/advanced.ui:285
+#: resources/ui/advanced.ui:298
 msgid "Show Desktop on Click"
 msgstr ""
 
-#: resources/ui/advanced.ui:286
+#: resources/ui/advanced.ui:299
 msgid "When windows are being shown (if disabled, toggle back to apps)"
 msgstr ""
 
-#: resources/ui/advanced.ui:298
+#: resources/ui/advanced.ui:311
 msgid "Show Apps/Windows on Scroll Up/Down"
 msgstr ""
 
-#: resources/ui/advanced.ui:299
+#: resources/ui/advanced.ui:312
 msgid "In the overview"
 msgstr ""
 
-#: resources/ui/advanced.ui:311
+#: resources/ui/advanced.ui:324
 msgid "Maximize/Unmaximize on Scroll Up/Down"
 msgstr ""
 
-#: resources/ui/advanced.ui:312
+#: resources/ui/advanced.ui:325
 msgid "On the desktop"
 msgstr ""
 
-#: resources/ui/advanced.ui:327
+#: resources/ui/advanced.ui:340
 msgid "App Menu"
 msgstr ""
 
-#: resources/ui/advanced.ui:328
+#: resources/ui/advanced.ui:341
 msgid "Customize the app menu"
 msgstr ""
 
-#: resources/ui/advanced.ui:332
+#: resources/ui/advanced.ui:345
 msgid "Patch App Menu"
 msgstr ""
 
-#: resources/ui/advanced.ui:333
+#: resources/ui/advanced.ui:346
 msgid ""
 "For the button, a window menu is embedded; patch everywhere for a consistent "
 "look in the app grid and the dash"
 msgstr ""
 
-#: resources/ui/advanced.ui:346
+#: resources/ui/advanced.ui:359
 msgid "Show Open Windows"
 msgstr ""
 
-#: resources/ui/advanced.ui:347
+#: resources/ui/advanced.ui:360
 msgid "Automatic (default) is depending on window count"
 msgstr ""
 
-#: resources/ui/advanced.ui:360
+#: resources/ui/advanced.ui:373
 msgid "Hide Pin/Unpin"
 msgstr ""
 
-#: resources/ui/advanced.ui:361
+#: resources/ui/advanced.ui:374
 msgid "Everywhere only works if also patched everywhere"
 msgstr ""
 
-#: resources/ui/advanced.ui:374
+#: resources/ui/advanced.ui:387
 msgid "Adjust Submenu Easing"
 msgstr ""
 
-#: resources/ui/advanced.ui:375
+#: resources/ui/advanced.ui:388
 msgid "Speeds up open/close submenu animation"
 msgstr ""
 
-#: resources/ui/advanced.ui:394 resources/ui/panel.ui:69
+#: resources/ui/advanced.ui:407 resources/ui/panel.ui:69
 msgid "Custom Clock"
 msgstr ""
 
-#: resources/ui/advanced.ui:398
+#: resources/ui/advanced.ui:411
 msgid "Year"
 msgstr ""
 
-#: resources/ui/advanced.ui:411
+#: resources/ui/advanced.ui:424
 msgid "Month"
 msgstr ""
 
-#: resources/ui/advanced.ui:424 resources/ui/panel.ui:79
+#: resources/ui/advanced.ui:437 resources/ui/panel.ui:79
 msgid "Weekday"
 msgstr ""
 
-#: resources/ui/advanced.ui:437
+#: resources/ui/advanced.ui:450
 msgid "Hour"
 msgstr ""
 
-#: resources/ui/advanced.ui:450 resources/ui/advanced.ui:723
+#: resources/ui/advanced.ui:463 resources/ui/advanced.ui:736
 msgid "Second"
 msgstr ""
 
-#: resources/ui/advanced.ui:463
+#: resources/ui/advanced.ui:476
 msgid "Extra"
 msgstr ""
 
-#: resources/ui/advanced.ui:464
+#: resources/ui/advanced.ui:477
 msgid "Show time zone and change locale options and styling"
 msgstr ""
 
-#: resources/ui/advanced.ui:468
+#: resources/ui/advanced.ui:481
 msgid "Time Zone Name"
 msgstr ""
 
-#: resources/ui/advanced.ui:481
+#: resources/ui/advanced.ui:494
 msgid ""
 "Time Zone, e.g., America/Los_Angeles (tzdb name) or +08:00 [empty for "
 "automatic (default)]"
 msgstr ""
 
-#: resources/ui/advanced.ui:487
+#: resources/ui/advanced.ui:500
 msgid "Calendar"
 msgstr ""
 
-#: resources/ui/advanced.ui:500
+#: resources/ui/advanced.ui:513
 msgid "Numeral System"
 msgstr ""
 
-#: resources/ui/advanced.ui:513
+#: resources/ui/advanced.ui:526
 msgid "Time Locale [empty for automatic (default, currently !CURRENT!)]"
 msgstr ""
 
-#: resources/ui/advanced.ui:519
+#: resources/ui/advanced.ui:532
 msgid "Style (CSS) [empty for no styling (default)]"
 msgstr ""
 
-#: resources/ui/advanced.ui:531 resources/ui/panel.ui:118
+#: resources/ui/advanced.ui:544 resources/ui/panel.ui:118
 msgid "User/Host Name"
 msgstr ""
 
-#: resources/ui/advanced.ui:535
+#: resources/ui/advanced.ui:548
 msgid "Hide on Lock Screen"
 msgstr ""
 
-#: resources/ui/advanced.ui:548
+#: resources/ui/advanced.ui:561
 msgid "Keep First"
 msgstr ""
 
-#: resources/ui/advanced.ui:563 resources/ui/lock.ui:10
+#: resources/ui/advanced.ui:576 resources/ui/lock.ui:10
 msgid "Lock Screen Message"
 msgstr ""
 
-#: resources/ui/advanced.ui:567
+#: resources/ui/advanced.ui:580
 msgid "Icon [empty for automatic (default, currently !CURRENT!)]"
 msgstr ""
 
-#: resources/ui/advanced.ui:573
+#: resources/ui/advanced.ui:586
 msgid "Initially Expanded"
 msgstr ""
 
-#: resources/ui/advanced.ui:588
+#: resources/ui/advanced.ui:601
 msgid "Other"
 msgstr ""
 
-#: resources/ui/advanced.ui:595
+#: resources/ui/advanced.ui:608
 msgid "About !NAME!"
 msgstr ""
 
-#: resources/ui/advanced.ui:604
-msgid "Allow Logging"
-msgstr ""
-
-#: resources/ui/advanced.ui:605
-msgid "Allow writing to the log for debugging"
-msgstr ""
-
 #: resources/ui/advanced.ui:617
-msgid "Reset Preferences"
+msgid "Logging"
 msgstr ""
 
 #: resources/ui/advanced.ui:618
+msgid "Allow writes to the log for debugging"
+msgstr ""
+
+#: resources/ui/advanced.ui:630
+msgid "Reset"
+msgstr ""
+
+#: resources/ui/advanced.ui:631
 msgid "This is irreversible"
 msgstr ""
 
-#: resources/ui/advanced.ui:625
+#: resources/ui/advanced.ui:638
 msgid "Reset Advanced Preferences"
 msgstr ""
 
-#: resources/ui/advanced.ui:636
+#: resources/ui/advanced.ui:649
 msgid "Reset All Preferences"
 msgstr ""
 
-#: resources/ui/advanced.ui:651
+#: resources/ui/advanced.ui:664
 msgid "Dynamic"
 msgstr ""
 
-#: resources/ui/advanced.ui:652
+#: resources/ui/advanced.ui:665
 msgid "App icon or static"
 msgstr ""
 
-#: resources/ui/advanced.ui:653
+#: resources/ui/advanced.ui:666
 msgid "No app icon"
 msgstr ""
 
-#: resources/ui/advanced.ui:654
+#: resources/ui/advanced.ui:667
 msgid "Static"
 msgstr ""
 
-#: resources/ui/advanced.ui:659 resources/ui/panel.ui:40
+#: resources/ui/advanced.ui:672 resources/ui/panel.ui:40
 msgid "Window"
 msgstr ""
 
-#: resources/ui/advanced.ui:660
+#: resources/ui/advanced.ui:673
 msgid "App"
 msgstr ""
 
-#: resources/ui/advanced.ui:661
+#: resources/ui/advanced.ui:674
 msgid "No title"
 msgstr ""
 
-#: resources/ui/advanced.ui:666 resources/ui/advanced.ui:687
-#: resources/ui/advanced.ui:694 resources/ui/advanced.ui:722
-#: resources/ui/advanced.ui:731
+#: resources/ui/advanced.ui:679 resources/ui/advanced.ui:700
+#: resources/ui/advanced.ui:707 resources/ui/advanced.ui:735
+#: resources/ui/advanced.ui:744
 msgid "Off"
 msgstr ""
 
-#: resources/ui/advanced.ui:667 resources/ui/advanced.ui:681
+#: resources/ui/advanced.ui:680 resources/ui/advanced.ui:694
 msgid "Button only"
 msgstr ""
 
-#: resources/ui/advanced.ui:668 resources/ui/advanced.ui:682
-#: resources/ui/advanced.ui:689
+#: resources/ui/advanced.ui:681 resources/ui/advanced.ui:695
+#: resources/ui/advanced.ui:702
 msgid "Everywhere"
 msgstr ""
 
-#: resources/ui/advanced.ui:673
+#: resources/ui/advanced.ui:686
 msgid "Automatic"
 msgstr ""
 
-#: resources/ui/advanced.ui:674
+#: resources/ui/advanced.ui:687
 msgid "Always and closed"
 msgstr ""
 
-#: resources/ui/advanced.ui:675
+#: resources/ui/advanced.ui:688
 msgid "Always and open"
 msgstr ""
 
-#: resources/ui/advanced.ui:680 resources/ui/advanced.ui:749
+#: resources/ui/advanced.ui:693 resources/ui/advanced.ui:762
 msgid "Don’t hide"
 msgstr ""
 
-#: resources/ui/advanced.ui:688
+#: resources/ui/advanced.ui:701
 msgid "App menu only"
 msgstr ""
 
-#: resources/ui/advanced.ui:695 resources/ui/advanced.ui:732
+#: resources/ui/advanced.ui:708 resources/ui/advanced.ui:745
 msgid "On"
 msgstr ""
 
-#: resources/ui/advanced.ui:696
+#: resources/ui/advanced.ui:709
 msgid "On with era"
 msgstr ""
 
-#: resources/ui/advanced.ui:701 resources/ui/advanced.ui:708
+#: resources/ui/advanced.ui:714 resources/ui/advanced.ui:721
 msgid "Short"
 msgstr ""
 
-#: resources/ui/advanced.ui:702 resources/ui/advanced.ui:709
+#: resources/ui/advanced.ui:715 resources/ui/advanced.ui:722
 msgid "Long"
 msgstr ""
 
-#: resources/ui/advanced.ui:703
+#: resources/ui/advanced.ui:716
 msgid "Numeric"
 msgstr ""
 
-#: resources/ui/advanced.ui:710
+#: resources/ui/advanced.ui:723
 msgid "Narrow"
 msgstr ""
 
-#: resources/ui/advanced.ui:715 resources/ui/advanced.ui:739
-#: resources/ui/advanced.ui:744
+#: resources/ui/advanced.ui:728 resources/ui/advanced.ui:752
+#: resources/ui/advanced.ui:757
 msgid "Default"
 msgstr ""
 
-#: resources/ui/advanced.ui:716
+#: resources/ui/advanced.ui:729
 msgid "12h"
 msgstr ""
 
-#: resources/ui/advanced.ui:717
+#: resources/ui/advanced.ui:730
 msgid "24h"
 msgstr ""
 
-#: resources/ui/advanced.ui:724
+#: resources/ui/advanced.ui:737
 msgid "1/10 Second"
 msgstr ""
 
-#: resources/ui/advanced.ui:725
+#: resources/ui/advanced.ui:738
 msgid "1/100 Second"
 msgstr ""
 
-#: resources/ui/advanced.ui:726
+#: resources/ui/advanced.ui:739
 msgid "1/1000 Second"
 msgstr ""
 
-#: resources/ui/advanced.ui:733
+#: resources/ui/advanced.ui:746
 msgid "On with offset only"
 msgstr ""
 
-#: resources/ui/advanced.ui:734
+#: resources/ui/advanced.ui:747
 msgid "On with long offset only"
 msgstr ""
 
-#: resources/ui/advanced.ui:750
+#: resources/ui/advanced.ui:763
 msgid "Hide"
 msgstr ""
 
-#: resources/ui/advanced.ui:751
+#: resources/ui/advanced.ui:764
 msgid "Hide user"
 msgstr ""
 
@@ -568,12 +576,12 @@ msgstr ""
 msgid "TRANSLATOR"
 msgstr ""
 
-#: src/preferences/advanced.js:87
+#: src/preferences/advanced.js:88
 #, javascript-format
 msgid "!VALUE! for symbolic icon style and !CURRENT!% saturation"
 msgstr ""
 
-#: src/preferences/advanced.js:261
+#: src/preferences/advanced.js:262
 msgid "Press key… (Esc or click to cancel, Backspace to remove)"
 msgstr ""
 
