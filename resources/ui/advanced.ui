@@ -614,8 +614,8 @@
         
         <child>
           <object class="AdwActionRow">
-            <property name="title" translatable="yes">Allow Logging</property>
-            <property name="subtitle" translatable="yes">Allow writing to the log for debugging</property>
+            <property name="title" translatable="yes">Logging</property>
+            <property name="subtitle" translatable="yes">Allow writes to the log for debugging</property>
             <property name="activatable-widget">allow_log</property>
             <child>
               <object class="GtkSwitch" id="allow_log">
@@ -627,7 +627,7 @@
         
         <child>
           <object class="AdwExpanderRow" id="reset_row">
-            <property name="title" translatable="yes">Reset Preferences</property>
+            <property name="title" translatable="yes">Reset</property>
             <property name="subtitle" translatable="yes">This is irreversible</property>
             <!-- Not using AdwButtonRow for now, because it requires newer GNOME versions -->
             <child>
