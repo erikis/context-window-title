@@ -34,6 +34,7 @@ export default class AdvancedPreferences extends Adw.PreferencesPage {
                     'button_title_type',
                     'button_menu_keybinding',
                     'button_menu_keybinding_shortcut',
+                    'button_override_overlay',
                     'button_toggle_windows',
                     'button_toggle_desktop',
                     'button_scroll_overview',
@@ -326,6 +327,13 @@ export default class AdvancedPreferences extends Adw.PreferencesPage {
         menuKeybindingRow.add_controller(menuKeybindingController);
 
         settings.bind(
+            'button-override-overlay',
+            this._button_override_overlay,
+            'active',
+            Gio.SettingsBindFlags.DEFAULT
+        );
+
+        settings.bind(
             'button-toggle-windows',
             this._button_toggle_windows,
             'active',
@@ -594,6 +602,7 @@ export default class AdvancedPreferences extends Adw.PreferencesPage {
             'button-icon-change',
             'button-title-type',
             'context-window-title-menu-keybinding',
+            'button-override-overlay',
             'button-toggle-windows',
             'button-toggle-desktop',
             'button-scroll-overview',

@@ -50,6 +50,8 @@ export default class ContextExtension extends Extension {
     #patchedAppMenuRef = null;
     #patchedAppMenuConfig = null;
     #isAdjustingSubMenu = false;
+    #isOverridingOverlay = false;
+    #overrideOverlayConfig = null;
     #clockLabel = null;
     #originalClockDisplay = null;
     #nameIndicator = null;
@@ -107,6 +109,7 @@ export default class ContextExtension extends Extension {
         this.#isAdjustingSubMenu = false;
 
         this.#unpatchAppMenu();
+        this.#unoverrideOverlay();
         this.#contextButton?.destroy();
         this.#contextButton = null;
 
@@ -137,6 +140,7 @@ export default class ContextExtension extends Extension {
             this.#onSettings(); // This will instantiate the context button, etc.
         } else {
             this.#removeAllKeybindings(); // Remove all keybindings on lock screen
+            this.#unoverrideOverlay();
             this.#contextButton?.destroy();
             this.#contextButton = null;
             try {
@@ -288,9 +292,14 @@ export default class ContextExtension extends Extension {
             }
             this.#onSettingsContextConfigure({ isAdding, isModified });
         }
-        // App menus can be patched globally if button is activated even if the
+
+        // App menus can be patched globally if the button is activated, even if the
         // button isn't actually instantiated due to no enabled functionality
         this.#onSettingsContextAppMenus({ isButtonActivated });
+
+        // Likewise, the overlay key can be handled even without context functionality
+        // (or any functionality) enabled
+        this.#onSettingsContextOverlay({ isButtonActivated });
     }
 
     // Break up into multiple, chained functions for readability, isolation,
@@ -580,30 +589,31 @@ export default class ContextExtension extends Extension {
             const isFavoriteHidden =
                 this.#settings.get_int('button-menu-hide-favorite') ===
                 Values.ButtonMenuHideFavorite.EVERYWHERE;
-            const config = this.#patchedAppMenuConfig ?? {
-                _focusWindow: null,
-                _isWindowMenu: false,
-                _menuOpenWindows: Values.ButtonMenuOpenWindows.ALWAYS_AND_OPEN,
-                _isFavoriteHidden: isFavoriteHidden,
-                _menuAdjustSubMenu:
-                    Values.ButtonMenuAdjustSubMenu.APP_MENU_ONLY,
-                _patchAppMenu: ContextButton.prototype._patchAppMenu,
-                _unpatchAppMenu: ContextButton.prototype._unpatchAppMenu,
-                _adjustSubMenuEaseProps:
-                    ContextButton.prototype._adjustSubMenuEaseProps,
-                _appMenuOverrides: {
-                    _updateFavoriteItem: function () {
-                        // this = AppMenu instance
-                        if (config._isFavoriteHidden) {
-                            if (this._toggleFavoriteItem) {
-                                this._toggleFavoriteItem.visible = false;
+            const config =
+                this.#patchedAppMenuConfig ??
+                Object.assign(Object.create(ContextButton.prototype), {
+                    _focusWindow: null,
+                    _isWindowMenu: false,
+                    _menuOpenWindows:
+                        Values.ButtonMenuOpenWindows.ALWAYS_AND_OPEN,
+                    _isFavoriteHidden: isFavoriteHidden,
+                    _menuAdjustSubMenu:
+                        Values.ButtonMenuAdjustSubMenu.APP_MENU_ONLY,
+                    _appMenuOverrides: {
+                        _updateFavoriteItem: function () {
+                            // this = AppMenu instance
+                            if (config._isFavoriteHidden) {
+                                if (this._toggleFavoriteItem) {
+                                    this._toggleFavoriteItem.visible = false;
+                                }
+                            } else {
+                                AppMenu.prototype._updateFavoriteItem?.call(
+                                    this
+                                );
                             }
-                        } else {
-                            AppMenu.prototype._updateFavoriteItem?.call(this);
-                        }
+                        },
                     },
-                },
-            };
+                });
             if (!this.#isPatchingAppMenu) {
                 this.#patchedAppMenuConfig = config;
                 const interceptMethod = (originalMethod) => {
@@ -774,6 +784,63 @@ export default class ContextExtension extends Extension {
             }
             this.#patchedAppMenuConfig = null;
             this.#isPatchingAppMenu = false;
+        }
+    }
+
+    #onSettingsContextOverlay({ isButtonActivated }) {
+        if (
+            isButtonActivated &&
+            this.#settings.get_boolean('button-override-overlay')
+        ) {
+            const config =
+                this.#overrideOverlayConfig ??
+                Object.create(ContextButton.prototype);
+            if (!this.#isOverridingOverlay) {
+                this.#overrideOverlayConfig = config;
+                GObject.signal_handlers_block_matched(global.display, {
+                    signalId: 'overlay-key',
+                });
+                global.display.connectObject(
+                    'overlay-key',
+                    () => {
+                        try {
+                            // If the button is instantiated, use the instance in order for
+                            // _isActuallyApps to be set
+                            const button = this.#contextButton ?? config;
+                            button._onClickContextOverview();
+                        } catch (ex) {
+                            this._log(
+                                console.error,
+                                `${NAME} contextButton _onClickContextOverview`,
+                                ex
+                            );
+                        }
+                    },
+                    this
+                );
+                this.#isOverridingOverlay = true;
+            }
+            Object.assign(config, {
+                _isWindowsToggle: this.#settings.get_boolean(
+                    'button-toggle-windows'
+                ),
+                _isDesktopToggle: this.#settings.get_boolean(
+                    'button-toggle-desktop'
+                ),
+            });
+        } else if (this.#isOverridingOverlay) {
+            this.#unoverrideOverlay();
+        }
+    }
+
+    #unoverrideOverlay() {
+        if (this.#isOverridingOverlay) {
+            global.display.disconnectObject(this);
+            GObject.signal_handlers_unblock_matched(global.display, {
+                signalId: 'overlay-key',
+            });
+            this.#overrideOverlayConfig = null;
+            this.#isOverridingOverlay = false;
         }
     }
 

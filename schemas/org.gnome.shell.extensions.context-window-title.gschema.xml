@@ -102,6 +102,11 @@
       <description>Whether to use specific scroll handling on desktop</description>
       <default>true</default>
     </key>
+    <key name="button-override-overlay" type="b">
+      <summary>Button override overlay</summary>
+      <description>Whether to override the overlay key handler</description>
+      <default>false</default>
+    </key>
     <key name="button-menu-patch" type="i">
       <summary>Button menu patch</summary>
       <description>Whether/how to patch app menu</description>

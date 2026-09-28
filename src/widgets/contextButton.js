@@ -69,8 +69,7 @@ export default class ContextButton extends PanelMenu.Button {
 
                     // Handle space, but reserve Enter for opening the menu
                     if (this._isContextButton && symbol === Clutter.KEY_space) {
-                        this.#onClickContext(Clutter.BUTTON_PRIMARY);
-                        return Clutter.EVENT_STOP;
+                        return this._onClickContextOverview();
                     }
                     return Clutter.EVENT_PROPAGATE;
                 },
@@ -961,32 +960,32 @@ export default class ContextButton extends PanelMenu.Button {
                 !this._isWindowButton &&
                 button === Clutter.BUTTON_MIDDLE)
         ) {
-            if (this._isContextButton && !Main.overview.closing) {
-                if (Main.overview.visible) {
-                    this.#onClickContextOverview();
-                } else {
-                    // Prevent updating context icon and initially detecting
-                    // overview while showAppsButton.checked is still false
-                    // (usually visible in a stutter on first click after startup)
-                    this._isActuallyApps = true;
-                    Main.overview.showApps();
-                    this._isActuallyApps = false;
-                }
-            }
-            return Clutter.EVENT_STOP;
+            return this._onClickContextOverview();
         }
         return undefined; // Don't handle if not actually context usage
     }
 
-    #onClickContextOverview() {
-        const showAppsButton = Main.overview.dash.showAppsButton;
-        if (this._isWindowsToggle && showAppsButton.checked) {
-            this.#hideApps(showAppsButton);
-        } else if (!this._isDesktopToggle && !showAppsButton.checked) {
-            showAppsButton.checked = true;
-        } else if (!Main.overview.animationInProgress) {
-            Main.overview.hide();
+    _onClickContextOverview() {
+        if (!Main.overview.closing) {
+            if (Main.overview.visible) {
+                const showAppsButton = Main.overview.dash.showAppsButton;
+                if (this._isWindowsToggle && showAppsButton.checked) {
+                    this._hideApps(showAppsButton);
+                } else if (!this._isDesktopToggle && !showAppsButton.checked) {
+                    showAppsButton.checked = true;
+                } else if (!Main.overview.animationInProgress) {
+                    Main.overview.hide();
+                }
+            } else {
+                // Prevent updating context icon and initially detecting
+                // overview while showAppsButton.checked is still false
+                // (usually visible in a stutter on first click after startup)
+                this._isActuallyApps = true;
+                Main.overview.showApps();
+                this._isActuallyApps = false;
+            }
         }
+        return Clutter.EVENT_STOP;
     }
 
     #onClickWindow(button) {
@@ -1108,7 +1107,7 @@ export default class ContextButton extends PanelMenu.Button {
                     break;
                 case Clutter.ScrollDirection.DOWN:
                     if (showAppsButton.checked) {
-                        this.#hideApps(showAppsButton);
+                        this._hideApps(showAppsButton);
                     }
                     break;
             }
@@ -1116,7 +1115,7 @@ export default class ContextButton extends PanelMenu.Button {
         return Clutter.EVENT_STOP;
     }
 
-    #hideApps(showAppsButton) {
+    _hideApps(showAppsButton) {
         // Dash to Dock's docking.js sets _fromDesktop = true to indicate that
         // the apps button should close the overview and not just the app grid
         if (showAppsButton._fromDesktop === true) {
