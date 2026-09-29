@@ -82,6 +82,11 @@
       <description>Menu keybinding with a globally unique keybinding name</description>
       <default><![CDATA[[]]]></default>
     </key>
+    <key name="button-override-overlay" type="b">
+      <summary>Button override overlay</summary>
+      <description>Whether to override the overlay key handler</description>
+      <default>false</default>
+    </key>
     <key name="button-toggle-windows" type="b">
       <summary>Button toggle windows</summary>
       <description>Whether to include toggling to windows</description>
