@@ -977,12 +977,7 @@ export default class ContextButton extends PanelMenu.Button {
                     Main.overview.hide();
                 }
             } else {
-                // Prevent updating context icon and initially detecting
-                // overview while showAppsButton.checked is still false
-                // (usually visible in a stutter on first click after startup)
-                this._isActuallyApps = true;
                 Main.overview.showApps();
-                this._isActuallyApps = false;
             }
         }
         return Clutter.EVENT_STOP;

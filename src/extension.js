@@ -27,6 +27,7 @@ import {
     InjectionManager,
 } from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import * as OverviewControls from 'resource:///org/gnome/shell/ui/overviewControls.js';
 
 import ClockLabel from './widgets/clockLabel.js';
 import ContextButton from './widgets/contextButton.js';
@@ -52,6 +53,7 @@ export default class ContextExtension extends Extension {
     #isAdjustingSubMenu = false;
     #isOverridingOverlay = false;
     #overrideOverlayConfig = null;
+    #isInterceptingOverview = false;
     #clockLabel = null;
     #originalClockDisplay = null;
     #nameIndicator = null;
@@ -107,6 +109,7 @@ export default class ContextExtension extends Extension {
         this.#injectionManager?.clear();
         this.#injectionManager = null;
         this.#isAdjustingSubMenu = false;
+        this.#isInterceptingOverview = false;
 
         this.#unpatchAppMenu();
         this.#unoverrideOverlay();
@@ -804,10 +807,7 @@ export default class ContextExtension extends Extension {
                     'overlay-key',
                     () => {
                         try {
-                            // If the button is instantiated, use the instance in order for
-                            // _isActuallyApps to be set
-                            const button = this.#contextButton ?? config;
-                            button._onClickContextOverview();
+                            config._onClickContextOverview();
                         } catch (ex) {
                             this._log(
                                 console.error,
@@ -830,6 +830,42 @@ export default class ContextExtension extends Extension {
             });
         } else if (this.#isOverridingOverlay) {
             this.#unoverrideOverlay();
+        }
+        if (isButtonActivated) {
+            if (!this.#isInterceptingOverview) {
+                const interceptMethod = (originalMethod) => {
+                    const extension = this;
+                    return function (state) {
+                        // this = Overview instance
+                        const button = extension.#contextButton;
+                        if (button) {
+                            // Prevent updating context icon and initially detecting
+                            // overview while showAppsButton.checked is still false
+                            // (usually visible first time showing apps after startup)
+                            button._isActuallyApps =
+                                state ===
+                                OverviewControls.ControlsState.APP_GRID;
+                        }
+                        const ret = originalMethod.apply(this, arguments);
+                        if (button) {
+                            button._isActuallyApps = false;
+                        }
+                        return ret;
+                    };
+                };
+                this.#injectionManager.overrideMethod(
+                    Main.overview,
+                    '_animateVisible',
+                    interceptMethod
+                );
+                this.#isInterceptingOverview = true;
+            }
+        } else if (this.#isInterceptingOverview) {
+            this.#injectionManager.restoreMethod(
+                Main.overview,
+                '_animateVisible'
+            );
+            this.#isInterceptingOverview = false;
         }
     }
 
