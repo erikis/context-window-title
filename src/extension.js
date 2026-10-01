@@ -27,6 +27,7 @@ import {
     InjectionManager,
 } from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import { Overview } from 'resource:///org/gnome/shell/ui/overview.js';
 import * as OverviewControls from 'resource:///org/gnome/shell/ui/overviewControls.js';
 
 import ClockLabel from './widgets/clockLabel.js';
@@ -854,7 +855,7 @@ export default class ContextExtension extends Extension {
                     };
                 };
                 this.#injectionManager.overrideMethod(
-                    Main.overview,
+                    Overview.prototype,
                     '_animateVisible',
                     interceptMethod
                 );
@@ -862,7 +863,7 @@ export default class ContextExtension extends Extension {
             }
         } else if (this.#isInterceptingOverview) {
             this.#injectionManager.restoreMethod(
-                Main.overview,
+                Overview.prototype,
                 '_animateVisible'
             );
             this.#isInterceptingOverview = false;
