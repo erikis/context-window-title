@@ -775,8 +775,7 @@ export default class ContextButton extends PanelMenu.Button {
             const icon = this._newIcon || this._icon;
             if (
                 this._isContextButton &&
-                Main.overview.visible &&
-                !Main.overview.closing &&
+                Main.overview.visibleTarget &&
                 this._iconChange !==
                     Values.ButtonIconChange.APP_ICON_OR_STATIC &&
                 this._iconChange !== Values.ButtonIconChange.STATIC
