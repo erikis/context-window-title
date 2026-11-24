@@ -344,19 +344,21 @@ export default class ContextButton extends PanelMenu.Button {
         }
 
         // Prevent appearance of overshooting
-        if (props.height >= 0 && props['margin-bottom'] === undefined) {
+        if (props.height >= 0 && props.margin_bottom === undefined) {
             // .popup-sub-menu has margin-bottom: $base_padding, so that when the submenu
             // is open, there is some vertical space before the next menu item.
             // However, this seems to not be properly accounted for during easing.
-            if (props.height >= BASE_PADDING) {
-                newProps.height -= BASE_PADDING;
+            const themeNode = actor.get_theme_node();
+            const marginBottom = themeNode.get_margin(St.Side.BOTTOM);
+            if (props.height >= marginBottom) {
+                newProps.height -= marginBottom;
             }
 
             // Animate the margin-bottom property
             const isOpening = props.height > 0;
-            newProps['margin-bottom'] = isOpening ? BASE_PADDING : 0;
+            newProps.margin_bottom = isOpening ? marginBottom : 0;
             const origStyle = actor.style; // Probably null
-            actor.style = `${origStyle ?? ''}; margin-bottom: ${isOpening ? 0 : BASE_PADDING}px`;
+            actor.style = `${origStyle ?? ''}; margin-bottom: ${isOpening ? 0 : marginBottom}px`;
             const onComplete = props.onComplete;
             newProps.onComplete = () => {
                 actor.style = origStyle;
